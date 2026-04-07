@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Inscription</title>
+</head>
+<body>
+<h2>Créer un compte (Inscription)</h2>
+
+<div th:if="${error}">
+    <p style="color: red; font-weight: bold;" th:text="${error}"></p>
+</div>
+
+<form th:action="@{/user/register}" method="post">
+
+    <div style="margin-bottom: 10px;">
+        <label for="nom">Nom :</label><br/>
+        <input type="text" id="nom" name="nomU" required />
+    </div>
+
+    <div style="margin-bottom: 10px;">
+        <label for="prenom">Prénom :</label><br/>
+        <input type="text" id="prenom" name="prenomU" required />
+    </div>
+
+    <div style="margin-bottom: 10px;">
+        <label for="email">Email :</label><br/>
+        <input type="email" id="email" name="mailU" required />
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <label for="mdp">Mot de passe :</label><br/>
+        <input type="password" id="mdp" name="mdpU" required />
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <label for="sexe">Sex :</label><br/>
+        <input type="text" id="sexe" name="sexeU" required />
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <label for="age">Age :</label><br/>
+        <input type="number" id="age" name="ageU" required />
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <label for="taille">Taille :</label><br/>
+        <input type="number" id="taille" name="tailleU" required />
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <label for="poids">Poids :</label><br/>
+        <input type="number" id="poids" name="poidsU" required />
+    </div>
+
+    <div>
+        <button type="submit">S'inscrire</button>
+    </div>
+
+</form>
+
+<p>
+    <a th:href="@{/user/login}">Déjà un compte ? Se connecter ici.</a>
+</p>
+</body>
+</html>

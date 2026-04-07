@@ -12,7 +12,7 @@ import lombok.*;
 public class Utilisateur {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long IdU;
+    private Long IdU;
     private String nomU;
     private String prenomU;
     private String mailU;

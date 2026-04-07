@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Formulaire</title>
+</head>
+<body>
+<h2>Profile</h2>
+
+<div th:if="${error}">
+    <p style="color: red; font-weight: bold;" th:text="${error}"></p>
+</div>
+
+<form th:action="@{/user/profile/update/{IdU}(id=${userUpdate.IdU})}" method="post">
+
+    <input type="nombre" name="id" th:value="${userUpdate.IdU}" />
+
+    <div style="margin-bottom: 15px;">
+        <label for="email">Email :</label><br/>
+        <input type="email" id="email" name="mailU" th:value="${userUpdate.mailU}" required />
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <label for="sexe">Sexe :</label><br/>
+        <input type="text" id="sexe" name="sexeU" th:value="${userUpdate.sexeU}" required />
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <label for="age">Age :</label><br/>
+        <input type="nombre" id="age" name="ageU" th:value="${userUpdate.ageU}" required />
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <label for="taille">Taille :</label><br/>
+        <input type="text" id="taille" name="tailleU" th:value="${userUpdate.tailleU}" required />
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <label for="poids">Poids :</label><br/>
+        <input type="text" id="poids" name="poidsU" th:value="${userUpdate.poidsU}" required />
+    </div>
+
+
+    <div>
+        <button type="submit">💾 Enregistrer </button>
+        &nbsp;
+        <a th:href="@{/user/profile/{id}(id=${userUpdate.IdU}))}">
+            <button type="button">Annuler</button>
+        </a>
+    </div>
+
+</form>
+</body>
+</html>
