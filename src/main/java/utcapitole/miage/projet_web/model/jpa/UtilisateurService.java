@@ -40,6 +40,27 @@ public class UtilisateurService {
 
     }
 
+    public void changerMotDePasse(Long idU, String ancienMdp, String nouveauMdp, String confirmMdp) {
+        //findById retoune optinal, .orElseThrow signifie si user est null, il va creer RuntimeException et retourne message.
+        Utilisateur user = utilisateurRepository.findById(idU)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé."));
+
+        if (!passwordEncoder.matches(ancienMdp, user.getMdpU())) {
+            throw new IllegalArgumentException("L'ancien mot de passe est incorrect.");
+        }
+
+        if (!nouveauMdp.equals(confirmMdp)) {
+            throw new IllegalArgumentException("Les nouveaux mots de passe ne correspondent pas.");
+        }
+
+        if (passwordEncoder.matches(nouveauMdp, user.getMdpU())) {
+            throw new IllegalArgumentException("Le nouveau mot de passe doit être différent de l'ancien.");
+        }
+
+        user.setMdpU(passwordEncoder.encode(nouveauMdp));
+        utilisateurRepository.save(user);
+    }
+
     public Optional<Utilisateur> findByIdU(Long IdU){
         return utilisateurRepository.findById(IdU);
     }
