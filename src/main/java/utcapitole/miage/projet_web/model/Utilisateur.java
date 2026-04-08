@@ -64,6 +64,17 @@ public class Utilisateur {
     @Column(name = "niveau_pratique")
     private Map<Sport, NiveauPratique> listSportNivPratique = new HashMap<>();
 
+        @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL, orphanRemoval = true)
+        private List<Activite> activites = new ArrayList<>();
+
+        @ManyToMany(fetch = FetchType.EAGER)
+        @JoinTable(
+            name = "utilisateur_badges",
+            joinColumns = @JoinColumn(name = "IdU"),
+            inverseJoinColumns = @JoinColumn(name = "idBadge")
+        )
+        private List<Badge> badges = new ArrayList<>();
+
     public Long getId() {
         return id;
     }
@@ -151,5 +162,21 @@ public class Utilisateur {
 
     public void setListSportNivPratique(Map<Sport, NiveauPratique> listSportNivPratique) {
         this.listSportNivPratique = listSportNivPratique;
+    }
+
+    public List<Activite> getActivites() {
+        return activites;
+    }
+
+    public void setActivites(List<Activite> activites) {
+        this.activites = activites;
+    }
+
+    public List<Badge> getBadges() {
+        return badges;
+    }
+
+    public void setBadges(List<Badge> badges) {
+        this.badges = badges;
     }
 }

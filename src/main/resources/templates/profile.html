@@ -6,11 +6,12 @@
 </head>
 <body>
 <h2>Mon Profil</h2>
+<p th:if="${param.badge != null}" style="color: green; font-weight: bold;">Un nouveau badge a ete attribue automatiquement.</p>
 <a th:href="@{/user/profile/update/{IdU}(IdU=${userProfile.id})}">
-    <button type="button">✏️ Modifier mes infos</button>
+    <button type="button">Modifier mes infos</button>
 </a>
 <a th:href="@{/user/profile/update-password/{IdU}(IdU=${userProfile.id})}">
-    <button type="button">🔒 Modifier le mot de passe</button>
+    <button type="button">Modifier le mot de passe</button>
 </a>
 <a th:href="@{/user/profile/voirUtilisateur}">
     <button type="button">Voir liste des utilisateurs</button>
@@ -27,6 +28,35 @@
     <p><strong>Taille :</strong> <span th:text="${userProfile.taille}"></span></p>
     <p><strong>Poids :</strong> <span th:text="${userProfile.poids}"></span></p>
 </div>
+
+<hr/>
+<h3>Mes badges</h3>
+<p th:if="${#lists.isEmpty(userProfile.badges)}">Aucun badge pour le moment.</p>
+<ul th:unless="${#lists.isEmpty(userProfile.badges)}">
+    <li th:each="badge : ${userProfile.badges}" th:text="${badge.entitule}"></li>
+</ul>
+
+<hr/>
+<h3>Administration - enregistrer une activite sportive</h3>
+<form th:action="@{/user/admin/users/{idUtilisateur}/activites(idUtilisateur=${userProfile.id})}" method="post">
+    <div>
+        <label for="type">Type</label>
+        <input id="type" name="type" type="text" required>
+    </div>
+    <div>
+        <label for="date">Date</label>
+        <input id="date" name="date" type="date" required>
+    </div>
+    <div>
+        <label for="duree">Duree (minutes)</label>
+        <input id="duree" name="duree" type="number" min="1" required>
+    </div>
+    <div>
+        <label for="distance">Distance (km)</label>
+        <input id="distance" name="distance" type="number" min="0" step="0.1" required>
+    </div>
+    <button type="submit">Enregistrer activite</button>
+</form>
 
 <hr/>
 

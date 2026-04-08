@@ -6,7 +6,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Utilisateur;
+import utcapitole.miage.projet_web.model.jpa.BadgeAttributionService;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 
 import java.util.List;
@@ -20,6 +22,9 @@ public class UtilisateurController {
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private BadgeAttributionService badgeAttributionService;
 
     @GetMapping("/login")
     public String showLoginForm() {
@@ -171,6 +176,42 @@ public class UtilisateurController {
         List<Utilisateur> listU = utilisateurService.getAll();
         model.addAttribute("utiliste", listU);
         return "usersList";
+    }
+
+    @PostMapping("/admin/users/{idUtilisateur}/activites")
+    public String enregistrerActiviteEtAttribuerBadges(@PathVariable Long idUtilisateur,
+                                                        @RequestParam String type,
+                                                        @RequestParam String date,
+                                                        @RequestParam int duree,
+                                                        @RequestParam double distance,
+                                                        HttpSession session) {
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            return "redirect:/user/login";
+        }
+
+        Activite activite = new Activite();
+        activite.setNom(type);
+        activite.setDate(date);
+        activite.setDuree(duree);
+        activite.setDistance(distance);
+
+        List<String> badgesAttribues = badgeAttributionService.enregistrerActiviteEtAttribuerBadges(idUtilisateur, activite);
+        boolean badgeAttribue = !badgesAttribues.isEmpty();
+
+        return "redirect:/user/profile/" + idUtilisateur + (badgeAttribue ? "?badge=attribue" : "");
+    }
+
+    @PostMapping("/admin/users/{idUtilisateur}/badges/auto")
+    public String attribuerBadgesAutomatiques(@PathVariable Long idUtilisateur,
+                                              HttpSession session) {
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            return "redirect:/user/login";
+        }
+
+        badgeAttributionService.attribuerBadgesAutomatiques(idUtilisateur);
+        return "redirect:/user/profile/" + idUtilisateur;
     }
 
 }
