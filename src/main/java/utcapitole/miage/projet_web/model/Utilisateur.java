@@ -145,10 +145,6 @@ public class Utilisateur {
         this.amis = amis;
     }
 
-<<<<<<< 12-us-enregistrer-manuellement-une-activité-sportive
-
-    
-=======
     public Map<Sport, NiveauPratique> getListSportNivPratique() {
         return listSportNivPratique;
     }
@@ -156,5 +152,4 @@ public class Utilisateur {
     public void setListSportNivPratique(Map<Sport, NiveauPratique> listSportNivPratique) {
         this.listSportNivPratique = listSportNivPratique;
     }
->>>>>>> main
 }
