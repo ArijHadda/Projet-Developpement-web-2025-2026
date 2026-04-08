@@ -83,11 +83,11 @@ public class UtilisateurController {
     public String modifierProfile(@PathVariable Long IdU,@RequestParam String mailU,
                                   @RequestParam String sexeU,
                                   @RequestParam int ageU, @RequestParam float tailleU,
-                                  @RequestParam float poidsU, HttpSession session){
+                                  @RequestParam float poidsU,@RequestParam String niveauPratique,HttpSession session){
 
         Utilisateur currentUser = (Utilisateur) session.getAttribute("loggedInUser");
         if (currentUser == null) return "redirect:/user/login";
-        utilisateurService.modifierProfile(IdU,mailU,sexeU,ageU,tailleU,poidsU);
+        utilisateurService.modifierProfile(IdU,mailU,sexeU,ageU,tailleU,poidsU,niveauPratique);
         return "redirect:/user/profile/" + currentUser.getId();
     }
 
@@ -169,7 +169,8 @@ public class UtilisateurController {
             return "redirect:/user/login";
         }
         List<Utilisateur> listU = utilisateurService.getAll();
-        return "redirect:/user/login";
+        model.addAttribute("utiliste", listU);
+        return "usersList";
     }
 
 }

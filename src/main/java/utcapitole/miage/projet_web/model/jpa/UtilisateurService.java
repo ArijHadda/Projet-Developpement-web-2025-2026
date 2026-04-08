@@ -27,7 +27,7 @@ public class UtilisateurService {
     }
 
     public Utilisateur modifierProfile(Long IdU, String mailU,String sexeU,int ageU,
-                                       float tailleU, float poidsU){
+                                       float tailleU, float poidsU, String niveauPratique){
         Optional<Utilisateur> userOpt= utilisateurRepository.findById(IdU);
 
         Utilisateur user = userOpt.get();

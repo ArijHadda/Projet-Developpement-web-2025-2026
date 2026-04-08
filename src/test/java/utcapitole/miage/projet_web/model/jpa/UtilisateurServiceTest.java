@@ -76,7 +76,7 @@ class UtilisateurServiceTest {
         when(utilisateurRepository.save(any(Utilisateur.class))).thenReturn(mockUser);
 
         Utilisateur updatedUser = assertDoesNotThrow(() ->
-                utilisateurService.modifierProfile(CORRECT_ID, "new@miage.fr", "M", 25, 1.80f, 75.0f)
+                utilisateurService.modifierProfile(CORRECT_ID, "new@miage.fr", "M", 25, 1.80f, 75.0f,"intermediaire")
         );
 
         assertEquals("new@miage.fr", updatedUser.getMail());
