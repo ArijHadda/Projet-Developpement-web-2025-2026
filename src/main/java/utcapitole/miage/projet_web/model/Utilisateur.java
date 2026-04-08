@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @Getter
@@ -44,8 +46,6 @@ public class Utilisateur {
     @Column(name = "poidsU")
     private float poids;
 
-    @Column(name = "niveauPratique")
-    private String niveauPratique;
 
     @ManyToMany
     @JoinTable(
@@ -54,6 +54,15 @@ public class Utilisateur {
             inverseJoinColumns = @JoinColumn(name = "IdAmis")
     )
     private List<Utilisateur> amis = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(
+            name = "sport_niveau_pratique",
+            joinColumns = @JoinColumn(name = "IdU")
+    )
+    @MapKeyJoinColumn(name = "id_sport")
+    @Column(name = "niveau_pratique")
+    private Map<Sport, NiveauPratique> listSportNivPratique = new HashMap<>();
 
     public Long getId() {
         return id;
@@ -127,13 +136,6 @@ public class Utilisateur {
         this.poids = poids;
     }
 
-    public String getNiveauPratique() {
-        return niveauPratique;
-    }
-
-    public void setNiveauPratique(String niveauPratique) {
-        this.niveauPratique = niveauPratique;
-    }
 
     public List<Utilisateur> getAmis() {
         return amis;
@@ -141,5 +143,13 @@ public class Utilisateur {
 
     public void setAmis(List<Utilisateur> amis) {
         this.amis = amis;
+    }
+
+    public Map<Sport, NiveauPratique> getListSportNivPratique() {
+        return listSportNivPratique;
+    }
+
+    public void setListSportNivPratique(Map<Sport, NiveauPratique> listSportNivPratique) {
+        this.listSportNivPratique = listSportNivPratique;
     }
 }
