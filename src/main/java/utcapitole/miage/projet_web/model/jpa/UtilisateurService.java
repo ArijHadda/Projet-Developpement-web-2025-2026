@@ -44,7 +44,7 @@ public class UtilisateurService {
         //findById retoune optinal, .orElseThrow signifie si user est null, il va creer RuntimeException et retourne message.
         Utilisateur user = utilisateurRepository.findById(idU)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé."));
-
+        //comparer ancienmdp et input
         if (!passwordEncoder.matches(ancienMdp, user.getMdpU())) {
             throw new IllegalArgumentException("L'ancien mot de passe est incorrect.");
         }
