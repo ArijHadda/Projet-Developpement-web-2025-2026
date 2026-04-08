@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 
+import java.util.List;
 import java.util.Optional;
 
 @Controller
@@ -33,11 +34,11 @@ public class UtilisateurController {
 
         Optional<Utilisateur> userOpt = utilisateurService.findByMailU(email);
 
-        if (userOpt.isPresent() && passwordEncoder.matches(password, userOpt.get().getMdpU())) {
+        if (userOpt.isPresent() && passwordEncoder.matches(password, userOpt.get().getMdp())) {
             System.out.println("coucou");
             session.setAttribute("loggedInUser", userOpt.get());
 
-            return "redirect:/user/profile/" + userOpt.get().getIdU();
+            return "redirect:/user/profile/" + userOpt.get().getId();
         } else {
             model.addAttribute("error", "L'email ou le mot de passe est incorrect !");
             return "login";
@@ -52,7 +53,7 @@ public class UtilisateurController {
 
     @PostMapping("/register")
     public String processRegister(@ModelAttribute Utilisateur utilisateur, Model model) {
-        if (utilisateurService.findByMailU(utilisateur.getMailU()).isPresent()) {
+        if (utilisateurService.findByMailU(utilisateur.getMail()).isPresent()) {
             model.addAttribute("error", "Cet email est déjà utilisé !");
             return "register";
         }
@@ -87,7 +88,7 @@ public class UtilisateurController {
         Utilisateur currentUser = (Utilisateur) session.getAttribute("loggedInUser");
         if (currentUser == null) return "redirect:/user/login";
         utilisateurService.modifierProfile(IdU,mailU,sexeU,ageU,tailleU,poidsU);
-        return "redirect:/user/profile/" + currentUser.getIdU();
+        return "redirect:/user/profile/" + currentUser.getId();
     }
 
     @GetMapping("/profile/update/{IdU}")
@@ -112,7 +113,7 @@ public class UtilisateurController {
     public String showUpdatePasswordForm(@PathVariable Long IdU, HttpSession session, Model model) {
 
         Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
-        if (loggedInUser == null || !loggedInUser.getIdU().equals(IdU)) {
+        if (loggedInUser == null || !loggedInUser.getId().equals(IdU)) {
             return "redirect:/user/login";
         }
 
@@ -130,7 +131,7 @@ public class UtilisateurController {
                                         Model model) {
 
         Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
-        if (loggedInUser == null || !loggedInUser.getIdU().equals(IdU)) {
+        if (loggedInUser == null || !loggedInUser.getId().equals(IdU)) {
             return "redirect:/user/login";
         }
 
@@ -160,4 +161,15 @@ public class UtilisateurController {
         session.invalidate();
         return "redirect:/user/login";
     }
+
+    @GetMapping("/profile/voirUtilisateur")
+    public String VoirListUtilisateur(Model model, HttpSession session){
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            return "redirect:/user/login";
+        }
+        List<Utilisateur> listU = utilisateurService.getAll();
+        return "redirect:/user/login";
+    }
+
 }
