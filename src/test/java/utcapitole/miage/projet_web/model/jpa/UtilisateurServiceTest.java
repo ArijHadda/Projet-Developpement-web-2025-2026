@@ -47,16 +47,16 @@ class UtilisateurServiceTest {
     @BeforeEach
     void setUp() {
         mockUser = new Utilisateur();
-        mockUser.setIdU(CORRECT_ID);
-        mockUser.setMailU(CORRECT_MAIL);
-        mockUser.setNomU(CORRECT_NOM);
-        mockUser.setMdpU(ENCODED_PASSWORD);
+        mockUser.setId(CORRECT_ID);
+        mockUser.setMail(CORRECT_MAIL);
+        mockUser.setNom(CORRECT_NOM);
+        mockUser.setMdp(ENCODED_PASSWORD);
     }
 
     @Test
     void testRegisterUser() {
         Utilisateur newUser = new Utilisateur();
-        newUser.setMdpU(RAW_PASSWORD);
+        newUser.setMdp(RAW_PASSWORD);
 
         // imiter l'action encoder, quand on veut faire encoder, il va retourner ENCODED_PASSWORD directement.
         when(passwordEncoder.encode(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
@@ -65,7 +65,7 @@ class UtilisateurServiceTest {
 
         Utilisateur savedUser = assertDoesNotThrow(() -> utilisateurService.registerUser(newUser));
 
-        assertEquals(ENCODED_PASSWORD, savedUser.getMdpU());
+        assertEquals(ENCODED_PASSWORD, savedUser.getMdp());
         //methode de Mockito, verifier la methode save() d'utilisateurRepository est bien appelee.
         verify(utilisateurRepository).save(newUser);
     }
@@ -79,11 +79,11 @@ class UtilisateurServiceTest {
                 utilisateurService.modifierProfile(CORRECT_ID, "new@miage.fr", "M", 25, 1.80f, 75.0f)
         );
 
-        assertEquals("new@miage.fr", updatedUser.getMailU());
-        assertEquals("M", updatedUser.getSexeU());
-        assertEquals(25, updatedUser.getAgeU());
-        assertEquals(1.80f, updatedUser.getTailleU());
-        assertEquals(75.0f, updatedUser.getPoidsU());
+        assertEquals("new@miage.fr", updatedUser.getMail());
+        assertEquals("M", updatedUser.getSexe());
+        assertEquals(25, updatedUser.getAge());
+        assertEquals(1.80f, updatedUser.getTaille());
+        assertEquals(75.0f, updatedUser.getPoids());
 
         verify(utilisateurRepository).save(mockUser);
     }
@@ -102,7 +102,7 @@ class UtilisateurServiceTest {
                 utilisateurService.changerMotDePasse(CORRECT_ID, RAW_PASSWORD, newPassword, newPassword)
         );
 
-        assertEquals(encodedNewPassword, mockUser.getMdpU());
+        assertEquals(encodedNewPassword, mockUser.getMdp());
         verify(utilisateurRepository).save(mockUser);
     }
 
@@ -158,27 +158,27 @@ class UtilisateurServiceTest {
         Optional<Utilisateur> result = utilisateurService.findByIdU(CORRECT_ID);
 
         assertTrue(result.isPresent());
-        assertEquals(CORRECT_ID, result.get().getIdU());
+        assertEquals(CORRECT_ID, result.get().getId());
     }
 
     @Test
     void testFindByMailU() {
-        when(utilisateurRepository.findByMailU(CORRECT_MAIL)).thenReturn(Optional.of(mockUser));
+        when(utilisateurRepository.findByMail(CORRECT_MAIL)).thenReturn(Optional.of(mockUser));
 
         Optional<Utilisateur> result = utilisateurService.findByMailU(CORRECT_MAIL);
 
         assertTrue(result.isPresent());
-        assertEquals(CORRECT_MAIL, result.get().getMailU());
+        assertEquals(CORRECT_MAIL, result.get().getMail());
     }
 
     @Test
     void testFindByNomU() {
-        when(utilisateurRepository.findByNomU(CORRECT_NOM)).thenReturn(Optional.of(mockUser));
+        when(utilisateurRepository.findByNom(CORRECT_NOM)).thenReturn(Optional.of(mockUser));
 
         Optional<Utilisateur> result = utilisateurService.findByNomU(CORRECT_NOM);
 
         assertTrue(result.isPresent());
-        assertEquals(CORRECT_NOM, result.get().getNomU());
+        assertEquals(CORRECT_NOM, result.get().getNom());
     }
 
     @Test

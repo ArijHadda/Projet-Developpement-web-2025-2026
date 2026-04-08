@@ -14,17 +14,38 @@ import java.util.List;
 @AllArgsConstructor
 @Table(name="Utilisateur")
 public class Utilisateur {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long IdU;
-    private String nomU;
-    private String prenomU;
-    private String mailU;
-    private String mdpU;
-    private String sexeU;
-    private int ageU;
-    private float tailleU;
-    private float poidsU;
+    @Column(name = "IdU")
+    private Long id;
+
+    @Column(name = "nomU")
+    private String nom;
+
+    @Column(name = "prenomU")
+    private String prenom;
+
+    @Column(name = "mailU")
+    private String mail;
+
+    @Column(name = "mdpU")
+    private String mdp;
+
+    @Column(name = "sexeU")
+    private String sexe;
+
+    @Column(name = "ageU")
+    private int age;
+
+    @Column(name = "tailleU")
+    private float taille;
+
+    @Column(name = "poidsU")
+    private float poids;
+
+    @Column(name = "niveauPratique")
+    private String niveauPratique;
 
     @ManyToMany
     @JoinTable(
@@ -34,79 +55,92 @@ public class Utilisateur {
     )
     private List<Utilisateur> amis = new ArrayList<>();
 
-
-
-
-    public Long getIdU() {
-        return IdU;
+    public Long getId() {
+        return id;
     }
 
-    public void setIdU(Long idU) {
-        IdU = idU;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public String getNomU() {
-        return nomU;
+    public String getNom() {
+        return nom;
     }
 
-    public void setNomU(String nomU) {
-        this.nomU = nomU;
+    public void setNom(String nom) {
+        this.nom = nom;
     }
 
-    public String getPrenomU() {
-        return prenomU;
+    public String getPrenom() {
+        return prenom;
     }
 
-    public void setPrenomU(String prenomU) {
-        this.prenomU = prenomU;
+    public void setPrenom(String prenom) {
+        this.prenom = prenom;
     }
 
-    public String getMailU() {
-        return mailU;
+    public String getMail() {
+        return mail;
     }
 
-    public void setMailU(String mailU) {
-        this.mailU = mailU;
+    public void setMail(String mail) {
+        this.mail = mail;
     }
 
-    public String getMdpU() {
-        return mdpU;
+    public String getMdp() {
+        return mdp;
     }
 
-    public void setMdpU(String mdpU) {
-        this.mdpU = mdpU;
+    public void setMdp(String mdp) {
+        this.mdp = mdp;
     }
 
-    public String getSexeU() {
-        return sexeU;
+    public String getSexe() {
+        return sexe;
     }
 
-    public void setSexeU(String sexeU) {
-        this.sexeU = sexeU;
+    public void setSexe(String sexe) {
+        this.sexe = sexe;
     }
 
-    public int getAgeU() {
-        return ageU;
+    public int getAge() {
+        return age;
     }
 
-    public void setAgeU(int ageU) {
-        this.ageU = ageU;
+    public void setAge(int age) {
+        this.age = age;
     }
 
-    public float getTailleU() {
-        return tailleU;
+    public float getTaille() {
+        return taille;
     }
 
-    public void setTailleU(float tailleU) {
-        this.tailleU = tailleU;
+    public void setTaille(float taille) {
+        this.taille = taille;
     }
 
-    public float getPoidsU() {
-        return poidsU;
+    public float getPoids() {
+        return poids;
     }
 
-    public void setPoidsU(float poidsU) {
-        this.poidsU = poidsU;
+    public void setPoids(float poids) {
+        this.poids = poids;
+    }
+
+    public String getNiveauPratique() {
+        return niveauPratique;
+    }
+
+    public void setNiveauPratique(String niveauPratique) {
+        this.niveauPratique = niveauPratique;
+    }
+
+    public List<Utilisateur> getAmis() {
+        return amis;
+    }
+
+    public void setAmis(List<Utilisateur> amis) {
+        this.amis = amis;
     }
 
 

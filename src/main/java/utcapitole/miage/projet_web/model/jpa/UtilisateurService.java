@@ -21,8 +21,8 @@ public class UtilisateurService {
     }
 
     public Utilisateur registerUser(Utilisateur utilisateur) {
-        String encodedPassword = passwordEncoder.encode(utilisateur.getMdpU());
-        utilisateur.setMdpU(encodedPassword);
+        String encodedPassword = passwordEncoder.encode(utilisateur.getMdp());
+        utilisateur.setMdp(encodedPassword);
         return utilisateurRepository.save(utilisateur);
     }
 
@@ -31,11 +31,11 @@ public class UtilisateurService {
         Optional<Utilisateur> userOpt= utilisateurRepository.findById(IdU);
 
         Utilisateur user = userOpt.get();
-        user.setMailU(mailU);
-        user.setSexeU(sexeU);
-        user.setAgeU(ageU);
-        user.setTailleU(tailleU);
-        user.setPoidsU(poidsU);
+        user.setMail(mailU);
+        user.setSexe(sexeU);
+        user.setAge(ageU);
+        user.setTaille(tailleU);
+        user.setPoids(poidsU);
         return utilisateurRepository.save(user);
 
     }
@@ -45,7 +45,7 @@ public class UtilisateurService {
         Utilisateur user = utilisateurRepository.findById(idU)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé."));
         //comparer ancienmdp et input
-        if (!passwordEncoder.matches(ancienMdp, user.getMdpU())) {
+        if (!passwordEncoder.matches(ancienMdp, user.getMdp())) {
             throw new IllegalArgumentException("L'ancien mot de passe est incorrect.");
         }
 
@@ -53,11 +53,11 @@ public class UtilisateurService {
             throw new IllegalArgumentException("Les nouveaux mots de passe ne correspondent pas.");
         }
 
-        if (passwordEncoder.matches(nouveauMdp, user.getMdpU())) {
+        if (passwordEncoder.matches(nouveauMdp, user.getMdp())) {
             throw new IllegalArgumentException("Le nouveau mot de passe doit être différent de l'ancien.");
         }
 
-        user.setMdpU(passwordEncoder.encode(nouveauMdp));
+        user.setMdp(passwordEncoder.encode(nouveauMdp));
         utilisateurRepository.save(user);
     }
 
@@ -66,11 +66,11 @@ public class UtilisateurService {
     }
 
     public Optional<Utilisateur> findByMailU(String mailU){
-        return utilisateurRepository.findByMailU(mailU);
+        return utilisateurRepository.findByMail(mailU);
     }
 
     public Optional<Utilisateur> findByNomU(String nomU){
-        return utilisateurRepository.findByNomU(nomU);
+        return utilisateurRepository.findByNom(nomU);
     }
 
     public List<Utilisateur> findAll(){
@@ -78,4 +78,7 @@ public class UtilisateurService {
     }
 
 
+    public List<Utilisateur> getAll() {
+        return utilisateurRepository.findAll();
+    }
 }
