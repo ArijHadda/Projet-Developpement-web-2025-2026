@@ -2,6 +2,10 @@ package utcapitole.miage.projet_web.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @Setter
@@ -21,6 +25,17 @@ public class Utilisateur {
     private int ageU;
     private float tailleU;
     private float poidsU;
+
+    @ManyToMany
+    @JoinTable(
+            name = "userAmi",
+            joinColumns = @JoinColumn(name = "IdU"),
+            inverseJoinColumns = @JoinColumn(name = "IdAmis")
+    )
+    private List<Utilisateur> amis = new ArrayList<>();
+
+
+
 
     public Long getIdU() {
         return IdU;
