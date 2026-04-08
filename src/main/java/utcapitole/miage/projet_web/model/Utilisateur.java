@@ -108,4 +108,7 @@ public class Utilisateur {
     public void setPoidsU(float poidsU) {
         this.poidsU = poidsU;
     }
+
+
+    
 }
