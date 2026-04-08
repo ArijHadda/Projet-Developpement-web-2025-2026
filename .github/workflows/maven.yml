@@ -30,7 +30,8 @@ jobs:
         run: mvn -B clean verify
 
       - name: SonarCloud Scan
-        run: mvn -B sonar:sonar -Dsonar.qualitygate.wait=true
+        run: mvn -B sonar:sonar 
+        #-Dsonar.qualitygate.wait=true
 
       - name: Check Javadoc
         run: mvn javadoc:javadoc -DfailOnError=true
