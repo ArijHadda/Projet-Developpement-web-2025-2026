@@ -1,18 +1,20 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Liste des utilisateurs</title>
+    <link rel="stylesheet" th:href="@{/css/sport.css}">
 </head>
 <body>
 <table>
     <tr>
-        <td>Nom</td>
-        <td>Prenom</td>
-        <td>Mail</td>
-        <td>Sexe</td>
-        <td>Age</td>
-        <td>Niveau de pratique</td>
+        <th>Nom</th>
+        <th>Prénom</th>
+        <th>Mail</th>
+        <th>Sexe</th>
+        <th>Age</th>
+        <th>Niveau de pratique</th>
     </tr>
     <tr th:each="u : ${utiliste}">
         <td th:text="${u.nom}"></td>

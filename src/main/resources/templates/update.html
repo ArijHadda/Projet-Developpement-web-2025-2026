@@ -2,7 +2,9 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Formulaire</title>
+    <link rel="stylesheet" th:href="@{/css/sport.css}">
 </head>
 <body>
 <h2>Profile</h2>
@@ -47,7 +49,7 @@
 
 
     <div>
-        <button type="submit">💾 Enregistrer </button>
+        <button type="submit">Enregistrer</button>
         &nbsp;
         <a th:href="@{/user/profile/{IdU}(IdU=${userUpdate.id})}">
             <button type="button">Annuler</button>

@@ -2,19 +2,23 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Profil Utilisateur</title>
+    <link rel="stylesheet" th:href="@{/css/sport.css}">
 </head>
 <body>
 <h2>Mon Profil</h2>
-<a th:href="@{/user/profile/update/{IdU}(IdU=${userProfile.id})}">
-    <button type="button">✏️ Modifier mes infos</button>
-</a>
-<a th:href="@{/user/profile/update-password/{IdU}(IdU=${userProfile.id})}">
-    <button type="button">🔒 Modifier le mot de passe</button>
-</a>
-<a th:href="@{/user/profile/voirUtilisateur}">
-    <button type="button">Voir liste des utilisateurs</button>
-</a>
+<div class="profile-actions">
+    <a th:href="@{/user/profile/update/{IdU}(IdU=${userProfile.id})}">
+        <button type="button">Modifier mes infos</button>
+    </a>
+    <a th:href="@{/user/profile/update-password/{IdU}(IdU=${userProfile.id})}">
+        <button type="button">Modifier le mot de passe</button>
+    </a>
+    <a th:href="@{/user/profile/voirUtilisateur}">
+        <button type="button">Voir liste des utilisateurs</button>
+    </a>
+</div>
 <hr/> <p>Bienvenue sur votre espace personnel ! Voici vos informations :</p>
 
 <div style="margin-bottom: 20px;">
