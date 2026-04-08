@@ -12,6 +12,8 @@ target/
 .settings
 .springBeans
 .sts4-cache
+.vscode
+
 
 ### IntelliJ IDEA ###
 .idea
@@ -25,6 +27,7 @@ target/
 /dist/
 /nbdist/
 /.nb-gradle/
+.sport.db
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
