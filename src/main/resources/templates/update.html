@@ -11,9 +11,9 @@
     <p style="color: red; font-weight: bold;" th:text="${error}"></p>
 </div>
 
-<form th:action="@{/user/profile/update/{IdU}(id=${userUpdate.IdU})}" method="post">
+<form th:action="@{/user/profile/update/{IdU}(IdU=${userUpdate.IdU})}" method="post">
 
-    <input type="nombre" name="id" th:value="${userUpdate.IdU}" />
+    <input type="hidden" name="id" th:value="${userUpdate.IdU}" />
 
     <div style="margin-bottom: 15px;">
         <label for="email">Email :</label><br/>
@@ -27,7 +27,7 @@
 
     <div style="margin-bottom: 15px;">
         <label for="age">Age :</label><br/>
-        <input type="nombre" id="age" name="ageU" th:value="${userUpdate.ageU}" required />
+        <input type="number" id="age" name="ageU" th:value="${userUpdate.ageU}" required />
     </div>
 
     <div style="margin-bottom: 15px;">
@@ -44,7 +44,7 @@
     <div>
         <button type="submit">💾 Enregistrer </button>
         &nbsp;
-        <a th:href="@{/user/profile/{id}(id=${userUpdate.IdU}))}">
+        <a th:href="@{/user/profile/{IdU}(IdU=${userUpdate.IdU})}">
             <button type="button">Annuler</button>
         </a>
     </div>

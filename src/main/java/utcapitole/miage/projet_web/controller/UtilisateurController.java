@@ -107,6 +107,54 @@ public class UtilisateurController {
 
     }
 
+    // changer mot de passe
+    @GetMapping("/profile/update-password/{IdU}")
+    public String showUpdatePasswordForm(@PathVariable Long IdU, HttpSession session, Model model) {
+
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (loggedInUser == null || !loggedInUser.getIdU().equals(IdU)) {
+            return "redirect:/user/login";
+        }
+
+        // envoyer userId a frontend
+        model.addAttribute("userId", IdU);
+        return "update-password";
+    }
+
+    @PostMapping("/profile/update-password/{IdU}")
+    public String processUpdatePassword(@PathVariable Long IdU,
+                                        @RequestParam String ancienMdp,
+                                        @RequestParam String nouveauMdp,
+                                        @RequestParam String confirmMdp,
+                                        HttpSession session,
+                                        Model model) {
+
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (loggedInUser == null || !loggedInUser.getIdU().equals(IdU)) {
+            return "redirect:/user/login";
+        }
+
+        try {
+            // essayer de changer mot de passe
+            utilisateurService.changerMotDePasse(IdU, ancienMdp, nouveauMdp, confirmMdp);
+
+            // change succes, retourne profile
+            return "redirect:/user/profile/" + IdU + "?success=passwordChanged";
+
+        } catch (IllegalArgumentException e) {
+            // catch erreur (ex. ancienmdp!= input, nouveaumdp!=confirmmdp)
+            // e.getMessage() -> le texte dans la methode changerMotDePasse (Service)
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("userId", IdU);
+            return "update-password";
+        } catch (Exception e) {
+            // catch erreur surprise (ex. BD est perdu)
+            model.addAttribute("error", "Une erreur inattendue est survenue.");
+            model.addAttribute("userId", IdU);
+            return "update-password";
+        }
+    }
+
     @GetMapping("/logout")
     public String logout(HttpSession session) {
         session.invalidate();

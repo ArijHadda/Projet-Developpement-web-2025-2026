@@ -7,7 +7,10 @@
 <body>
 <h2>Mon Profil</h2>
 <a th:href="@{/user/profile/update/{IdU}(IdU=${userProfile.IdU})}">
-    <button type="button">✏️ Modifier </button>
+    <button type="button">✏️ Modifier mes infos</button>
+</a>
+<a th:href="@{/user/profile/update-password/{IdU}(IdU=${userProfile.IdU})}">
+    <button type="button">🔒 Modifier le mot de passe</button>
 </a>
 <hr/> <p>Bienvenue sur votre espace personnel ! Voici vos informations :</p>
 
