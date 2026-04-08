@@ -1,10 +1,17 @@
 package utcapitole.miage.projet_web.model;
 
+import java.time.LocalDate;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 
 @Entity
 public class Activite {
@@ -14,11 +21,14 @@ public class Activite {
     @Column(name = "idAct")
     private Long id;
 
+    @NotBlank(message = "Le nom de l'activité est obligatoire")
     @Column(name = "nomAct")
     private String nom;
 
+    @NotNull(message = "La date est obligatoire")
+    @PastOrPresent(message = "La date ne peut pas être dans le futur")
     @Column(name = "dateAct")
-    private String date;
+    private LocalDate date;
 
     @Column(name = "conditionsMeteo")
     private String conditionsMeteo;
@@ -35,10 +45,14 @@ public class Activite {
     @Column(name = "caloriesConsommeesAct")
     private int caloriesConsommees;
 
+    @ManyToOne
+    @JoinColumn(name = "IdU")
+    private Utilisateur utilisateur;
+
     public Activite() {
     }
 
-    public Activite(Long id, String nom, String date, String conditionsMeteo, int duree, double distance, int note,
+    public Activite(Long id, String nom, LocalDate date, String conditionsMeteo, int duree, double distance, int note,
             int caloriesConsommees) {
         this.id = id;
         this.nom = nom;
@@ -66,11 +80,11 @@ public class Activite {
         this.nom = nom;
     }
 
-    public String getDate() {
+    public LocalDate getDate() {
         return date;
     }
 
-    public void setDate(String date) {
+    public void setDate(LocalDate date) {
         this.date = date;
     }
 
@@ -112,6 +126,14 @@ public class Activite {
 
     public void setCaloriesConsommees(int caloriesConsommees) {
         this.caloriesConsommees = caloriesConsommees;
+    }
+
+    public Utilisateur getUtilisateur() {
+        return utilisateur;
+    }
+
+    public void setUtilisateur(Utilisateur utilisateur) {
+        this.utilisateur = utilisateur;
     }
 
     @Override

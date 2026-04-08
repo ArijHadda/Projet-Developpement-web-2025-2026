@@ -8,29 +8,48 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import utcapitole.miage.projet_web.model.Activite;
+import utcapitole.miage.projet_web.model.Utilisateur;
 
 @Service
 public class ActiviteService {
 
-    @Autowired
-    private ActiviteRepository activiteRepository;
+    private final ActiviteRepository activiteRepository;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public Activite enregistrerActivite(Activite activite, double latitude, double longitude) {
+    public ActiviteService(ActiviteRepository activiteRepository) {
+        this.activiteRepository = activiteRepository;
+    }
+
+    public Activite enregistrerActivite(Activite activite) {
         
         // 1. Calcul automatique des calories
         // Formule simplifiée (MET * poids * durée)
         int calories = calculerCalories(activite);
         activite.setCaloriesConsommees(calories);
 
-        String meteo = recupererMeteo(latitude, longitude);
+        // 2. Récupérer automatiquement les coordonnées puis la météo
+        double[] coords = getCoordonnees();
+        String meteo = recupererMeteo(coords[0], coords[1]);
         activite.setConditionsMeteo(meteo);
 
         return activiteRepository.save(activite);
     }
 
-    private int calculerCalories(Activite activite) {
+    private double[] getCoordonnees() {
+        try {
+            // Utilisation d'un API IP pour obtenir les coordonnées automatiquement (via ip-api)
+            Map<String, Object> response = restTemplate.getForObject("http://ip-api.com/json/", Map.class);
+            double lat = ((Number) response.get("lat")).doubleValue();
+            double lon = ((Number) response.get("lon")).doubleValue();
+            return new double[]{lat, lon};
+        } catch (Exception e) {
+            // Coordonnées par défaut (Toulouse) en cas d'échec de l'API
+            return new double[]{43.6047, 1.4442};
+        }
+    }
+
+    private int calculerCalories(Activite activite) { // pour le moment on utilise une formule simplifiée
         return activite.getDuree() * 10; 
     }
 
@@ -52,5 +71,9 @@ public class ActiviteService {
     
     public List<Activite> getProgresUtilisateur(Long id) {
         return activiteRepository.findByUtilisateurIdOrderByDateDesc(id);
+    }
+
+    public List<Activite> getActivitesByUtilisateur(Utilisateur user) {
+        return activiteRepository.findByUtilisateur(user);
     }
 }

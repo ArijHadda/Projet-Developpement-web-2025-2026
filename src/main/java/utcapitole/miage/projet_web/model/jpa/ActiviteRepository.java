@@ -4,6 +4,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import utcapitole.miage.projet_web.model.Activite;
+import utcapitole.miage.projet_web.model.Utilisateur;
+
 import java.util.List;
 
 
@@ -13,5 +15,7 @@ public interface ActiviteRepository extends JpaRepository<Activite, Long> {
     List<Activite> findByNom(String nom);
 
     List<Activite> findByUtilisateurIdOrderByDateDesc(Long id);
+
+    List<Activite> findByUtilisateur(Utilisateur user);
 
 }

@@ -3,20 +3,41 @@ package utcapitole.miage.projet_web;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.Test;
 
 import utcapitole.miage.projet_web.model.Activite;
+import utcapitole.miage.projet_web.model.Utilisateur;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+import org.junit.jupiter.api.BeforeEach;
+
+import java.util.Set;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ActiviteTest {
    
     private final Long id = 1L;
     private final String nom = "Course";
-    private final String date = "2022-01-01";
+    private final LocalDate date = LocalDate.of(2022, 1, 1);
     private final String conditionsMeteo = "Soleil";
     private final int duree = 60;
     private final float distance = 10;
     private final int note = 5;
     private final int caloriesConsommeestest = 500;
+
+    private Validator validator;
+
+    @BeforeEach
+    void setUp() {
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        validator = factory.getValidator();
+    }
 
     @Test
     void testActiviteSettersAndGetters() {
@@ -32,13 +53,109 @@ public class ActiviteTest {
         assertAll(
             () -> assertEquals(1L, activite.getId()),
             () -> assertEquals("Course", activite.getNom()),
-            () -> assertEquals("2022-01-01", activite.getDate()),
+            () -> assertEquals(LocalDate.of(2022, 1, 1), activite.getDate()),
             () -> assertEquals("Soleil", activite.getConditionsMeteo()),
             () -> assertEquals(60, activite.getDuree()),
             () -> assertEquals(10, activite.getDistance()),
             () -> assertEquals(5, activite.getNote()),
             () -> assertEquals(500, activite.getCaloriesConsommees())
         );
+    }
+
+    @Test
+    void testActiviteToString() {
+        Activite activite = new Activite(id, nom, date, conditionsMeteo, duree, distance, note, caloriesConsommeestest);
+        assertEquals("Activite [id=" + id + ", nom=" + nom + ", date=" + date + ", conditionsMeteo=" + conditionsMeteo
+                + ", duree=" + duree + ", distance=" + distance + ", note=" + note + ", caloriesConsommees="
+                + caloriesConsommeestest + "]", activite.toString());
+    }
+
+    @Test
+    void testActiviteConstructor() {
+        Activite activite = new Activite(id, nom, date, conditionsMeteo, duree, distance, note, caloriesConsommeestest);
+        assertAll(
+            () -> assertEquals(1L, activite.getId()),
+            () -> assertEquals("Course", activite.getNom()),
+            () -> assertEquals(LocalDate.of(2022, 1, 1), activite.getDate()),
+            () -> assertEquals("Soleil", activite.getConditionsMeteo()),
+            () -> assertEquals(60, activite.getDuree()),
+            () -> assertEquals(10, activite.getDistance()),
+            () -> assertEquals(5, activite.getNote()),
+            () -> assertEquals(500, activite.getCaloriesConsommees())
+        );
+    }
+
+    @Test
+    void testActiviteNoArgsConstructor() {
+        Activite activite = new Activite();
+        assertAll(
+            () -> assertEquals(null, activite.getId()),
+            () -> assertEquals(null, activite.getNom()),
+            () -> assertEquals(null, activite.getDate()),
+            () -> assertEquals(null, activite.getConditionsMeteo()),
+            () -> assertEquals(0, activite.getDuree()),
+            () -> assertEquals(0, activite.getDistance()),
+            () -> assertEquals(0, activite.getNote()),
+            () -> assertEquals(0, activite.getCaloriesConsommees())
+        );
+    }
+
+    @Test
+    void testActiviteSetUtilisateur() {
+        Activite activite = new Activite();
+        Utilisateur utilisateur = new Utilisateur();
+        activite.setUtilisateur(utilisateur);
+        assertEquals(utilisateur, activite.getUtilisateur());
+    }
+
+    @Test
+    void testActiviteGetUtilisateur() {
+        Activite activite = new Activite();
+        Utilisateur utilisateur = new Utilisateur();
+        activite.setUtilisateur(utilisateur);
+        assertEquals(utilisateur, activite.getUtilisateur());
+    }
+
+
+    @Test
+    void testActiviteHashCode() {
+        Activite activite = new Activite(id, nom, date, conditionsMeteo, duree, distance, note, caloriesConsommeestest);
+        assertEquals(activite.hashCode(), activite.hashCode());
+    }
+
+    // Tests pour #44 : Champ obligatoire manquant
+    @Test
+    void testNomObligatoire() {
+        Activite activite = new Activite(id, "", date, conditionsMeteo, duree, distance, note, caloriesConsommeestest);
+        Set<ConstraintViolation<Activite>> violations = validator.validate(activite);
+        assertFalse(violations.isEmpty(), "Le nom doit comporter une erreur de validation (NotBlank)");
+        
+        activite.setNom(null);
+        violations = validator.validate(activite);
+        assertFalse(violations.isEmpty(), "Le nom doit comporter une erreur de validation (NotNull/NotBlank)");
+    }
+
+    @Test
+    void testDateObligatoire() {
+        Activite activite = new Activite(id, nom, null, conditionsMeteo, duree, distance, note, caloriesConsommeestest);
+        Set<ConstraintViolation<Activite>> violations = validator.validate(activite);
+        assertFalse(violations.isEmpty(), "La date doit comporter une erreur de validation (NotNull)");
+    }
+
+    // Tests pour #46 : Validation logique des dates
+    @Test
+    void testDatePasDansLeFutur() {
+        LocalDate dateFuture = LocalDate.now().plusDays(1);
+        Activite activite = new Activite(id, nom, dateFuture, conditionsMeteo, duree, distance, note, caloriesConsommeestest);
+        Set<ConstraintViolation<Activite>> violations = validator.validate(activite);
+        assertFalse(violations.isEmpty(), "La date ne peut pas être dans le futur (PastOrPresent)");
+    }
+
+    @Test
+    void testActiviteValide() {
+        Activite activite = new Activite(id, nom, LocalDate.now(), conditionsMeteo, duree, distance, note, caloriesConsommeestest);
+        Set<ConstraintViolation<Activite>> violations = validator.validate(activite);
+        assertTrue(violations.isEmpty(), "L'activité devrait être valide sans erreurs de validation");
     }
 
 }
