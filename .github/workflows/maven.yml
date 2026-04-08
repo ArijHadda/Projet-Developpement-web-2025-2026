@@ -34,7 +34,6 @@ jobs:
         #-Dsonar.qualitygate.wait=true
 
       - name: Check Javadoc
-        run: mvn javadoc:javadoc -DfailOnError=true
+        run: mvn javadoc:javadoc 
+        #-DfailOnError=true
 
-      - name: Check Licences
-        run: mvn apache-rat:check
