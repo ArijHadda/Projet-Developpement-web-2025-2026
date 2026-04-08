@@ -16,12 +16,14 @@ public class UtilisateurService {
     @Autowired
     private final BCryptPasswordEncoder passwordEncoder;
     @Autowired
-    private DemandeAmiRepository demandeAmiRepository;
+    private final DemandeAmiRepository demandeAmiRepository;
 
-    public UtilisateurService(UtilisateurRepository utilisateurRepository, BCryptPasswordEncoder passwordEncoder) {
+    public UtilisateurService(UtilisateurRepository utilisateurRepository, BCryptPasswordEncoder passwordEncoder, DemandeAmiRepository demandeAmiRepository) {
         this.utilisateurRepository = utilisateurRepository;
         this.passwordEncoder = passwordEncoder;
+        this.demandeAmiRepository = demandeAmiRepository;
     }
+
 
     public Utilisateur registerUser(Utilisateur utilisateur) {
         String encodedPassword = passwordEncoder.encode(utilisateur.getMdp());
@@ -112,24 +114,19 @@ public class UtilisateurService {
         demandeAmiRepository.deleteById(demandeId);
     }
 
-    public Optional<Utilisateur> findByIdU(Long IdU){
+    public Optional<Utilisateur> findById(Long IdU){
         return utilisateurRepository.findById(IdU);
     }
 
-    public Optional<Utilisateur> findByMailU(String mailU){
+    public Optional<Utilisateur> findByMail(String mailU){
         return utilisateurRepository.findByMail(mailU);
     }
 
-    public Optional<Utilisateur> findByNomU(String nomU){
+    public Optional<Utilisateur> findByNom(String nomU){
         return utilisateurRepository.findByNom(nomU);
     }
 
     public List<Utilisateur> findAll(){
-        return utilisateurRepository.findAll();
-    }
-
-
-    public List<Utilisateur> getAll() {
         return utilisateurRepository.findAll();
     }
 }

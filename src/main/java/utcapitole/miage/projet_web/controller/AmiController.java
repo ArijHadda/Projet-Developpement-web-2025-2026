@@ -32,7 +32,7 @@ public class AmiController {
         Utilisateur current = (Utilisateur) session.getAttribute("loggedInUser");
         if (current == null) return "redirect:/user/login";
         //userBase de donnees, current comme une image pour l'instant, il n'autorise pas quand on ajout une demande
-        Utilisateur userDb = utilisateurService.findByIdU(current.getId()).get();
+        Utilisateur userDb = utilisateurService.findById(current.getId()).get();
         List<Utilisateur> tous = utilisateurService.findAll();
 
         // obtenir la liste des demande en attentes que j'ai envoyees
@@ -70,7 +70,7 @@ public class AmiController {
         Utilisateur current = (Utilisateur) session.getAttribute("loggedInUser");
         if (current == null) return "redirect:/user/login";
 
-        Utilisateur userDb = utilisateurService.findByIdU(current.getId()).get();
+        Utilisateur userDb = utilisateurService.findById(current.getId()).get();
         List<DemandeAmi> list = demandeAmiRepository.findByDestinataireAndStatut(userDb, "PENDING");
 
         model.addAttribute("invitations", list);
