@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Profil Utilisateur</title>
+</head>
+<body>
+<h2>Mon Profil</h2>
+<a th:href="@{/user/profile/update/{IdU}(IdU=${userProfile.IdU})}">
+    <button type="button">✏️ Modifier mes infos</button>
+</a>
+<a th:href="@{/user/profile/update-password/{IdU}(IdU=${userProfile.IdU})}">
+    <button type="button">🔒 Modifier le mot de passe</button>
+</a>
+
+<hr/> <p>Bienvenue sur votre espace personnel ! Voici vos informations :</p>
+
+<div style="margin-bottom: 20px;">
+    <p><strong>ID :</strong> <span th:text="${userProfile.IdU}"></span></p>
+    <p><strong>Nom :</strong> <span th:text="${userProfile.nomU}"></span></p>
+    <p><strong>Prénom :</strong> <span th:text="${userProfile.prenomU}"></span></p>
+    <p><strong>Email :</strong> <span th:text="${userProfile.mailU}"></span></p>
+    <p><strong>Sexe :</strong> <span th:text="${userProfile.sexeU}"></span></p>
+    <p><strong>Age :</strong> <span th:text="${userProfile.ageU}"></span></p>
+    <p><strong>Taille :</strong> <span th:text="${userProfile.tailleU}"></span></p>
+    <p><strong>Poids :</strong> <span th:text="${userProfile.poidsU}"></span></p>
+</div>
+
+<hr/>
+
+<div>
+    <a th:href="@{/user/logout}">
+        <button type="button">Se déconnecter</button>
+    </a>
+</div>
+
+</body>
+</html>

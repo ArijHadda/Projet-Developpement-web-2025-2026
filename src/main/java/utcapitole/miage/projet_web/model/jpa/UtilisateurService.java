@@ -1,4 +1,81 @@
 package utcapitole.miage.projet_web.model.jpa;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import utcapitole.miage.projet_web.model.Utilisateur;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
 public class UtilisateurService {
+    @Autowired
+    private final UtilisateurRepository utilisateurRepository;
+    @Autowired
+    private final BCryptPasswordEncoder passwordEncoder;
+
+    public UtilisateurService(UtilisateurRepository utilisateurRepository, BCryptPasswordEncoder passwordEncoder) {
+        this.utilisateurRepository = utilisateurRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    public Utilisateur registerUser(Utilisateur utilisateur) {
+        String encodedPassword = passwordEncoder.encode(utilisateur.getMdpU());
+        utilisateur.setMdpU(encodedPassword);
+        return utilisateurRepository.save(utilisateur);
+    }
+
+    public Utilisateur modifierProfile(Long IdU, String mailU,String sexeU,int ageU,
+                                       float tailleU, float poidsU){
+        Optional<Utilisateur> userOpt= utilisateurRepository.findById(IdU);
+
+        Utilisateur user = userOpt.get();
+        user.setMailU(mailU);
+        user.setSexeU(sexeU);
+        user.setAgeU(ageU);
+        user.setTailleU(tailleU);
+        user.setPoidsU(poidsU);
+        return utilisateurRepository.save(user);
+
+    }
+
+    public void changerMotDePasse(Long idU, String ancienMdp, String nouveauMdp, String confirmMdp) {
+        //findById retoune optinal, .orElseThrow signifie si user est null, il va creer RuntimeException et retourne message.
+        Utilisateur user = utilisateurRepository.findById(idU)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé."));
+        //comparer ancienmdp et input
+        if (!passwordEncoder.matches(ancienMdp, user.getMdpU())) {
+            throw new IllegalArgumentException("L'ancien mot de passe est incorrect.");
+        }
+
+        if (!nouveauMdp.equals(confirmMdp)) {
+            throw new IllegalArgumentException("Les nouveaux mots de passe ne correspondent pas.");
+        }
+
+        if (passwordEncoder.matches(nouveauMdp, user.getMdpU())) {
+            throw new IllegalArgumentException("Le nouveau mot de passe doit être différent de l'ancien.");
+        }
+
+        user.setMdpU(passwordEncoder.encode(nouveauMdp));
+        utilisateurRepository.save(user);
+    }
+
+    public Optional<Utilisateur> findByIdU(Long IdU){
+        return utilisateurRepository.findById(IdU);
+    }
+
+    public Optional<Utilisateur> findByMailU(String mailU){
+        return utilisateurRepository.findByMailU(mailU);
+    }
+
+    public Optional<Utilisateur> findByNomU(String nomU){
+        return utilisateurRepository.findByNomU(nomU);
+    }
+
+    public List<Utilisateur> findAll(){
+        return utilisateurRepository.findAll();
+    }
+
+
 }
