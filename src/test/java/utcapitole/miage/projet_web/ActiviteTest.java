@@ -39,6 +39,7 @@ public class ActiviteTest {
         validator = factory.getValidator();
     }
 
+    // test
     @Test
     void testActiviteSettersAndGetters() {
         Activite activite = new Activite();
@@ -61,6 +62,7 @@ public class ActiviteTest {
             () -> assertEquals(500, activite.getCaloriesConsommees())
         );
     }
+    
 
     @Test
     void testActiviteToString() {
