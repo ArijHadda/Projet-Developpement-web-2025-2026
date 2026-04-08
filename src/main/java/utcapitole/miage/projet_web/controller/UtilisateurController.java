@@ -170,7 +170,7 @@ public class UtilisateurController {
         }
         List<Utilisateur> listU = utilisateurService.getAll();
         model.addAttribute("utiliste", listU);
-        return "usersList";
+        return "redirect:/user/ami/chercher";
     }
 
 }
