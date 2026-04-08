@@ -12,6 +12,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PositiveOrZero;
 
 @Entity
 public class Activite {
@@ -33,9 +35,11 @@ public class Activite {
     @Column(name = "conditionsMeteo")
     private String conditionsMeteo;
 
+    @Min(value = 1, message = "La durée est obligatoire et doit être au moins de 1")
     @Column(name = "dureeAct")
     private int duree;
 
+    @PositiveOrZero(message = "La distance ne peut pas être négative")
     @Column(name = "distanceAct")
     private double distance;
 

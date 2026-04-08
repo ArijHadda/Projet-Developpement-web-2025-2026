@@ -142,6 +142,23 @@ public class ActiviteTest {
         assertFalse(violations.isEmpty(), "La date doit comporter une erreur de validation (NotNull)");
     }
 
+    @Test
+    void testDureeObligatoire() {
+        Activite activite = new Activite(id, nom, date, conditionsMeteo, 0, distance, note, caloriesConsommeestest);
+        Set<ConstraintViolation<Activite>> violations = validator.validate(activite);
+        assertFalse(violations.isEmpty(), "La durée doit comporter une erreur de validation (Min)");
+        activite.setDuree(-15);
+        violations = validator.validate(activite);
+        assertFalse(violations.isEmpty(), "La durée négative doit comporter une erreur de validation (Min)");
+    }
+
+    @Test
+    void testDistancePasNegative() {
+        Activite activite = new Activite(id, nom, date, conditionsMeteo, duree, -2.5, note, caloriesConsommeestest);
+        Set<ConstraintViolation<Activite>> violations = validator.validate(activite);
+        assertFalse(violations.isEmpty(), "La distance ne peut pas être négative (PositiveOrZero)");
+    }
+
     // Tests pour #46 : Validation logique des dates
     @Test
     void testDatePasDansLeFutur() {
