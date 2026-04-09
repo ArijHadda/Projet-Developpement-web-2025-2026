@@ -17,18 +17,23 @@ public class Activite {
     @Column(name = "idAct")
     private Long id;
 
+    @NotBlank(message = "Le nom de l'activité est obligatoire")
     @Column(name = "nomAct")
     private String nom;
 
+    @NotNull(message = "La date est obligatoire")
+    @PastOrPresent(message = "La date ne peut pas être dans le futur")
     @Column(name = "dateAct")
-    private String date;
+    private LocalDate date;
 
     @Column(name = "conditionsMeteo")
     private String conditionsMeteo;
 
+    @Min(value = 1, message = "La durée est obligatoire et doit être au moins de 1")
     @Column(name = "dureeAct")
     private int duree;
 
+    @PositiveOrZero(message = "La distance ne peut pas être négative")
     @Column(name = "distanceAct")
     private double distance;
 
@@ -45,12 +50,16 @@ public class Activite {
     public Activite() {
     }
 
-    public Activite(Long id, String nom, String date, int duree, double distance) {
+    public Activite(Long id, String nom, LocalDate date, String conditionsMeteo, int duree, double distance, int note,
+            int caloriesConsommees) {
         this.id = id;
         this.nom = nom;
         this.date = date;
+        this.conditionsMeteo = conditionsMeteo;
         this.duree = duree;
         this.distance = distance;
+        this.note = note;
+        this.caloriesConsommees = caloriesConsommees;
     }
 
     public Long getId() {
@@ -69,11 +78,11 @@ public class Activite {
         this.nom = nom;
     }
 
-    public String getDate() {
+    public LocalDate getDate() {
         return date;
     }
 
-    public void setDate(String date) {
+    public void setDate(LocalDate date) {
         this.date = date;
     }
 
