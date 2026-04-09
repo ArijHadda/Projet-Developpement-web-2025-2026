@@ -1,28 +1,19 @@
 package utcapitole.miage.projet_web.model;
 
-<<<<<<< HEAD
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-=======
 import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
->>>>>>> 6f98eb3f43cf805934f3cf3f749d9972ae6ef79a
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-<<<<<<< HEAD
-=======
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PositiveOrZero;
->>>>>>> 6f98eb3f43cf805934f3cf3f749d9972ae6ef79a
 
 @Entity
 public class Activite {
@@ -32,13 +23,6 @@ public class Activite {
     @Column(name = "idAct")
     private Long id;
 
-<<<<<<< HEAD
-    @Column(name = "nomAct")
-    private String nom;
-
-    @Column(name = "dateAct")
-    private String date;
-=======
     @NotBlank(message = "Le nom de l'activité est obligatoire")
     @Column(name = "nomAct")
     private String nom;
@@ -47,22 +31,15 @@ public class Activite {
     @PastOrPresent(message = "La date ne peut pas être dans le futur")
     @Column(name = "dateAct")
     private LocalDate date;
->>>>>>> 6f98eb3f43cf805934f3cf3f749d9972ae6ef79a
 
     @Column(name = "conditionsMeteo")
     private String conditionsMeteo;
 
-<<<<<<< HEAD
-    @Column(name = "dureeAct")
-    private int duree;
-
-=======
     @Min(value = 1, message = "La durée est obligatoire et doit être au moins de 1")
     @Column(name = "dureeAct")
     private int duree;
 
     @PositiveOrZero(message = "La distance ne peut pas être négative")
->>>>>>> 6f98eb3f43cf805934f3cf3f749d9972ae6ef79a
     @Column(name = "distanceAct")
     private double distance;
 
@@ -72,25 +49,13 @@ public class Activite {
     @Column(name = "caloriesConsommeesAct")
     private int caloriesConsommees;
 
-<<<<<<< HEAD
-    @ManyToOne(fetch = FetchType.LAZY)
-=======
     @ManyToOne
->>>>>>> 6f98eb3f43cf805934f3cf3f749d9972ae6ef79a
     @JoinColumn(name = "IdU")
     private Utilisateur utilisateur;
 
     public Activite() {
     }
 
-<<<<<<< HEAD
-    public Activite(Long id, String nom, String date, int duree, double distance) {
-        this.id = id;
-        this.nom = nom;
-        this.date = date;
-        this.duree = duree;
-        this.distance = distance;
-=======
     public Activite(Long id, String nom, LocalDate date, String conditionsMeteo, int duree, double distance, int note,
             int caloriesConsommees) {
         this.id = id;
@@ -101,7 +66,6 @@ public class Activite {
         this.distance = distance;
         this.note = note;
         this.caloriesConsommees = caloriesConsommees;
->>>>>>> 6f98eb3f43cf805934f3cf3f749d9972ae6ef79a
     }
 
     public Long getId() {
@@ -120,19 +84,11 @@ public class Activite {
         this.nom = nom;
     }
 
-<<<<<<< HEAD
-    public String getDate() {
-        return date;
-    }
-
-    public void setDate(String date) {
-=======
     public LocalDate getDate() {
         return date;
     }
 
     public void setDate(LocalDate date) {
->>>>>>> 6f98eb3f43cf805934f3cf3f749d9972ae6ef79a
         this.date = date;
     }
 
@@ -187,13 +143,8 @@ public class Activite {
     @Override
     public String toString() {
         return "Activite [id=" + id + ", nom=" + nom + ", date=" + date + ", conditionsMeteo=" + conditionsMeteo
-<<<<<<< HEAD
-            + ", duree=" + duree + ", distance=" + distance + ", note=" + note + ", caloriesConsommees="
-            + caloriesConsommees + "]";
-=======
                 + ", duree=" + duree + ", distance=" + distance + ", note=" + note + ", caloriesConsommees="
                 + caloriesConsommees + "]";
->>>>>>> 6f98eb3f43cf805934f3cf3f749d9972ae6ef79a
     }
 
     

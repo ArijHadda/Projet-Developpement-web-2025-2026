@@ -10,6 +10,7 @@ import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.jpa.BadgeAttributionService;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
+import java.time.LocalDate;
 
 import java.util.List;
 import java.util.Optional;
@@ -181,7 +182,7 @@ public class UtilisateurController {
     @PostMapping("/admin/users/{idUtilisateur}/activites")
     public String enregistrerActiviteEtAttribuerBadges(@PathVariable Long idUtilisateur,
                                                         @RequestParam String type,
-                                                        @RequestParam String date,
+                                                        @RequestParam LocalDate date,
                                                         @RequestParam int duree,
                                                         @RequestParam double distance,
                                                         HttpSession session) {
