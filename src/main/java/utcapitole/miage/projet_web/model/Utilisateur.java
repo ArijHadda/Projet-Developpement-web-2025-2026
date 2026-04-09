@@ -178,5 +178,13 @@ public class Utilisateur {
 
     public void setBadges(List<Badge> badges) {
         this.badges = badges;
+    public void addAmi(Utilisateur nouveauAmi) {
+        if (this.amis == null) {
+            this.amis = new ArrayList<>();
+        }
+        if (!this.amis.contains(nouveauAmi)) {
+            this.amis.add(nouveauAmi);
+            nouveauAmi.getAmis().add(this);
+        }
     }
 }
