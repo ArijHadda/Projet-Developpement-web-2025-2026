@@ -5,10 +5,7 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import utcapitole.miage.projet_web.model.DemandeAmi;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.jpa.DemandeAmiRepository;
@@ -28,12 +25,19 @@ public class AmiController {
 
     // afficher tous les utilisateurs
     @GetMapping("/chercher")
-    public String chercherAmis(Model model, HttpSession session) {
+    public String chercherAmis(@RequestParam(value = "motCle", required = false) String motCle,
+                               Model model, HttpSession session) {
         Utilisateur current = (Utilisateur) session.getAttribute("loggedInUser");
         if (current == null) return "redirect:/user/login";
         //userBase de donnees, current comme une image pour l'instant, il n'autorise pas quand on ajout une demande
         Utilisateur userDb = utilisateurService.findById(current.getId()).get();
-        List<Utilisateur> tous = utilisateurService.findAll();
+
+        List<Utilisateur> listeAffichee;
+        if (motCle != null && !motCle.trim().isEmpty()) {
+            listeAffichee = utilisateurService.rechercherParNomOuPrenom(motCle.trim());
+        } else {
+            listeAffichee = utilisateurService.findAll();
+        }
 
         // obtenir la liste des demande en attentes que j'ai envoyees
         List<DemandeAmi> mesDemandesEnvoyees = demandeAmiRepository.findByExpediteurAndStatut(userDb, "PENDING");
@@ -43,9 +47,10 @@ public class AmiController {
                 .map(d -> d.getDestinataire().getId())
                 .toList();
 
-        model.addAttribute("utiliste", tous);
+        model.addAttribute("utiliste", listeAffichee);
         model.addAttribute("mesAmis", userDb.getAmis());
         model.addAttribute("waitingIds", waitingIds);
+        model.addAttribute("motCle", motCle);
 
         return "usersList";
     }

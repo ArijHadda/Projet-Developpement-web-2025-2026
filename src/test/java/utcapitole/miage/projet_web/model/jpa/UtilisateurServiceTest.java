@@ -294,4 +294,20 @@ class UtilisateurServiceTest {
         assertEquals(2, result.size());
         verify(utilisateurRepository).findAll();
     }
+
+    @Test
+    void testRechercherParNomOuPrenom() {
+        String motCle = "Dup";
+        List<Utilisateur> resultList = Arrays.asList(mockUser);
+
+        when(utilisateurRepository.findByNomContainingIgnoreCaseOrPrenomContainingIgnoreCase(motCle, motCle))
+                .thenReturn(resultList);
+
+        List<Utilisateur> result = utilisateurService.rechercherParNomOuPrenom(motCle);
+
+        assertEquals(1, result.size());
+        assertEquals(CORRECT_NOM, result.get(0).getNom());
+
+        verify(utilisateurRepository).findByNomContainingIgnoreCaseOrPrenomContainingIgnoreCase(motCle, motCle);
+    }
 }

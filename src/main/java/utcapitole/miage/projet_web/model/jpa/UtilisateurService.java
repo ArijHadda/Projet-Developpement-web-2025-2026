@@ -129,4 +129,8 @@ public class UtilisateurService {
     public List<Utilisateur> findAll(){
         return utilisateurRepository.findAll();
     }
+
+    public List<Utilisateur> rechercherParNomOuPrenom(String motCle) {
+        return utilisateurRepository.findByNomContainingIgnoreCaseOrPrenomContainingIgnoreCase(motCle, motCle);
+    }
 }

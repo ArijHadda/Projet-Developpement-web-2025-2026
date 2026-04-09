@@ -15,6 +15,11 @@
 </div>
 <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}">← Retour au profil</a>
 <hr/>
+<form th:action="@{/user/ami/chercher}" method="get" style="margin-bottom: 20px;">
+    <input type="text" name="motCle" th:value="${motCle}" placeholder="Rechercher par nom ou prénom..." style="padding: 5px; width: 250px;"/>
+    <button type="submit" style="padding: 5px 10px;">🔍 Chercher</button>
+    <a th:if="${motCle != null and !motCle.isEmpty()}" th:href="@{/user/ami/chercher}" style="margin-left: 10px; color: red; text-decoration: none;">✖ Annuler</a>
+</form>
 <table>
     <tr>
         <td>Nom</td>
