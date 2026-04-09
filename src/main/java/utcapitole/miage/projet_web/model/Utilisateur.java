@@ -64,6 +64,12 @@ public class Utilisateur {
     @Column(name = "niveau_pratique")
     private Map<Sport, NiveauPratique> listSportNivPratique = new HashMap<>();
 
+    @OneToMany(mappedBy = "createur")
+    private List<Challenge> challengesCrees = new ArrayList<>();
+
+    @OneToMany(mappedBy = "utilisateur")
+    private List<Participation> participations = new ArrayList<>();
+
     public Long getId() {
         return id;
     }
