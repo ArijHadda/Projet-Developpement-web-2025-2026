@@ -30,12 +30,12 @@ public class Challenge {
     @Column(name = "sportCible")
     private String sportCible;
 
-    // 关联关系 1: 创建者 (créer)
+    // CREATEUR
     @ManyToOne
     @JoinColumn(name = "idCreateur")
     private Utilisateur createur;
 
-    // 关联关系 2: 参与者 (rejoindre) -> 指向中间表
+    // PARTICIPATIONS
     @OneToMany(mappedBy = "challenge", cascade = CascadeType.ALL)
     private List<Participation> participations = new ArrayList<>();
 }

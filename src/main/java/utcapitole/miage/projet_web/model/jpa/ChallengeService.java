@@ -52,27 +52,23 @@ public class ChallengeService {
         return challengeRepository.findAll();
     }
 
-    // ================= 2. 创建挑战 =================
     public Challenge creerChallenge(Challenge challenge, Utilisateur createur) {
-        challenge.setCreateur(createur); // 绑定创建者
+        challenge.setCreateur(createur);
         return challengeRepository.save(challenge);
     }
 
-    // ================= 3. 加入挑战 =================
     public void rejoindreChallenge(Long challengeId, Utilisateur utilisateur) {
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new RuntimeException("Challenge introuvable"));
 
-        // 检查是否已经加入过，防止重复报名
         if (participationRepository.existsByUtilisateurAndChallenge(utilisateur, challenge)) {
             throw new RuntimeException("Vous participez déjà à ce challenge !");
         }
 
-        // 创建新的参与记录
         Participation participation = new Participation();
         participation.setChallenge(challenge);
         participation.setUtilisateur(utilisateur);
-        participation.setDateInscription(LocalDate.now()); // 记录报名时间
+        participation.setDateInscription(LocalDate.now());
 
         participationRepository.save(participation);
     }
@@ -92,9 +88,8 @@ public class ChallengeService {
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new RuntimeException("Challenge introuvable"));
 
-        // 权限校验：判断当前登录用户是不是这个挑战的创建者
         if (challenge.getCreateur().getId().equals(utilisateurActuel.getId())) {
-            challenge.setTitre(nouveauTitre); // 只修改标题
+            challenge.setTitre(nouveauTitre);
             challengeRepository.save(challenge);
         } else {
             throw new RuntimeException("Non autorisé à modifier ce challenge.");
