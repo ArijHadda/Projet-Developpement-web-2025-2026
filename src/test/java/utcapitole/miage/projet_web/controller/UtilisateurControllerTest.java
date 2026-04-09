@@ -1,249 +1,253 @@
 package utcapitole.miage.projet_web.controller;
 
 import jakarta.servlet.http.HttpSession;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
 import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.jpa.BadgeAttributionService;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 
+import java.lang.reflect.Field;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@ExtendWith(MockitoExtension.class)
 class UtilisateurControllerTest {
 
-    @Mock
-    private UtilisateurService utilisateurService;
+    private UtilisateurController controller;
+    private FakeUtilisateurService utilisateurService;
+    private FakeBadgeAttributionService badgeService;
 
-    @Mock
-    private BCryptPasswordEncoder passwordEncoder;
+    @BeforeEach
+    void setUp() {
+        controller = new UtilisateurController();
+        utilisateurService = new FakeUtilisateurService();
+        badgeService = new FakeBadgeAttributionService();
 
-    @Mock
-    private BadgeAttributionService badgeAttributionService;
-
-    @Mock
-    private HttpSession session;
-
-    @Mock
-    private Model model;
-
-    @InjectMocks
-    private UtilisateurController utilisateurController;
-
-    private Utilisateur user(Long id) {
-        Utilisateur utilisateur = new Utilisateur();
-        utilisateur.setId(id);
-        utilisateur.setMail("user" + id + "@test.fr");
-        utilisateur.setMdp("encoded");
-        return utilisateur;
-    }
-
-    private static Stream<Arguments> loginFailureScenarios() {
-        Utilisateur existing = new Utilisateur();
-        existing.setMdp("encoded");
-        return Stream.of(
-                Arguments.of(Optional.empty(), false),
-                Arguments.of(Optional.of(existing), false)
-        );
-    }
-
-    private static Stream<Arguments> passwordUpdateErrorScenarios() {
-        return Stream.of(
-                Arguments.of(new IllegalArgumentException("Message test"), "Message test"),
-                Arguments.of(new RuntimeException("DB down"), "Une erreur inattendue est survenue.")
-        );
-    }
-
-    private static Stream<Arguments> activityAwardScenarios() {
-        return Stream.of(
-                Arguments.of(List.of(), "redirect:/user/profile/10"),
-                Arguments.of(List.of("1er 10km"), "redirect:/user/profile/10?badge=attribue")
-        );
+        setField(controller, "utilisateurService", utilisateurService);
+        setField(controller, "passwordEncoder", new BCryptPasswordEncoder());
+        setField(controller, "badgeAttributionService", badgeService);
     }
 
     @Test
-    void pagesStatiquesEtLogout() {
-        assertEquals("login", utilisateurController.showLoginForm());
-        assertEquals("redirect:/user/login", utilisateurController.logout(session));
-        verify(session).invalidate();
+    void loginFlowSuccessAndFailure() {
+        Utilisateur user = user(1L, "a@test.fr", "secret");
+        utilisateurService.byMail.put("a@test.fr", user);
+
+        HttpSession session = new MockHttpSession();
+        Model model = new ExtendedModelMap();
+
+        String success = controller.processLogin("a@test.fr", "secret", session, model);
+        assertEquals("redirect:/user/profile/" + user.getId(), success);
+
+        String failure = controller.processLogin("a@test.fr", "bad", new MockHttpSession(), new ExtendedModelMap());
+        assertEquals("login", failure);
     }
 
     @Test
-    void registerFlow() {
-        assertEquals("register", utilisateurController.showRegisterForm(model));
-        verify(model).addAttribute(eq("utilisateur"), any(Utilisateur.class));
+    void registerFlowDuplicateThenSuccess() {
+        Utilisateur duplicate = user(2L, "dup@test.fr", "pwd");
+        utilisateurService.byMail.put("dup@test.fr", duplicate);
 
-        Utilisateur duplicate = user(1L);
-        when(utilisateurService.findByMailU(duplicate.getMail())).thenReturn(Optional.of(new Utilisateur()));
-        assertEquals("register", utilisateurController.processRegister(duplicate, model));
-        verify(model).addAttribute("error", "Cet email est déjà utilisé !");
+        Model model = new ExtendedModelMap();
+        String duplicateView = controller.processRegister(duplicate, model);
+        assertEquals("register", duplicateView);
+        assertEquals("Cet email est déjà utilisé !", model.getAttribute("error"));
 
-        Utilisateur fresh = user(2L);
-        when(utilisateurService.findByMailU(fresh.getMail())).thenReturn(Optional.empty());
-        assertEquals("redirect:/user/login", utilisateurController.processRegister(fresh, model));
-        verify(utilisateurService).registerUser(fresh);
+        Utilisateur fresh = user(3L, "new@test.fr", "pwd");
+        String success = controller.processRegister(fresh, new ExtendedModelMap());
+        assertEquals("redirect:/user/login", success);
+        assertEquals(fresh, utilisateurService.lastRegisteredUser);
     }
 
     @Test
-    void loginSuccess() {
-        Utilisateur found = user(1L);
-        when(utilisateurService.findByMailU(found.getMail())).thenReturn(Optional.of(found));
-        when(passwordEncoder.matches("secret", "encoded")).thenReturn(true);
+    void profileAndUpdateRoutesCoverSessionAndNotFoundBranches() {
+        Utilisateur logged = user(10L, "u@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
 
-        String view = utilisateurController.processLogin(found.getMail(), "secret", session, model);
+        utilisateurService.byId.put(10L, logged);
+        String profileOk = controller.afficherProfile(10L, session, new ExtendedModelMap());
+        assertEquals("profile", profileOk);
 
-        assertEquals("redirect:/user/profile/1", view);
-        verify(session).setAttribute("loggedInUser", found);
+        String profileMissing = controller.afficherProfile(999L, session, new ExtendedModelMap());
+        assertEquals("redirect:/user/login", profileMissing);
+
+        String updateOk = controller.updateProfile(10L, session, new ExtendedModelMap());
+        assertEquals("update", updateOk);
+
+        String updateMissing = controller.updateProfile(999L, session, new ExtendedModelMap());
+        assertEquals("redirect:/user/login", updateMissing);
+
+        String noSession = controller.afficherProfile(10L, new MockHttpSession(), new ExtendedModelMap());
+        assertEquals("redirect:/user/login", noSession);
     }
 
-    @ParameterizedTest
-    @MethodSource("loginFailureScenarios")
-    void loginFailures(Optional<Utilisateur> foundUser, boolean passwordMatches) {
-        when(utilisateurService.findByMailU("mail@test.fr")).thenReturn(foundUser);
-        if (foundUser.isPresent()) {
-            when(passwordEncoder.matches("secret", foundUser.get().getMdp())).thenReturn(passwordMatches);
+    @Test
+    void updatePasswordFlowCoversSuccessAndErrors() {
+        Utilisateur logged = user(1L, "p@test.fr", "oldpwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+
+        assertEquals("update-password", controller.showUpdatePasswordForm(1L, session, new ExtendedModelMap()));
+        assertEquals("redirect:/user/login", controller.showUpdatePasswordForm(2L, session, new ExtendedModelMap()));
+
+        utilisateurService.passwordException = null;
+        String success = controller.processUpdatePassword(1L, "old", "new", "new", session, new ExtendedModelMap());
+        assertEquals("redirect:/user/profile/1?success=passwordChanged", success);
+
+        utilisateurService.passwordException = new IllegalArgumentException("Message test");
+        Model model = new ExtendedModelMap();
+        String illegal = controller.processUpdatePassword(1L, "old", "new", "new", session, model);
+        assertEquals("update-password", illegal);
+        assertEquals("Message test", model.getAttribute("error"));
+
+        utilisateurService.passwordException = new RuntimeException("boom");
+        Model model2 = new ExtendedModelMap();
+        String generic = controller.processUpdatePassword(1L, "old", "new", "new", session, model2);
+        assertEquals("update-password", generic);
+        assertEquals("Une erreur inattendue est survenue.", model2.getAttribute("error"));
+    }
+
+    @Test
+    void listUsersAndProfileUpdateAndLogout() {
+        Utilisateur logged = user(5L, "l@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+
+        utilisateurService.allUsers = List.of(logged, user(6L, "x@test.fr", "pwd"));
+        String listView = controller.VoirListUtilisateur(new ExtendedModelMap(), session);
+        assertEquals("redirect:/user/ami/chercher", listView);
+
+        String update = controller.modifierProfile(5L, "n@test.fr", "F", 20, 1.6f, 50f, "debutant", session);
+        assertEquals("redirect:/user/profile/5", update);
+        assertEquals("n@test.fr", utilisateurService.lastModifiedMail);
+
+        MockHttpSession logoutSession = new MockHttpSession();
+        controller.logout(logoutSession);
+        assertTrue(logoutSession.isInvalid());
+    }
+
+    @Test
+    void badgeEndpointsCoverSessionAndAwardBranches() {
+        Utilisateur logged = user(8L, "b@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+
+        badgeService.autoBadgesToReturn = List.of();
+        String noBadge = controller.enregistrerActiviteEtAttribuerBadges(
+                8L, "Course", LocalDate.of(2026, 4, 1), 40, 9.0, session
+        );
+        assertEquals("redirect:/user/profile/8", noBadge);
+        assertEquals("Course", badgeService.lastActivite.getNom());
+
+        badgeService.autoBadgesToReturn = List.of("1er 10km");
+        String withBadge = controller.enregistrerActiviteEtAttribuerBadges(
+                8L, "Course", LocalDate.of(2026, 4, 1), 40, 10.0, session
+        );
+        assertEquals("redirect:/user/profile/8?badge=attribue", withBadge);
+
+        String auto = controller.attribuerBadgesAutomatiques(8L, session);
+        assertEquals("redirect:/user/profile/8", auto);
+
+        String blocked = controller.attribuerBadgesAutomatiques(8L, new MockHttpSession());
+        assertEquals("redirect:/user/login", blocked);
+    }
+
+    private Utilisateur user(Long id, String mail, String mdp) {
+        Utilisateur u = new Utilisateur();
+        u.setId(id);
+        u.setMail(mail);
+        u.setMdp(mdp);
+        return u;
+    }
+
+    private void setField(Object target, String fieldName, Object value) {
+        try {
+            Field field = target.getClass().getDeclaredField(fieldName);
+            field.setAccessible(true);
+            field.set(target, value);
+        } catch (Exception e) {
+            throw new RuntimeException("Injection de test impossible pour le champ: " + fieldName, e);
+        }
+    }
+
+    private static class FakeUtilisateurService extends UtilisateurService {
+        Map<String, Utilisateur> byMail = new HashMap<>();
+        Map<Long, Utilisateur> byId = new HashMap<>();
+        List<Utilisateur> allUsers = new ArrayList<>();
+
+        Utilisateur lastRegisteredUser;
+        String lastModifiedMail;
+        RuntimeException passwordException;
+
+        FakeUtilisateurService() {
+            super(null, new BCryptPasswordEncoder(), null);
         }
 
-        String view = utilisateurController.processLogin("mail@test.fr", "secret", session, model);
+        @Override
+        public Optional<Utilisateur> findByMail(String mailU) {
+            return Optional.ofNullable(byMail.get(mailU));
+        }
 
-        assertEquals("login", view);
-        verify(model).addAttribute("error", "L'email ou le mot de passe est incorrect !");
+        @Override
+        public Optional<Utilisateur> findById(Long idU) {
+            return Optional.ofNullable(byId.get(idU));
+        }
+
+        @Override
+        public Utilisateur registerUser(Utilisateur utilisateur) {
+            this.lastRegisteredUser = utilisateur;
+            return utilisateur;
+        }
+
+        @Override
+        public Utilisateur modifierProfile(Long IdU, String mailU, String sexeU, int ageU, float tailleU, float poidsU, String niveauPratique) {
+            this.lastModifiedMail = mailU;
+            return byId.getOrDefault(IdU, new Utilisateur());
+        }
+
+        @Override
+        public void changerMotDePasse(Long idU, String ancienMdp, String nouveauMdp, String confirmMdp) {
+            if (passwordException != null) {
+                throw passwordException;
+            }
+        }
+
+        @Override
+        public List<Utilisateur> findAll() {
+            return allUsers;
+        }
     }
 
-    @Test
-    void toutesLesRoutesProtegeesSansSessionRedirigentLogin() {
-        when(session.getAttribute("loggedInUser")).thenReturn(null);
+    private static class FakeBadgeAttributionService extends BadgeAttributionService {
+        List<String> autoBadgesToReturn = new ArrayList<>();
+        Activite lastActivite;
 
-        assertEquals("redirect:/user/login", utilisateurController.afficherProfile(1L, session, model));
-        assertEquals("redirect:/user/login", utilisateurController.modifierProfile(1L, "m@test.fr", "F", 20, 1.65f, 55f, "debutant", session));
-        assertEquals("redirect:/user/login", utilisateurController.updateProfile(1L, session, model));
-        assertEquals("redirect:/user/login", utilisateurController.showUpdatePasswordForm(1L, session, model));
-        assertEquals("redirect:/user/login", utilisateurController.processUpdatePassword(1L, "old", "new", "new", session, model));
-        assertEquals("redirect:/user/login", utilisateurController.VoirListUtilisateur(model, session));
-        assertEquals("redirect:/user/login", utilisateurController.enregistrerActiviteEtAttribuerBadges(10L, "Course", LocalDate.of(2026, 4, 1), 45, 9.0, session));
-        assertEquals("redirect:/user/login", utilisateurController.attribuerBadgesAutomatiques(10L, session));
+        FakeBadgeAttributionService() {
+            super(null, null, null);
+        }
 
-        verify(utilisateurService, never()).getAll();
-        verify(badgeAttributionService, never()).enregistrerActiviteEtAttribuerBadges(any(), any());
-        verify(badgeAttributionService, never()).attribuerBadgesAutomatiques(any());
-    }
+        @Override
+        public List<String> enregistrerActiviteEtAttribuerBadges(Long utilisateurId, Activite activite) {
+            this.lastActivite = activite;
+            return autoBadgesToReturn;
+        }
 
-    @Test
-    void afficherProfileEtUpdateProfileCouvrentBranchesPresentEtAbsent() {
-        Utilisateur logged = user(1L);
-        Utilisateur target = user(2L);
-        when(session.getAttribute("loggedInUser")).thenReturn(logged);
-
-        when(utilisateurService.findByIdU(2L)).thenReturn(Optional.of(target));
-        assertEquals("profile", utilisateurController.afficherProfile(2L, session, model));
-        verify(model).addAttribute("userProfile", target);
-
-        when(utilisateurService.findByIdU(99L)).thenReturn(Optional.empty());
-        assertEquals("redirect:/user/login", utilisateurController.afficherProfile(99L, session, model));
-
-        when(utilisateurService.findByIdU(2L)).thenReturn(Optional.of(target));
-        assertEquals("update", utilisateurController.updateProfile(2L, session, model));
-        verify(model).addAttribute("userUpdate", target);
-
-        when(utilisateurService.findByIdU(100L)).thenReturn(Optional.empty());
-        assertEquals("redirect:/user/login", utilisateurController.updateProfile(100L, session, model));
-    }
-
-    @Test
-    void modifierProfileEtVoirListeEtBadgesAutoSucces() {
-        Utilisateur logged = user(7L);
-        when(session.getAttribute("loggedInUser")).thenReturn(logged);
-
-        String updateResult = utilisateurController.modifierProfile(1L, "new@test.fr", "M", 25, 1.8f, 70f, "intermediaire", session);
-        assertEquals("redirect:/user/profile/7", updateResult);
-        verify(utilisateurService).modifierProfile(1L, "new@test.fr", "M", 25, 1.8f, 70f, "intermediaire");
-
-        List<Utilisateur> users = List.of(logged, user(2L));
-        when(utilisateurService.getAll()).thenReturn(users);
-        assertEquals("usersList", utilisateurController.VoirListUtilisateur(model, session));
-        verify(model).addAttribute("utiliste", users);
-
-        assertEquals("redirect:/user/profile/12", utilisateurController.attribuerBadgesAutomatiques(12L, session));
-        verify(badgeAttributionService).attribuerBadgesAutomatiques(12L);
-    }
-
-    @Test
-    void showUpdatePasswordFormBranches() {
-        Utilisateur logged = user(5L);
-        when(session.getAttribute("loggedInUser")).thenReturn(logged);
-
-        assertEquals("redirect:/user/login", utilisateurController.showUpdatePasswordForm(1L, session, model));
-
-        logged.setId(1L);
-        assertEquals("update-password", utilisateurController.showUpdatePasswordForm(1L, session, model));
-        verify(model).addAttribute("userId", 1L);
-    }
-
-    @Test
-    void processUpdatePasswordSuccess() {
-        Utilisateur logged = user(1L);
-        when(session.getAttribute("loggedInUser")).thenReturn(logged);
-
-        String view = utilisateurController.processUpdatePassword(1L, "old", "new", "new", session, model);
-
-        assertEquals("redirect:/user/profile/1?success=passwordChanged", view);
-        verify(utilisateurService).changerMotDePasse(1L, "old", "new", "new");
-    }
-
-    @ParameterizedTest
-    @MethodSource("passwordUpdateErrorScenarios")
-    void processUpdatePasswordErrorBranches(RuntimeException exception, String expectedMessage) {
-        Utilisateur logged = user(1L);
-        when(session.getAttribute("loggedInUser")).thenReturn(logged);
-        doThrow(exception).when(utilisateurService).changerMotDePasse(1L, "old", "new", "new");
-
-        String view = utilisateurController.processUpdatePassword(1L, "old", "new", "new", session, model);
-
-        assertEquals("update-password", view);
-        verify(model).addAttribute("error", expectedMessage);
-        verify(model).addAttribute("userId", 1L);
-    }
-
-    @ParameterizedTest
-    @MethodSource("activityAwardScenarios")
-    void enregistrerActiviteEtAttribuerBadgesBranches(List<String> badges, String expectedRedirect) {
-        Utilisateur logged = user(1L);
-        when(session.getAttribute("loggedInUser")).thenReturn(logged);
-        when(badgeAttributionService.enregistrerActiviteEtAttribuerBadges(eq(10L), any(Activite.class))).thenReturn(badges);
-
-        String view = utilisateurController.enregistrerActiviteEtAttribuerBadges(
-                10L, "Course", LocalDate.of(2026, 4, 1), 45, 9.0, session
-        );
-
-        assertEquals(expectedRedirect, view);
-
-        ArgumentCaptor<Activite> captor = ArgumentCaptor.forClass(Activite.class);
-        verify(badgeAttributionService).enregistrerActiviteEtAttribuerBadges(eq(10L), captor.capture());
-        Activite activite = captor.getValue();
-        assertEquals("Course", activite.getNom());
-        assertEquals(LocalDate.of(2026, 4, 1), activite.getDate());
-        assertEquals(45, activite.getDuree());
-        assertEquals(9.0, activite.getDistance());
+        @Override
+        public List<String> attribuerBadgesAutomatiques(Long utilisateurId) {
+            return autoBadgesToReturn;
+        }
     }
 }

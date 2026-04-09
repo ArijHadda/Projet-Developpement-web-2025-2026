@@ -43,7 +43,7 @@ class UtilisateurTest {
         List<Utilisateur> amis = new ArrayList<>();
         amis.add(new Utilisateur());
 
-        Sport sport = new Sport("Course", "Endurance");
+        Sport sport = new Sport("Course", "Endurance", 0.0, 1.0, true);
         Map<Sport, NiveauPratique> niveaux = new HashMap<>();
         niveaux.put(sport, NiveauPratique.DEBUTANT);
 
@@ -93,7 +93,7 @@ class UtilisateurTest {
         Utilisateur ami = new Utilisateur();
         List<Utilisateur> amis = List.of(ami);
 
-        Sport sport = new Sport("Natation", "Cardio");
+        Sport sport = new Sport("Natation", "Cardio", 0.0, 1.0, true);
         Map<Sport, NiveauPratique> niveaux = new HashMap<>();
         niveaux.put(sport, NiveauPratique.INTERMEDIAIRE);
 
