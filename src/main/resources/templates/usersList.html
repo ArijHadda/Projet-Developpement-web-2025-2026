@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des utilisateurs</title>
+</head>
+<body>
+<table>
+    <tr>
+        <td>Nom</td>
+        <td>Prenom</td>
+        <td>Mail</td>
+        <td>Sexe</td>
+        <td>Age</td>
+        <td>Niveau de pratique</td>
+    </tr>
+    <tr th:each="u : ${utiliste}">
+        <td th:text="${u.nom}"></td>
+        <td th:text="${u.prenom}"></td>
+        <td th:text="${u.mail}"></td>
+        <td th:text="${u.sexe}"></td>
+        <td th:text="${u.age}"></td>
+        <td th:text="${u.niveauPratique}"></td>
+    </tr>
+</table>
+
+</body>
+</html>
