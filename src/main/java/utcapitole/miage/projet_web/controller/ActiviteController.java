@@ -23,11 +23,13 @@ public class ActiviteController {
 
     @GetMapping("/add-activite")
     public String showAddActiviteForm(Model model, jakarta.servlet.http.HttpSession session) {
-        if (session.getAttribute("loggedInUser") == null) {
+        Utilisateur user = (Utilisateur) session.getAttribute("loggedInUser");
+        if (user == null) {
             return "redirect:/user/login";
         }
         model.addAttribute("activite", new Activite());
         model.addAttribute("sports", sportRepository.findAll());
+        model.addAttribute("user", user);
         return "add-activite";
     }
 

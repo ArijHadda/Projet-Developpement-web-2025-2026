@@ -60,7 +60,7 @@
             if (isSpeed) {
                 distanceGroup.style.display = 'block';
                 intensityGroup.style.display = 'none';
-                document.getElementById('niveauIntensite').value = 0; // Reset
+                document.getElementById('niveauIntensite').value = 1; // 修正：设为 1 以符合 min="1" 限制
             } else {
                 distanceGroup.style.display = 'none';
                 intensityGroup.style.display = 'block';
@@ -68,6 +68,6 @@
             }
         }
     </script>
-    <a href="/user/profile">Retour au profil</a>
+    <a th:href="@{/user/profile/{id}(id=${user.id})}">Retour au profil</a>
 </body>
 </html>

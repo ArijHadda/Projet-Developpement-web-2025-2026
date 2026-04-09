@@ -182,4 +182,22 @@ public class ActiviteTest {
         assertTrue(violations.isEmpty(), "L'activité devrait être valide sans erreurs de validation");
     }
 
+    @Test
+    void testNiveauIntensiteValidation() {
+        // Test min value (1)
+        Activite activite = new Activite(id, nom, date, conditionsMeteo, duree, distance, note, 0, caloriesConsommeestest);
+        Set<ConstraintViolation<Activite>> violations = validator.validate(activite);
+        assertFalse(violations.isEmpty(), "Le niveau d'intensité 0 doit comporter une erreur de validation (Min)");
+
+        // Test max value (5)
+        activite.setNiveauIntensite(6);
+        violations = validator.validate(activite);
+        assertFalse(violations.isEmpty(), "Le niveau d'intensité 6 doit comporter une erreur de validation (Max)");
+
+        // Test valid value
+        activite.setNiveauIntensite(3);
+        violations = validator.validate(activite);
+        assertTrue(violations.isEmpty(), "Le niveau d'intensité 3 est valide");
+    }
+
 }

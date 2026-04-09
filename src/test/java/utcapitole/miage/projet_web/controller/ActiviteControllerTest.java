@@ -77,6 +77,7 @@ public class ActiviteControllerTest {
         assertEquals("add-activite", viewName);
         verify(model).addAttribute(eq("activite"), any(Activite.class));
         verify(model).addAttribute(eq("sports"), any());
+        verify(model).addAttribute("user", mockUser);
     }
 
     @Test
