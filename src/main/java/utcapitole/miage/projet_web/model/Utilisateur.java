@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 @Entity
-@Getter
-@Setter
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
