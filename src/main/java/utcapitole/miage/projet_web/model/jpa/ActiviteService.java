@@ -1,5 +1,6 @@
 package utcapitole.miage.projet_web.model.jpa;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -116,6 +117,27 @@ public class ActiviteService {
     }
 
     public List<Activite> getActivitesByUtilisateur(Utilisateur user) {
-        return activiteRepository.findByUtilisateur(user);
+        return activiteRepository.findByUtilisateurIdOrderByDateDesc(user.getId());
+    }
+
+    public Map<String, Object> getStatsActivites(List<Activite> activites) {
+        Map<String, Object> stats = new HashMap<>();
+        int totalActivites = activites.size();
+        double totalDuree = 0;
+        double totalDistance = 0;
+        int totalCalories = 0;
+
+        for (Activite a : activites) {
+            totalDuree += a.getDuree();
+            totalDistance += a.getDistance();
+            totalCalories += a.getCaloriesConsommees();
+        }
+
+        stats.put("count", totalActivites);
+        stats.put("totalDuree", totalDuree);
+        stats.put("totalDistance", totalDistance);
+        stats.put("totalCalories", totalCalories);
+        
+        return stats;
     }
 }

@@ -7,6 +7,14 @@
 <body>
     <h1>Liste des activités</h1>
     
+    <div id="stats-summary" th:if="${stats != null}" style="margin-bottom: 20px; border: 1px solid #ccc; padding: 10px;">
+        <h3>Résumé de votre parcours</h3>
+        <p>Nombre total d'activités : <span th:text="${stats.count}">0</span></p>
+        <p>Durée totale : <span th:text="${stats.totalDuree}">0</span> min</p>
+        <p>Distance totale : <span th:text="${stats.totalDistance}">0</span> km</p>
+        <p>Calories totales brûlées : <span th:text="${stats.totalCalories}">0</span> kcal</p>
+    </div>
+    
     <table border="1">
         <thead>
             <tr>
