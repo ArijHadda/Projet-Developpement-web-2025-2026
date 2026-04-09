@@ -1,12 +1,15 @@
 package utcapitole.miage.projet_web.model.jpa;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,6 +26,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import utcapitole.miage.projet_web.model.Activite;
+import utcapitole.miage.projet_web.model.Sport;
 import utcapitole.miage.projet_web.model.Utilisateur;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,68 +36,319 @@ class ActiviteServiceTest {
     private ActiviteRepository activiteRepository;
 
     @Mock
+    private SportRepository sportRepository;
+
+    @Mock
     private RestTemplate restTemplate;
 
     private ActiviteService activiteService;
 
+    // ─────────────────── Helpers communs aux mocks météo ───────────────────
+
+    private Map<String, Object> buildIpApiResponse(double lat, double lon) {
+        Map<String, Object> r = new HashMap<>();
+        r.put("lat", lat);
+        r.put("lon", lon);
+        return r;
+    }
+
+    private Map<String, Object> buildMeteoResponse(double temperature) {
+        Map<String, Object> currentWeather = new HashMap<>();
+        currentWeather.put("temperature", temperature);
+        Map<String, Object> meteoResponse = new HashMap<>();
+        meteoResponse.put("current_weather", currentWeather);
+        return meteoResponse;
+    }
+
+    private Utilisateur buildUser(float poids) {
+        Utilisateur user = new Utilisateur();
+        user.setPoids(poids);
+        return user;
+    }
+
     @BeforeEach
     void setUp() {
-        activiteService = new ActiviteService(activiteRepository);
+        activiteService = new ActiviteService(activiteRepository, sportRepository);
         ReflectionTestUtils.setField(activiteService, "restTemplate", restTemplate);
+
+        lenient().when(sportRepository.findByNom(any())).thenAnswer(invocation -> {
+            String nom = invocation.getArgument(0);
+            if ("Course".equals(nom)) return new Sport("Course", "Endurance", 0.0, 1.0, true);
+            if ("Cyclisme".equals(nom)) return new Sport("Cyclisme", "Endurance", 2.0, 0.4, true);
+            if ("Marche".equals(nom)) return new Sport("Marche", "Endurance", 2.0, 0.3, true);
+            if ("Natation".equals(nom)) return new Sport("Natation", "Endurance", 4.0, 1.0, false);
+            return null;
+        });
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // [Test] #60 – Déclencheur de calcul automatique
+    // ═══════════════════════════════════════════════════════════════════════
     @Test
-    void testEnregistrerActivite_Success() {
+    void testEnregistrerActivite_caloriesCalculeesEtStockeesDansDB() {
+        // Given
+        Utilisateur user = buildUser(70.0f);
         Activite activite = new Activite();
+        activite.setNom("Course");
         activite.setDuree(60);
-        Map<String, Object> ipApiResponse = new HashMap<>();
-        ipApiResponse.put("lat", 48.8566);
-        ipApiResponse.put("lon", 2.3522);
+        activite.setDistance(10.0);
+        activite.setUtilisateur(user);
 
-        Map<String, Object> currentWeather = new HashMap<>();
-        currentWeather.put("temperature", 20.5);
-        Map<String, Object> meteoResponse = new HashMap<>();
-        meteoResponse.put("current_weather", currentWeather);
-
-        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(ipApiResponse);
-        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(meteoResponse);
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(48.8566, 2.3522));
+        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(20.5));
         when(activiteRepository.save(any(Activite.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
         Activite savedActivite = activiteService.enregistrerActivite(activite);
-        assertEquals(600, savedActivite.getCaloriesConsommees());
-        assertEquals("Température: 20.5°C", savedActivite.getConditionsMeteo());
+
+        // Then
+        assertTrue(savedActivite.getCaloriesConsommees() > 0);
         verify(activiteRepository).save(activite);
+
+        // vitesse = 10 km/h → MET = 0.0 + 1.0 * 10 = 10.0
+        // calories = 10.0 * 70 * 1.0 = 700
+        assertEquals(700, savedActivite.getCaloriesConsommees());
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // [Test] #61 – Dépendance des paramètres de calcul
+    // ═══════════════════════════════════════════════════════════════════════
+    @Test
+    void testEnregistrerActivite_poissDifferentsDonnentCaloriesDifferentes() {
+        // Given
+        Utilisateur userA = buildUser(60.0f);
+        Utilisateur userB = buildUser(90.0f);
+
+        Activite activiteA = new Activite();
+        activiteA.setNom("Natation");
+        activiteA.setDuree(60);
+        activiteA.setDistance(0);
+        activiteA.setNiveauIntensite(3);
+        activiteA.setUtilisateur(userA);
+
+        Activite activiteB = new Activite();
+        activiteB.setNom("Natation");
+        activiteB.setDuree(60);
+        activiteB.setDistance(0);
+        activiteB.setNiveauIntensite(3);
+        activiteB.setUtilisateur(userB);
+
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(48.8566, 2.3522));
+        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(22.0));
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Activite savedA = activiteService.enregistrerActivite(activiteA);
+
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(48.8566, 2.3522));
+        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(22.0));
+
+        Activite savedB = activiteService.enregistrerActivite(activiteB);
+
+        assertTrue(savedA.getCaloriesConsommees() > 0);
+        assertTrue(savedB.getCaloriesConsommees() > 0);
+        assertNotEquals(savedA.getCaloriesConsommees(), savedB.getCaloriesConsommees());
+
+        // Natation (base 4.0, coeff 1.0, niveau 3) -> MET = 7.0
+        // A = 7.0*60*1 = 420. B = 7.0*90*1 = 630
+        assertEquals(420, savedA.getCaloriesConsommees());
+        assertEquals(630, savedB.getCaloriesConsommees());
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Tests de couverture 
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Test
+    void testCalculerCalories_utilisateurNull_retourne0() {
+        Activite activite = new Activite();
+        activite.setNom("Course");
+        activite.setDuree(60);
+
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(48.8566, 2.3522));
+        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(18.0));
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Activite saved = activiteService.enregistrerActivite(activite);
+        assertEquals(0, saved.getCaloriesConsommees());
     }
 
     @Test
-    void testEnregistrerActivite_CoordonneesException() {
+    void testCalculerCalories_dureeNulle_retourne0() {
+        Utilisateur user = buildUser(70.0f);
         Activite activite = new Activite();
-        activite.setDuree(30);
+        activite.setNom("Course");
+        activite.setDuree(0);
+        activite.setUtilisateur(user);
+
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(48.8566, 2.3522));
+        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(18.0));
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Activite saved = activiteService.enregistrerActivite(activite);
+        assertEquals(0, saved.getCaloriesConsommees());
+    }
+
+    @Test
+    void testCalculerCalories_poidsNul_utilisePoidsDefaut() {
+        Utilisateur user = buildUser(0.0f);  // Défaut -> 70.0f
+        Activite activite = new Activite();
+        activite.setNom("Natation");
+        activite.setDuree(60);
+        activite.setNiveauIntensite(3); // MET = 4.0 + 1.0*3 = 7.0
+        activite.setUtilisateur(user);
+
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(48.8566, 2.3522));
+        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(20.0));
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Activite saved = activiteService.enregistrerActivite(activite);
+        // 7.0 * 70 * 1 = 490
+        assertEquals(490, saved.getCaloriesConsommees());
+    }
+
+    @Test
+    void testCalculerCalories_courseVitessesDifferentes() {
+        // MET = 0.0 + 1.0 * v. Cal = MET * 70 * 1 = v * 70
+        assertCaloriesCourse(5.0, 70.0f, 350);
+        assertCaloriesCourse(7.0, 70.0f, 490);
+        assertCaloriesCourse(9.0, 70.0f, 630);
+        assertCaloriesCourse(11.0, 70.0f, 770);
+        assertCaloriesCourse(14.0, 70.0f, 980);
+    }
+
+    @Test
+    void testCalculerCalories_courseSansDistance_MET0() {
+        Utilisateur user = buildUser(70.0f);
+        Activite activite = new Activite();
+        activite.setNom("Course");
+        activite.setDuree(60);
+        activite.setDistance(0); // v=0 -> MET=0
+        activite.setUtilisateur(user);
+
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(48.8566, 2.3522));
+        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(20.0));
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Activite saved = activiteService.enregistrerActivite(activite);
+        assertEquals(0, saved.getCaloriesConsommees());
+    }
+
+    @Test
+    void testCalculerCalories_cyclismeSansDistance() {
+        Utilisateur user = buildUser(70.0f);
+        Activite activite = new Activite();
+        activite.setNom("Cyclisme");
+        activite.setDuree(60);
+        activite.setDistance(0);
+        activite.setUtilisateur(user);
+
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(48.8566, 2.3522));
+        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(20.0));
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Activite saved = activiteService.enregistrerActivite(activite);
+        // MET = 2.0 + 0.4*0 = 2.0 => 2.0*70*1=140
+        assertEquals(140, saved.getCaloriesConsommees());
+    }
+
+    @Test
+    void testCalculerCalories_cyclismeVitesses() {
+        // MET = 2.0 + 0.4 * v
+        assertCaloriesCyclisme(10.0, 70.0f, 420); // 2+4=6 => 420
+        assertCaloriesCyclisme(17.0, 70.0f, 616); // 2+6.8=8.8 => 616
+        assertCaloriesCyclisme(20.0, 70.0f, 700); // 2+8=10 => 700
+        assertCaloriesCyclisme(23.0, 70.0f, 784); // 2+9.2=11.2 => 784
+        assertCaloriesCyclisme(30.0, 70.0f, 980); // 2+12=14 => 980
+    }
+
+    @Test
+    void testCalculerCalories_marcheVitesses() {
+        // MET = 2.0 + 0.3 * v
+        assertCaloriesMarche(2.0, 70.0f, 182); // 2 + 0.6 = 2.6 => 182
+        assertCaloriesMarche(4.0, 70.0f, 224); // 2 + 1.2 = 3.2 => 224
+        assertCaloriesMarche(6.0, 70.0f, 266); // 2 + 1.8 = 3.8 => 266
+    }
+
+    @Test
+    void testCalculerCalories_typeInconnu_METdefaut() {
+        Utilisateur user = buildUser(70.0f);
+        Activite activite = new Activite();
+        activite.setNom("Yoga"); // non mocké -> fallback -> 4.0
+        activite.setDuree(60);
+        activite.setDistance(0);
+        activite.setUtilisateur(user);
+
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(48.8566, 2.3522));
+        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(20.0));
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Activite saved = activiteService.enregistrerActivite(activite);
+        // MET=4.0, poids=70, 1h → 4*70*1=280
+        assertEquals(280, saved.getCaloriesConsommees());
+    }
+
+    @Test
+    void testCalculerCalories_nomNull_METdefaut() {
+        Utilisateur user = buildUser(70.0f);
+        Activite activite = new Activite();
+        activite.setNom(null);
+        activite.setDuree(60);
+        activite.setDistance(0);
+        activite.setUtilisateur(user);
+
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(48.8566, 2.3522));
+        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(20.0));
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Activite saved = activiteService.enregistrerActivite(activite);
+        assertEquals(280, saved.getCaloriesConsommees());
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Tests API météo / coordonnnees
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Test
+    void testEnregistrerActivite_CoordonneesException_utiliseCoordonneesToulouse() {
+        Utilisateur user = buildUser(70.0f);
+        Activite activite = new Activite();
+        activite.setNom("Natation");
+        activite.setNiveauIntensite(3);
+        activite.setDuree(60);
+        activite.setDistance(0);
+        activite.setUtilisateur(user);
+
         when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenThrow(new RestClientException("IP API Error"));
-        Map<String, Object> currentWeather = new HashMap<>();
-        currentWeather.put("temperature", 15.0);
-        Map<String, Object> meteoResponse = new HashMap<>();
-        meteoResponse.put("current_weather", currentWeather);
-        when(restTemplate.getForObject(contains("latitude=43.6047&longitude=1.4442"), eq(Map.class))).thenReturn(meteoResponse);
-        when(activiteRepository.save(any(Activite.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        Activite savedActivite = activiteService.enregistrerActivite(activite);
-        assertEquals(300, savedActivite.getCaloriesConsommees());
-        assertEquals("Température: 15.0°C", savedActivite.getConditionsMeteo());
+        when(restTemplate.getForObject(contains("latitude=43.6047&longitude=1.4442"), eq(Map.class))).thenReturn(buildMeteoResponse(15.0));
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Activite saved = activiteService.enregistrerActivite(activite);
+        assertEquals(490, saved.getCaloriesConsommees()); // 7.0 * 70 * 1
+        assertEquals("Température: 15.0°C", saved.getConditionsMeteo());
     }
 
     @Test
-    void testEnregistrerActivite_MeteoException() {
+    void testEnregistrerActivite_MeteoException_retourneMeteoIndisponible() {
+        Utilisateur user = buildUser(70.0f);
         Activite activite = new Activite();
-        activite.setDuree(45);
-        Map<String, Object> ipApiResponse = new HashMap<>();
-        ipApiResponse.put("lat", 48.8566);
-        ipApiResponse.put("lon", 2.3522);
-        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(ipApiResponse);
+        activite.setNom("Natation");
+        activite.setNiveauIntensite(3);
+        activite.setDuree(60);
+        activite.setDistance(0);
+        activite.setUtilisateur(user);
+
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(48.8566, 2.3522));
         when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenThrow(new RestClientException("Weather API Error"));
-        when(activiteRepository.save(any(Activite.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        Activite savedActivite = activiteService.enregistrerActivite(activite);
-        assertEquals(450, savedActivite.getCaloriesConsommees());
-        assertEquals("Météo indisponible", savedActivite.getConditionsMeteo());
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Activite saved = activiteService.enregistrerActivite(activite);
+        assertEquals(490, saved.getCaloriesConsommees());
+        assertEquals("Météo indisponible", saved.getConditionsMeteo());
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Tests repository
+    // ═══════════════════════════════════════════════════════════════════════
 
     @Test
     void testGetToutesLesActivites() {
@@ -124,4 +379,34 @@ class ActiviteServiceTest {
         verify(activiteRepository).findByUtilisateur(user);
     }
 
+    // ─────────────────── Méthodes utilitaires ────────────────────────────────
+
+    private void assertCaloriesCyclisme(double distanceKm, float poids, int expectedCalories) {
+        assertCaloriesGenerique("Cyclisme", distanceKm, poids, expectedCalories);
+    }
+    
+    private void assertCaloriesCourse(double distanceKm, float poids, int expectedCalories) {
+        assertCaloriesGenerique("Course", distanceKm, poids, expectedCalories);
+    }
+    
+    private void assertCaloriesMarche(double distanceKm, float poids, int expectedCalories) {
+        assertCaloriesGenerique("Marche", distanceKm, poids, expectedCalories);
+    }
+
+    private void assertCaloriesGenerique(String nomSport, double distanceKm, float poids, int expectedCalories) {
+        Utilisateur user = buildUser(poids);
+        Activite activite = new Activite();
+        activite.setNom(nomSport);
+        activite.setDuree(60);
+        activite.setDistance(distanceKm);
+        activite.setUtilisateur(user);
+
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(48.8566, 2.3522));
+        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(20.0));
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Activite saved = activiteService.enregistrerActivite(activite);
+        assertEquals(expectedCalories, saved.getCaloriesConsommees(),
+                nomSport + " à " + distanceKm + " km/h devrait donner " + expectedCalories + " cal");
+    }
 }

@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PositiveOrZero;
 
@@ -46,6 +47,11 @@ public class Activite {
     @Column(name = "noteAct")
     private int note;
 
+    @Min(value = 1, message = "Le niveau d'intensité doit être au moins de 1")
+    @Max(value = 5, message = "Le niveau d'intensité ne peut pas dépasser 5")
+    @Column(name = "niveauIntensite")
+    private int niveauIntensite;
+
     @Column(name = "caloriesConsommeesAct")
     private int caloriesConsommees;
 
@@ -53,11 +59,15 @@ public class Activite {
     @JoinColumn(name = "IdU")
     private Utilisateur utilisateur;
 
+    @ManyToOne
+    @JoinColumn(name = "idSport")
+    private Sport sport;
+
     public Activite() {
     }
 
     public Activite(Long id, String nom, LocalDate date, String conditionsMeteo, int duree, double distance, int note,
-            int caloriesConsommees) {
+            int niveauIntensite, int caloriesConsommees) {
         this.id = id;
         this.nom = nom;
         this.date = date;
@@ -65,6 +75,7 @@ public class Activite {
         this.duree = duree;
         this.distance = distance;
         this.note = note;
+        this.niveauIntensite = niveauIntensite;
         this.caloriesConsommees = caloriesConsommees;
     }
 
@@ -124,6 +135,14 @@ public class Activite {
         this.note = note;
     }
 
+    public int getNiveauIntensite() {
+        return niveauIntensite;
+    }
+
+    public void setNiveauIntensite(int niveauIntensite) {
+        this.niveauIntensite = niveauIntensite;
+    }
+
     public int getCaloriesConsommees() {
         return caloriesConsommees;
     }
@@ -140,11 +159,19 @@ public class Activite {
         this.utilisateur = utilisateur;
     }
 
+    public Sport getSport() {
+        return sport;
+    }
+
+    public void setSport(Sport sport) {
+        this.sport = sport;
+    }
+
     @Override
     public String toString() {
         return "Activite [id=" + id + ", nom=" + nom + ", date=" + date + ", conditionsMeteo=" + conditionsMeteo
-                + ", duree=" + duree + ", distance=" + distance + ", note=" + note + ", caloriesConsommees="
-                + caloriesConsommees + "]";
+                + ", duree=" + duree + ", distance=" + distance + ", note=" + note + ", niveauIntensite=" + niveauIntensite
+                + ", caloriesConsommees=" + caloriesConsommees + "]";
     }
 
     

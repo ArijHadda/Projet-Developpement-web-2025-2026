@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.jpa.ActiviteService;
+import utcapitole.miage.projet_web.model.jpa.SportRepository;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
+
 @Controller
 @RequestMapping("/activite")
 public class ActiviteController {
@@ -16,12 +18,18 @@ public class ActiviteController {
     @Autowired
     private ActiviteService activiteService;
 
+    @Autowired
+    private SportRepository sportRepository;
+
     @GetMapping("/add-activite")
     public String showAddActiviteForm(Model model, jakarta.servlet.http.HttpSession session) {
-        if (session.getAttribute("loggedInUser") == null) {
+        Utilisateur user = (Utilisateur) session.getAttribute("loggedInUser");
+        if (user == null) {
             return "redirect:/user/login";
         }
         model.addAttribute("activite", new Activite());
+        model.addAttribute("sports", sportRepository.findAll());
+        model.addAttribute("user", user);
         return "add-activite";
     }
 
