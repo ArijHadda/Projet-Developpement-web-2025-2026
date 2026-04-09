@@ -152,4 +152,14 @@ public class Utilisateur {
     public void setListSportNivPratique(Map<Sport, NiveauPratique> listSportNivPratique) {
         this.listSportNivPratique = listSportNivPratique;
     }
+
+    public void addAmi(Utilisateur nouveauAmi) {
+        if (this.amis == null) {
+            this.amis = new ArrayList<>();
+        }
+        if (!this.amis.contains(nouveauAmi)) {
+            this.amis.add(nouveauAmi);
+            nouveauAmi.getAmis().add(this);
+        }
+    }
 }
