@@ -36,28 +36,7 @@
     <li th:each="badge : ${userProfile.badges}" th:text="${badge.entitule}"></li>
 </ul>
 
-<hr/>
-<h3>Administration - enregistrer une activite sportive</h3>
-<form th:action="@{/user/admin/users/{idUtilisateur}/activites(idUtilisateur=${userProfile.id})}" method="post">
-    <div>
-        <label for="type">Type</label>
-        <input id="type" name="type" type="text" required>
-    </div>
-    <div>
-        <label for="date">Date</label>
-        <input id="date" name="date" type="date" required>
-    </div>
-    <div>
-        <label for="duree">Duree (minutes)</label>
-        <input id="duree" name="duree" type="number" min="1" required>
-    </div>
-    <div>
-        <label for="distance">Distance (km)</label>
-        <input id="distance" name="distance" type="number" min="0" step="0.1" required>
-    </div>
-    <button type="submit">Enregistrer activite</button>
-</form>
-
+<br>
 <hr/>
 
 <div style="margin-top: 10px;">
@@ -68,6 +47,9 @@
     </a>
 </div>
 <h3>👥 Mes Amis (<span th:text="${#lists.size(userProfile.amis)}">0</span>)</h3>
+
+<br>
+<hr/>
 <div th:if="${#lists.isEmpty(userProfile.amis)}">
     <p>Vous n'avez pas encore d'amis. <a th:href="@{/user/ami/chercher}">Chercher des amis</a></p>
 </div>

@@ -41,7 +41,6 @@ public class UtilisateurController {
         Optional<Utilisateur> userOpt = utilisateurService.findByMail(email);
 
         if (userOpt.isPresent() && passwordEncoder.matches(password, userOpt.get().getMdp())) {
-            System.out.println("coucou");
             session.setAttribute("loggedInUser", userOpt.get());
 
             return "redirect:/user/profile/" + userOpt.get().getId();

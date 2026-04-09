@@ -42,13 +42,14 @@ class UtilisateurControllerTest {
 
     @Test
     void loginFlowSuccessAndFailure() {
-        Utilisateur user = user(1L, "a@test.fr", "secret");
+        String plainPassword = "secret";
+        Utilisateur user = user(1L, "a@test.fr", new BCryptPasswordEncoder().encode(plainPassword));
         utilisateurService.byMail.put("a@test.fr", user);
 
         HttpSession session = new MockHttpSession();
         Model model = new ExtendedModelMap();
 
-        String success = controller.processLogin("a@test.fr", "secret", session, model);
+        String success = controller.processLogin("a@test.fr", plainPassword, session, model);
         assertEquals("redirect:/user/profile/" + user.getId(), success);
 
         String failure = controller.processLogin("a@test.fr", "bad", new MockHttpSession(), new ExtendedModelMap());
