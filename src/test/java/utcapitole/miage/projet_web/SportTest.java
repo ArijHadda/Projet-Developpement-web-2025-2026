@@ -1,4 +1,4 @@
-package utcapitole.miage.projet_web.model;
+package utcapitole.miage.projet_web;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -13,6 +13,8 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import utcapitole.miage.projet_web.model.Sport;
+
 import java.util.Set;
 
 class SportTest {

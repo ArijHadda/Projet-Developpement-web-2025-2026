@@ -1,10 +1,9 @@
-db/sport.db
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-.sport.db
+*.db
 
 ### STS ###
 .apt_generated

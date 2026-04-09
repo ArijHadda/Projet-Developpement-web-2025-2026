@@ -6,11 +6,12 @@
 </head>
 <body>
 <h2>Mon Profil</h2>
+<p th:if="${param.badge != null}" style="color: green; font-weight: bold;">Un nouveau badge a ete attribue automatiquement.</p>
 <a th:href="@{/user/profile/update/{IdU}(IdU=${userProfile.id})}">
-    <button type="button">✏️ Modifier mes infos</button>
+    <button type="button">Modifier mes infos</button>
 </a>
 <a th:href="@{/user/profile/update-password/{IdU}(IdU=${userProfile.id})}">
-    <button type="button">🔒 Modifier le mot de passe</button>
+    <button type="button">Modifier le mot de passe</button>
 </a>
 <a th:href="@{/user/ami/chercher}">
     <button type="button">🔍 Chercher des amis</button>
@@ -29,6 +30,14 @@
 </div>
 
 <hr/>
+<h3>Mes badges</h3>
+<p th:if="${#lists.isEmpty(userProfile.badges)}">Aucun badge pour le moment.</p>
+<ul th:unless="${#lists.isEmpty(userProfile.badges)}">
+    <li th:each="badge : ${userProfile.badges}" th:text="${badge.entitule}"></li>
+</ul>
+
+<br>
+<hr/>
 
 <div style="margin-top: 10px;">
     <a th:href="@{/user/ami/invitations}">
@@ -38,6 +47,9 @@
     </a>
 </div>
 <h3>👥 Mes Amis (<span th:text="${#lists.size(userProfile.amis)}">0</span>)</h3>
+
+<br>
+<hr/>
 <div th:if="${#lists.isEmpty(userProfile.amis)}">
     <p>Vous n'avez pas encore d'amis. <a th:href="@{/user/ami/chercher}">Chercher des amis</a></p>
 </div>
