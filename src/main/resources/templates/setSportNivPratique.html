@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Set niveau pratique d'un sport</title>
+</head>
+<body>
+<form th:action="@{/user/nivPratique}"  method="post">
+    <select name="sport" id="sport">
+        <option value="" disabled selected>-- Choisir un sport --</option>
+        <option th:each="s : ${sports}"
+                th:value="${s.id}"
+                th:text="${s.nom}">
+        </option>
+    </select>
+    <br><br>
+    <select name="niveau">
+        <option value="" disabled selected>-- Choisir un niveau --</option>
+        <option th:each="n : ${niveaux}"
+                th:value="${n}"
+                th:text="${n}">
+        </option>
+    </select>
+    <input type="submit" value="valider">
+
+</form>
+</body>
+</html>

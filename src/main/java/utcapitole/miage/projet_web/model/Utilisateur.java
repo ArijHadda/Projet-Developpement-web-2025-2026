@@ -152,4 +152,7 @@ public class Utilisateur {
     public void setListSportNivPratique(Map<Sport, NiveauPratique> listSportNivPratique) {
         this.listSportNivPratique = listSportNivPratique;
     }
+    public void addSportNiveau(Sport sport, NiveauPratique niveau) {
+        this.listSportNivPratique.put(sport, niveau);
+    }
 }

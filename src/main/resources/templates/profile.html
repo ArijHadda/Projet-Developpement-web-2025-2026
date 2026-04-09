@@ -15,6 +15,9 @@
 <a th:href="@{/user/profile/voirUtilisateur}">
     <button type="button">Voir liste des utilisateurs</button>
 </a>
+<a th:href="@{/user/profile/ajouterNivPratique}">
+    <button type="button">Ajouter niv pratique</button>
+</a>
 <hr/> <p>Bienvenue sur votre espace personnel ! Voici vos informations :</p>
 
 <div style="margin-bottom: 20px;">
@@ -26,6 +29,7 @@
     <p><strong>Age :</strong> <span th:text="${userProfile.age}"></span></p>
     <p><strong>Taille :</strong> <span th:text="${userProfile.taille}"></span></p>
     <p><strong>Poids :</strong> <span th:text="${userProfile.poids}"></span></p>
+    <p><strong>Sport & niveau de Pratique :</strong> <span th:text="${userProfile.listSportNivPratique}"></span></p>
 </div>
 
 <hr/>

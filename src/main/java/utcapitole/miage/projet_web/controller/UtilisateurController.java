@@ -6,10 +6,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import utcapitole.miage.projet_web.model.NiveauPratique;
+import utcapitole.miage.projet_web.model.Sport;
 import utcapitole.miage.projet_web.model.Utilisateur;
+import utcapitole.miage.projet_web.model.jpa.SportService;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Controller
@@ -17,6 +22,8 @@ import java.util.Optional;
 public class UtilisateurController {
     @Autowired
     private UtilisateurService utilisateurService;
+    @Autowired
+    private SportService sportService;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -163,7 +170,7 @@ public class UtilisateurController {
     }
 
     @GetMapping("/profile/voirUtilisateur")
-    public String VoirListUtilisateur(Model model, HttpSession session){
+    public String voirListUtilisateur(Model model, HttpSession session){
         Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
         if (loggedInUser == null) {
             return "redirect:/user/login";
@@ -172,5 +179,30 @@ public class UtilisateurController {
         model.addAttribute("utiliste", listU);
         return "usersList";
     }
+    @GetMapping("/profile/ajouterNivPratique")
+    public String ajouterNivPratique(Model model, HttpSession session){
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            return "redirect:/user/login";
+        }
+        model.addAttribute("sports", sportService.getAll());
+        model.addAttribute("niveaux", NiveauPratique.values());
+        return "setSportNivPratique";
+    }
+    @PostMapping("/nivPratique")
+    public String ajouterNiveauratique(Model model, HttpSession session, @RequestParam Long sport,@RequestParam NiveauPratique niveau){
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            return "redirect:/user/login";
+        }
+        Utilisateur user = utilisateurService.getUtilisateurAvecSports(loggedInUser.getId());
+        Sport s = sportService.getById(sport);
+        user.addSportNiveau(s, niveau);
+        utilisateurService.save(user);
+        session.setAttribute("loggedInUser", user);
+        model.addAttribute("userProfile", user);
+        return "profile";
+    }
+
 
 }

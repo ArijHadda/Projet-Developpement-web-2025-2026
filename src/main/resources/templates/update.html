@@ -41,9 +41,17 @@
     </div>
 
     <div style="margin-bottom: 15px;">
-        <label for="pratique">Niveau de Pratique :</label><br/>
-        <input type="text" id="pratique" name="niveauPratique" th:value="${userUpdate.niveauPratique}" required />
+        <label for="sport">Sport & niveau pratique :</label><br/>
+        <input type="text" id="sport" name="nivPratique" th:value="${userUpdate.listSportNivPratique}" required />
+        <ol th:each="u : ${userUpdate.listSportNivPratique}">
+            <li th:text="${u}"></li>
+            <input type="button" value="supprimer">
+        </ol>
+
+
     </div>
+
+
 
 
     <div>

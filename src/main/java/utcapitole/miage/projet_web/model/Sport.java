@@ -8,15 +8,14 @@ public class Sport {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "idSport")
+    @Column(name = "id_sport")
     private Long id;
 
-    @Column(name = "nomSport", nullable = false)
+    @Column(name = "nom_sport")
     private String nom;
 
-    @Column(name = "typeSport")
+    @Column(name = "type_sport")
     private String type;
-
     // Constructeurs
     public Sport() {}
 
