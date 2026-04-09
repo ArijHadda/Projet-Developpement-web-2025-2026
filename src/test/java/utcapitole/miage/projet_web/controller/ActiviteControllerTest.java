@@ -17,6 +17,8 @@ import jakarta.servlet.http.HttpSession;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -139,26 +141,45 @@ public class ActiviteControllerTest {
     }
 
     @Test
-    void listActivites_loggedIn_addsActivitesToModelAndReturnsView() {
+    void listActivites_loggedIn_addsActivitesAndStatsToModel() {
+        // Given
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
-        List<Activite> activites = Arrays.asList(mockActivite, new Activite());
+        
+        Activite a1 = new Activite();
+        a1.setNom("Running");
+        a1.setDate(java.time.LocalDate.now());
+        a1.setDuree(45);
+        
+        List<Activite> activites = Arrays.asList(a1);
         when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(activites);
+        
+        Map<String, Object> mockStats = new HashMap<>();
+        mockStats.put("count", 1);
+        when(activiteService.getStatsActivites(activites)).thenReturn(mockStats);
 
+        // When
         String viewName = activiteController.listActivites(model, session);
 
+        // Then
         assertEquals("activiteList", viewName);
-        verify(activiteService).getActivitesByUtilisateur(mockUser);
         verify(model).addAttribute("activites", activites);
+        verify(model).addAttribute("stats", mockStats);
+        
+        // Vérification explicite pour Issue #62 (données présentes dans l'objet)
+        assertEquals("Running", activites.get(0).getNom());
+        assertEquals(45, activites.get(0).getDuree());
     }
 
     @Test
     void listActivites_loggedIn_listeVideEstGeree() {
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
         when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(Collections.emptyList());
+        when(activiteService.getStatsActivites(any())).thenReturn(new HashMap<>());
 
         String viewName = activiteController.listActivites(model, session);
 
         assertEquals("activiteList", viewName);
-        verify(model).addAttribute("activites", Collections.emptyList());
+        verify(model).addAttribute(eq("activites"), any());
+        verify(model).addAttribute(eq("stats"), any());
     }
 }

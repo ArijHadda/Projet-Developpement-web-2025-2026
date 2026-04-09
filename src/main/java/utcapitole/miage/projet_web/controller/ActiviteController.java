@@ -1,5 +1,6 @@
 package utcapitole.miage.projet_web.controller;
 
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -52,7 +53,9 @@ public class ActiviteController {
             return "redirect:/user/login";
         }
         Utilisateur user = (Utilisateur) session.getAttribute("loggedInUser");
-        model.addAttribute("activites", activiteService.getActivitesByUtilisateur(user));
+        List<Activite> activites = activiteService.getActivitesByUtilisateur(user);
+        model.addAttribute("activites", activites);
+        model.addAttribute("stats", activiteService.getStatsActivites(activites));
         return "activiteList";
     }
     
