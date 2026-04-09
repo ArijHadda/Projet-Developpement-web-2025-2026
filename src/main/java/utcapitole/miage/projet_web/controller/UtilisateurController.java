@@ -203,6 +203,14 @@ public class UtilisateurController {
         model.addAttribute("userProfile", user);
         return "profile";
     }
+    @GetMapping("/deleteSportNiveau/{id}")
+    public String deleteSportNiveau(@PathVariable Long id, HttpSession session){
+
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            return "redirect:/user/login";
+        }
+    }
 
 
 }
