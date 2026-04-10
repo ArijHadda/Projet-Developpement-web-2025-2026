@@ -1,5 +1,6 @@
 package utcapitole.miage.projet_web.model.jpa;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -132,5 +133,16 @@ public class UtilisateurService {
 
     public List<Utilisateur> rechercherParNomOuPrenom(String motCle) {
         return utilisateurRepository.findByNomContainingIgnoreCaseOrPrenomContainingIgnoreCase(motCle, motCle);
+    }
+
+    @Transactional
+    public Utilisateur getUtilisateurAvecSports(Long id) {
+        Utilisateur u = utilisateurRepository.findById(id).orElseThrow();
+        u.getListSportNivPratique().size(); // force le chargement
+        return u;
+    }
+
+    public void save(Utilisateur user) {
+        utilisateurRepository.save(user);
     }
 }

@@ -372,11 +372,37 @@ class ActiviteServiceTest {
     @Test
     void testGetActivitesByUtilisateur() {
         Utilisateur user = mock(Utilisateur.class);
+        when(user.getId()).thenReturn(1L);
         Activite a1 = new Activite();
-        when(activiteRepository.findByUtilisateur(user)).thenReturn(Arrays.asList(a1));
+        when(activiteRepository.findByUtilisateurIdOrderByDateDesc(1L)).thenReturn(Arrays.asList(a1));
         List<Activite> activites = activiteService.getActivitesByUtilisateur(user);
         assertEquals(1, activites.size());
-        verify(activiteRepository).findByUtilisateur(user);
+        verify(activiteRepository).findByUtilisateurIdOrderByDateDesc(1L);
+    }
+
+    @Test
+    void testGetStatsActivites_calculeCorrectementLesAggregats() {
+        // Given
+        Activite a1 = new Activite();
+        a1.setDuree(30);
+        a1.setDistance(5.0);
+        a1.setCaloriesConsommees(300);
+
+        Activite a2 = new Activite();
+        a2.setDuree(60);
+        a2.setDistance(10.0);
+        a2.setCaloriesConsommees(700);
+
+        List<Activite> list = Arrays.asList(a1, a2);
+
+        // When
+        Map<String, Object> stats = activiteService.getStatsActivites(list);
+
+        // Then
+        assertEquals(2, stats.get("count"));
+        assertEquals(90.0, stats.get("totalDuree"));
+        assertEquals(15.0, stats.get("totalDistance"));
+        assertEquals(1000, stats.get("totalCalories"));
     }
 
     // ─────────────────── Méthodes utilitaires ────────────────────────────────

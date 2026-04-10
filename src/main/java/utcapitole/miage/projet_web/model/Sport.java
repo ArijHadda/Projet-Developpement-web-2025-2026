@@ -10,32 +10,34 @@ public class Sport {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "idSport")
+    @Column(name = "id_sport")
     private Long id;
-
+  
     @NotBlank(message = "Le nom du sport est obligatoire")
-    @Column(name = "nomSport", nullable = false)
+    //@Column(name = "nomSport", nullable = false)
+    @Column(name = "nom_sport", nullable = false)
     private String nom;
 
     @NotBlank(message = "Le type de sport est obligatoire")
-    @Column(name = "typeSport")
+    //@Column(name = "typeSport")
+    @Column(name = "type_sport")
     private String type;
 
     @PositiveOrZero(message = "L'intensité de base ne peut pas être négative")
     @Column(name = "intensiteBase")
-    private double intensiteBase;
+    private Double intensiteBase;
 
     @PositiveOrZero(message = "Le coefficient d'intensité ne peut pas être négatif")
     @Column(name = "coeffIntensite")
-    private double coeffIntensite;
+    private Double coeffIntensite;
 
     @Column(name = "estBaseSurVitesse")
-    private boolean estBaseSurVitesse;
+    private Boolean estBaseSurVitesse;
 
     // Constructeurs
     public Sport() {}
 
-    public Sport(String nom, String type, double intensiteBase, double coeffIntensite, boolean estBaseSurVitesse) {
+    public Sport(String nom, String type, Double intensiteBase, Double coeffIntensite, Boolean estBaseSurVitesse) {
         this.nom = nom;
         this.type = type;
         this.intensiteBase = intensiteBase;
@@ -64,29 +66,30 @@ public class Sport {
         this.type = type;
     }
 
-    public double getIntensiteBase() {
+    public Double getIntensiteBase() {
         return intensiteBase;
     }
 
-    public void setIntensiteBase(double intensiteBase) {
+    public void setIntensiteBase(Double intensiteBase) {
         this.intensiteBase = intensiteBase;
     }
 
-    public double getCoeffIntensite() {
+    public Double getCoeffIntensite() {
         return coeffIntensite;
     }
 
-    public void setCoeffIntensite(double coeffIntensite) {
+    public void setCoeffIntensite(Double coeffIntensite) {
         this.coeffIntensite = coeffIntensite;
     }
 
-    public boolean isEstBaseSurVitesse() {
+   /* public Boolean isEstBaseSurVitesse() {
         return estBaseSurVitesse;
-    }
+    }*/
 
-    public void setEstBaseSurVitesse(boolean estBaseSurVitesse) {
+    public void setEstBaseSurVitesse(Boolean estBaseSurVitesse) {
         this.estBaseSurVitesse = estBaseSurVitesse;
     }
+
 
     // toString (utile pour debug)
     @Override
@@ -99,6 +102,10 @@ public class Sport {
                 ", coeffIntensite=" + coeffIntensite +
                 ", estBaseSurVitesse=" + estBaseSurVitesse +
                 '}';
+    }
+
+    public Boolean getEstBaseSurVitesse() {
+        return estBaseSurVitesse;
     }
 }
 

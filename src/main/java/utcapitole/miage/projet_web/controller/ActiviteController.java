@@ -1,5 +1,8 @@
 package utcapitole.miage.projet_web.controller;
 
+import java.util.List;
+
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,12 +24,16 @@ public class ActiviteController {
     @Autowired
     private SportRepository sportRepository;
 
+    @Autowired
+    private UtilisateurService utilisateurService;
+
     @GetMapping("/add-activite")
     public String showAddActiviteForm(Model model, jakarta.servlet.http.HttpSession session) {
-        Utilisateur user = (Utilisateur) session.getAttribute("loggedInUser");
-        if (user == null) {
+        Utilisateur userSession = (Utilisateur) session.getAttribute("loggedInUser");
+        if (userSession == null) {
             return "redirect:/user/login";
         }
+        Utilisateur user = utilisateurService.getUtilisateurAvecSports(userSession.getId());
         model.addAttribute("activite", new Activite());
         model.addAttribute("sports", sportRepository.findAll());
         model.addAttribute("user", user);
@@ -52,7 +59,9 @@ public class ActiviteController {
             return "redirect:/user/login";
         }
         Utilisateur user = (Utilisateur) session.getAttribute("loggedInUser");
-        model.addAttribute("activites", activiteService.getActivitesByUtilisateur(user));
+        List<Activite> activites = activiteService.getActivitesByUtilisateur(user);
+        model.addAttribute("activites", activites);
+        model.addAttribute("stats", activiteService.getStatsActivites(activites));
         return "activiteList";
     }
     

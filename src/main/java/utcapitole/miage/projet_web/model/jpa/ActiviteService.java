@@ -1,5 +1,6 @@
 package utcapitole.miage.projet_web.model.jpa;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,8 +74,8 @@ public class ActiviteService {
         
         double met = 4.0; // Valeur par défaut
 
-        if (sport != null) {
-            if (sport.isEstBaseSurVitesse()) {
+       /* if (sport != null) {
+            if (Boolean.TRUE.equals(sport.getEstBaseSurVitesse())) {
                 double distance = activite.getDistance();
                 double speedKmH = (durationHours > 0) ? (distance / durationHours) : 0;
                 met = sport.getIntensiteBase() + sport.getCoeffIntensite() * speedKmH;
@@ -83,7 +84,24 @@ public class ActiviteService {
                 int niveau = (activite.getNiveauIntensite() > 0) ? activite.getNiveauIntensite() : 3;
                 met = sport.getIntensiteBase() + sport.getCoeffIntensite() * niveau;
             }
-        } else {
+        }
+        */
+        if (sport != null) {
+
+            double intensiteBase = (sport.getIntensiteBase() != null) ? sport.getIntensiteBase() : 0.0;
+            double coeff = (sport.getCoeffIntensite() != null) ? sport.getCoeffIntensite() : 0.0;
+
+            if (Boolean.TRUE.equals(sport.getEstBaseSurVitesse())) {
+                double distance = activite.getDistance();
+                double speedKmH = (durationHours > 0) ? (distance / durationHours) : 0;
+                met = intensiteBase + coeff * speedKmH;
+            } else {
+                int niveau = (activite.getNiveauIntensite() > 0) ? activite.getNiveauIntensite() : 3;
+                met = intensiteBase + coeff * niveau;
+            }
+        }
+        else {
+
             // Logique de repli minimaliste si le Sport n'est pas trouvé
             String type = (activite.getNom() != null) ? activite.getNom() : "Autre";
             if (type.equals("Course")) met = 8.0;
@@ -116,6 +134,27 @@ public class ActiviteService {
     }
 
     public List<Activite> getActivitesByUtilisateur(Utilisateur user) {
-        return activiteRepository.findByUtilisateur(user);
+        return activiteRepository.findByUtilisateurIdOrderByDateDesc(user.getId());
+    }
+
+    public Map<String, Object> getStatsActivites(List<Activite> activites) {
+        Map<String, Object> stats = new HashMap<>();
+        int totalActivites = activites.size();
+        double totalDuree = 0;
+        double totalDistance = 0;
+        int totalCalories = 0;
+
+        for (Activite a : activites) {
+            totalDuree += a.getDuree();
+            totalDistance += a.getDistance();
+            totalCalories += a.getCaloriesConsommees();
+        }
+
+        stats.put("count", totalActivites);
+        stats.put("totalDuree", totalDuree);
+        stats.put("totalDistance", totalDistance);
+        stats.put("totalCalories", totalCalories);
+        
+        return stats;
     }
 }

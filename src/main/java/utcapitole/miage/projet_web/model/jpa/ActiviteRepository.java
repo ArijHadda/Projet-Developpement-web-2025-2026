@@ -33,4 +33,8 @@ public interface ActiviteRepository extends JpaRepository<Activite, Long> {
             @Param("dateFin") LocalDate dateFin
     );
 
+    boolean existsByUtilisateurIdAndDistanceGreaterThanEqual(Long utilisateurId, double distance);
+
+    List<Activite> findByUtilisateurId(Long utilisateurId);
+
 }

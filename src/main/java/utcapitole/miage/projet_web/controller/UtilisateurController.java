@@ -6,10 +6,20 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import utcapitole.miage.projet_web.model.NiveauPratique;
+import utcapitole.miage.projet_web.model.Sport;
+import utcapitole.miage.projet_web.model.SportNiveauPratique;
 import utcapitole.miage.projet_web.model.Utilisateur;
+import utcapitole.miage.projet_web.model.jpa.SportNiveauPratiqueService;
+import utcapitole.miage.projet_web.model.jpa.SportService;
+import utcapitole.miage.projet_web.model.Activite;
+import utcapitole.miage.projet_web.model.jpa.BadgeAttributionService;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
+import java.time.LocalDate;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Controller
@@ -17,9 +27,16 @@ import java.util.Optional;
 public class UtilisateurController {
     @Autowired
     private UtilisateurService utilisateurService;
+    @Autowired
+    private SportService sportService;
+    @Autowired
+    private SportNiveauPratiqueService sportNiveauPratiqueService;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private BadgeAttributionService badgeAttributionService;
 
     @GetMapping("/login")
     public String showLoginForm() {
@@ -35,7 +52,6 @@ public class UtilisateurController {
         Optional<Utilisateur> userOpt = utilisateurService.findByMail(email);
 
         if (userOpt.isPresent() && passwordEncoder.matches(password, userOpt.get().getMdp())) {
-            System.out.println("coucou");
             session.setAttribute("loggedInUser", userOpt.get());
 
             return "redirect:/user/profile/" + userOpt.get().getId();
@@ -69,14 +85,20 @@ public class UtilisateurController {
         if (loggedInUser == null) {
             return "redirect:/user/login";
         }
-
-        Optional<Utilisateur> userOpt = utilisateurService.findById(IdU);
+        Utilisateur user = utilisateurService.getUtilisateurAvecSports(loggedInUser.getId());
+        if (user == null) {
+            return "redirect:/user/login";
+        }
+        model.addAttribute("userProfile",user);
+        return "profile";
+        /*Optional<Utilisateur> userOpt = utilisateurService.findByIdU(IdU);
         if (userOpt.isPresent()) {
             model.addAttribute("userProfile", userOpt.get());
             return "profile";
         } else {
             return "redirect:/user/login";
-        }
+        }*/
+
     }
 
     @PostMapping("/profile/update/{IdU}")
@@ -91,7 +113,7 @@ public class UtilisateurController {
         return "redirect:/user/profile/" + currentUser.getId();
     }
 
-    @GetMapping("/profile/update/{IdU}")
+    /*@GetMapping("/profile/update/{IdU}")
     public String updateProfile(@PathVariable Long IdU, HttpSession session, Model model){
         Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
         if (loggedInUser == null) {
@@ -106,6 +128,19 @@ public class UtilisateurController {
             return "redirect:/user/login";
         }
 
+    }*/
+    @GetMapping("/profile/update/{IdU}")
+    public String updateProfile(@PathVariable Long IdU, HttpSession session, Model model){
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            return "redirect:/user/login";
+        }
+
+        // Charger l'utilisateur AVEC ses sports
+        Utilisateur user = utilisateurService.getUtilisateurAvecSports(IdU);
+        model.addAttribute("userUpdate", user);
+
+        return "update";
     }
 
     // changer mot de passe
@@ -163,7 +198,7 @@ public class UtilisateurController {
     }
 
     @GetMapping("/profile/voirUtilisateur")
-    public String VoirListUtilisateur(Model model, HttpSession session){
+    public String voirListUtilisateur(Model model, HttpSession session){
         Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
         if (loggedInUser == null) {
             return "redirect:/user/login";
@@ -172,5 +207,87 @@ public class UtilisateurController {
         model.addAttribute("utiliste", listU);
         return "redirect:/user/ami/chercher";
     }
+
+    @PostMapping("/admin/users/{idUtilisateur}/activites")
+    public String enregistrerActiviteEtAttribuerBadges(@PathVariable Long idUtilisateur,
+                                                        @RequestParam String type,
+                                                        @RequestParam LocalDate date,
+                                                        @RequestParam int duree,
+                                                        @RequestParam double distance,
+                                                        HttpSession session) {
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            return "redirect:/user/login";
+        }
+
+        Activite activite = new Activite();
+        activite.setNom(type);
+        activite.setDate(date);
+        activite.setDuree(duree);
+        activite.setDistance(distance);
+
+        List<String> badgesAttribues = badgeAttributionService.enregistrerActiviteEtAttribuerBadges(idUtilisateur, activite);
+        boolean badgeAttribue = !badgesAttribues.isEmpty();
+
+        return "redirect:/user/profile/" + idUtilisateur + (badgeAttribue ? "?badge=attribue" : "");
+    }
+
+    @PostMapping("/admin/users/{idUtilisateur}/badges/auto")
+    public String attribuerBadgesAutomatiques(@PathVariable Long idUtilisateur,
+                                              HttpSession session) {
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            return "redirect:/user/login";
+        }
+
+        badgeAttributionService.attribuerBadgesAutomatiques(idUtilisateur);
+        return "redirect:/user/profile/" + idUtilisateur;
+    }
+    @GetMapping("/profile/ajouterNivPratique")
+    public String ajouterNivPratique(Model model, HttpSession session){
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            return "redirect:/user/login";
+        }
+        model.addAttribute("sports", sportService.getAll());
+        model.addAttribute("niveaux", NiveauPratique.values());
+        return "setSportNivPratique";
+    }
+    @PostMapping("/nivPratique")
+    public String ajouterNiveauratique(Model model, HttpSession session, @RequestParam Long sport,@RequestParam NiveauPratique niveau){
+        Utilisateur sessionUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (sessionUser == null) {
+            return "redirect:/user/login";
+        }
+        Utilisateur user = utilisateurService.getUtilisateurAvecSports(sessionUser.getId());
+        if (user == null){ return "redirect:/user/login";}
+        Sport sports = sportService.getById(sport);
+        Optional<SportNiveauPratique> existing = sportNiveauPratiqueService.findByUtilisateurIdAndSportId(user.getId(),sport);
+        if(existing.isPresent()){
+            SportNiveauPratique sn = existing.get();
+            sn.setNiveau(niveau);
+            sportNiveauPratiqueService.save(sn);
+        }
+        else{
+            SportNiveauPratique sn = new SportNiveauPratique();
+            sn.setSport(sports);
+            sn.setNiveau(niveau);
+            sn.setUtilisateur(user);
+            user.getListSportNivPratique().add(sn);
+            utilisateurService.save(user);
+        }
+        return "redirect:/user/profile/"+ user.getId();
+    }
+    @GetMapping("/deleteSportNiveau/{idSn}")
+    public String deleteSportNiveau(@PathVariable Long idSn, HttpSession session){
+
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            return "redirect:/user/login";
+        }
+        sportNiveauPratiqueService.deleteById(idSn);
+        return "redirect:/user/profile/" + loggedInUser.getId();
+    }
+
 
 }
