@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifier le Challenge</title>
+</head>
+<body>
+<h2>✏️ Modifier le Challenge</h2>
+
+<form th:action="@{/challenge/{id}/edit(id=${challenge.id})}" method="post" style="max-width: 400px; display: flex; flex-direction: column; gap: 15px;">
+
+    <div>
+        <label for="titre">Nouveau Titre :</label>
+        <input type="text" id="titre" name="titre" th:value="${challenge.titre}" required style="width: 100%; padding: 5px;"/>
+    </div>
+
+    <div style="background-color: #f9f9f9; padding: 10px; border: 1px dashed #ccc;">
+        <p style="margin: 0; color: #666; font-size: 0.9em;">⚠️ Les paramètres suivants ne peuvent pas être modifiés une fois le challenge créé, afin de garantir l'équité pour tous les participants.</p>
+        <p><strong>Sport ciblé :</strong> <span th:text="${challenge.sportCible}"></span></p>
+        <p><strong>Date de début :</strong> <span th:text="${challenge.dateDebut}"></span></p>
+        <p><strong>Date de fin :</strong> <span th:text="${challenge.dateFin}"></span></p>
+    </div>
+
+    <div>
+        <button type="submit" style="background-color: #0275d8; color: white; padding: 10px; width: 100%;">💾 Sauvegarder les modifications</button>
+    </div>
+</form>
+
+<br>
+<a th:href="@{/challenge/list}">
+    <button type="button">🔙 Annuler et Retour</button>
+</a>
+
+</body>
+</html>
