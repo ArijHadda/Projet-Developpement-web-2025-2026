@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 @Entity
-@Getter
-@Setter
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -58,6 +56,17 @@ public class Utilisateur {
     @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SportNiveauPratique> listSportNivPratique = new ArrayList<>();
 
+
+        @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL, orphanRemoval = true)
+        private List<Activite> activites = new ArrayList<>();
+
+        @ManyToMany(fetch = FetchType.EAGER)
+        @JoinTable(
+            name = "utilisateur_badges",
+            joinColumns = @JoinColumn(name = "IdU"),
+            inverseJoinColumns = @JoinColumn(name = "idBadge")
+        )
+        private List<Badge> badges = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -151,5 +160,29 @@ public class Utilisateur {
     public void addSportNiveau(Sport s, NiveauPratique niveau) {
         SportNiveauPratique sn = new SportNiveauPratique(s,niveau);
         this.listSportNivPratique.add(sn);
+    }
+    public List<Activite> getActivites() {
+        return activites;
+    }
+
+    public void setActivites(List<Activite> activites) {
+        this.activites = activites;
+    }
+
+    public List<Badge> getBadges() {
+        return badges;
+    }
+
+    public void setBadges(List<Badge> badges) {
+        this.badges = badges;
+    }
+    public void addAmi(Utilisateur nouveauAmi) {
+        if (this.amis == null) {
+            this.amis = new ArrayList<>();
+        }
+        if (!this.amis.contains(nouveauAmi)) {
+            this.amis.add(nouveauAmi);
+            nouveauAmi.getAmis().add(this);
+        }
     }
 }
