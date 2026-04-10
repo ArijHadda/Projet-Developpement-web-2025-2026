@@ -20,24 +20,20 @@ public class Objectif {
     @Column(name = "frequenceObj")
     private String frequence = "Mensuel";
 
-    // 预期运动时长 (可以是 0，代表不限制时长)
+    // La durée objective = 0 signifie qu'il n'y a pas d'objectif ou non prevue
     @PositiveOrZero(message = "La durée ne peut pas être négative")
     @Column(name = "dureeObj")
     private int duree;
 
-    // 预期运动距离 (可以是 0.0，代表不限制距离)
+    // pareille que durée, peut = 0
     @PositiveOrZero(message = "La distance ne peut pas être négative")
     @Column(name = "distanceObj")
     private double distance;
 
-    // 外键：属于哪个用户？
-    // ManyToOne: 多个 Objectif 属于 1 个 Utilisateur
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "idU", nullable = false)
     private Utilisateur utilisateur;
 
-    // 外键：目标是针对哪一项运动的？
-    // ManyToOne: 多个 Objectif 可以针对 1 个 Sport (比如很多人的目标都是跑步)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_sport", nullable = false)
     private Sport sport;

@@ -58,27 +58,22 @@
         const select = document.getElementById('sport');
         const selectedOption = select.options[select.selectedIndex];
 
-        // 如果用户还没选，或者选了默认的提示选项，就不做操作
         if (!selectedOption || !selectedOption.hasAttribute('data-is-speed')) {
             return;
         }
 
-        // 读取刚才绑定的 estBaseSurVitesse 的值
         const isSpeed = selectedOption.getAttribute('data-is-speed') === 'true';
         const distanceGroup = document.getElementById('distanceGroup');
         const distanceInput = document.getElementById('distance');
 
         if (isSpeed) {
-            // 如果是跑步等速度型运动，显示距离框
             distanceGroup.style.display = 'block';
         } else {
-            // 如果是健身等非速度型运动，隐藏距离框，并把值清零
             distanceGroup.style.display = 'none';
             distanceInput.value = 0;
         }
     }
 
-    // 页面加载完成后立刻执行一次（为了适配点击"修改"进入表单时的情况）
     window.onload = function() {
         toggleObjectifFields();
     };

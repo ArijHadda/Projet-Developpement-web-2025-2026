@@ -23,7 +23,6 @@ public class ObjectifService {
         List<Objectif> objectifs = objectifRepository.findByUtilisateur(user);
         List<ObjectifProgressDTO> resultList = new ArrayList<>();
 
-        // 获取当前月的月初和月末日期
         LocalDate debutMois = LocalDate.now().withDayOfMonth(1);
         LocalDate finMois = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
 
@@ -33,7 +32,6 @@ public class ObjectifService {
             double durActuelle = 0.0;
             double pctDur = 0.0;
 
-            // 1. 如果设定了距离，就算距离
             if (obj.getDistance() > 0) {
                 distActuelle = activiteRepository.calculerDistanceTotale(
                         user.getId(), obj.getSport().getId(), debutMois, finMois);
@@ -41,7 +39,6 @@ public class ObjectifService {
                 if (pctDist > 100) pctDist = 100;
             }
 
-            // 2. 如果设定了时长，就算时长 (注意：这里用的是独立的 if，不是 else if)
             if (obj.getDuree() > 0) {
                 Long dureeLong = activiteRepository.calculerDureeTotale(
                         user.getId(), obj.getSport().getId(), debutMois, finMois);
@@ -50,7 +47,6 @@ public class ObjectifService {
                 if (pctDur > 100) pctDur = 100;
             }
 
-            // 把算好的四个值一起塞进 DTO
             resultList.add(new ObjectifProgressDTO(obj, distActuelle, pctDist, durActuelle, pctDur));
         }
 
