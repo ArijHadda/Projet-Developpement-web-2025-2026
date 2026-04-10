@@ -74,8 +74,8 @@ public class ActiviteService {
         
         double met = 4.0; // Valeur par défaut
 
-        if (sport != null) {
-            if (sport.isEstBaseSurVitesse()) {
+       /* if (sport != null) {
+            if (Boolean.TRUE.equals(sport.getEstBaseSurVitesse())) {
                 double distance = activite.getDistance();
                 double speedKmH = (durationHours > 0) ? (distance / durationHours) : 0;
                 met = sport.getIntensiteBase() + sport.getCoeffIntensite() * speedKmH;
@@ -84,7 +84,24 @@ public class ActiviteService {
                 int niveau = (activite.getNiveauIntensite() > 0) ? activite.getNiveauIntensite() : 3;
                 met = sport.getIntensiteBase() + sport.getCoeffIntensite() * niveau;
             }
-        } else {
+        }
+        */
+        if (sport != null) {
+
+            double intensiteBase = (sport.getIntensiteBase() != null) ? sport.getIntensiteBase() : 0.0;
+            double coeff = (sport.getCoeffIntensite() != null) ? sport.getCoeffIntensite() : 0.0;
+
+            if (Boolean.TRUE.equals(sport.getEstBaseSurVitesse())) {
+                double distance = activite.getDistance();
+                double speedKmH = (durationHours > 0) ? (distance / durationHours) : 0;
+                met = intensiteBase + coeff * speedKmH;
+            } else {
+                int niveau = (activite.getNiveauIntensite() > 0) ? activite.getNiveauIntensite() : 3;
+                met = intensiteBase + coeff * niveau;
+            }
+        }
+        else {
+
             // Logique de repli minimaliste si le Sport n'est pas trouvé
             String type = (activite.getNom() != null) ? activite.getNom() : "Autre";
             if (type.equals("Course")) met = 8.0;

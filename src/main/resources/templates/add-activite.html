@@ -14,7 +14,7 @@
             <option th:each="sport : ${sports}"
                     th:value="${sport.nom}"
                     th:text="${sport.nom}"
-                    th:attr="data-is-speed=${sport.estBaseSurVitesse}">
+                    th:attr="data-is-speed=${sport.estBaseSurVitesse ?: false}">
             </option>
         </select>
         <br><br>
