@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Mes Activités</title>
+</head>
+<body>
+    <h1>Liste des activités</h1>
+    
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Activité</th>
+                <th>Date</th>
+                <th>Durée (min)</th>
+                <th>Distance (km)</th>
+                <th>Note (/10)</th>
+                <th>Calories (kcal)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="activite : ${activites}">
+                <td th:text="${activite.nom}"></td>
+                <td th:text="${activite.date}"></td>
+                <td th:text="${activite.duree}"></td>
+                <td th:text="${activite.distance}"></td>
+                <td th:text="${activite.note}"></td>
+                <td th:text="${activite.caloriesConsommees}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(activites)}">
+                <td colspan="6">Aucune activité enregistrée.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <br>
+    <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}">
+        <button type="button">Retour au profil</button>
+    </a>
+</body>
+</html>

@@ -6,8 +6,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Utilisateur;
+import utcapitole.miage.projet_web.model.jpa.BadgeAttributionService;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
+import java.time.LocalDate;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +24,9 @@ public class UtilisateurController {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
+    @Autowired
+    private BadgeAttributionService badgeAttributionService;
+
     @GetMapping("/login")
     public String showLoginForm() {
         return "login";
@@ -32,10 +38,9 @@ public class UtilisateurController {
                                HttpSession session,
                                Model model) {
 
-        Optional<Utilisateur> userOpt = utilisateurService.findByMailU(email);
+        Optional<Utilisateur> userOpt = utilisateurService.findByMail(email);
 
         if (userOpt.isPresent() && passwordEncoder.matches(password, userOpt.get().getMdp())) {
-            System.out.println("coucou");
             session.setAttribute("loggedInUser", userOpt.get());
 
             return "redirect:/user/profile/" + userOpt.get().getId();
@@ -53,7 +58,7 @@ public class UtilisateurController {
 
     @PostMapping("/register")
     public String processRegister(@ModelAttribute Utilisateur utilisateur, Model model) {
-        if (utilisateurService.findByMailU(utilisateur.getMail()).isPresent()) {
+        if (utilisateurService.findByMail(utilisateur.getMail()).isPresent()) {
             model.addAttribute("error", "Cet email est déjà utilisé !");
             return "register";
         }
@@ -70,7 +75,7 @@ public class UtilisateurController {
             return "redirect:/user/login";
         }
 
-        Optional<Utilisateur> userOpt = utilisateurService.findByIdU(IdU);
+        Optional<Utilisateur> userOpt = utilisateurService.findById(IdU);
         if (userOpt.isPresent()) {
             model.addAttribute("userProfile", userOpt.get());
             return "profile";
@@ -98,7 +103,7 @@ public class UtilisateurController {
             return "redirect:/user/login";
         }
 
-        Optional<Utilisateur> userOpt = utilisateurService.findByIdU(IdU);
+        Optional<Utilisateur> userOpt = utilisateurService.findById(IdU);
         if (userOpt.isPresent()) {
             model.addAttribute("userUpdate", userOpt.get());
             return "update";
@@ -168,9 +173,45 @@ public class UtilisateurController {
         if (loggedInUser == null) {
             return "redirect:/user/login";
         }
-        List<Utilisateur> listU = utilisateurService.getAll();
+        List<Utilisateur> listU = utilisateurService.findAll();
         model.addAttribute("utiliste", listU);
-        return "usersList";
+        return "redirect:/user/ami/chercher";
+    }
+
+    @PostMapping("/admin/users/{idUtilisateur}/activites")
+    public String enregistrerActiviteEtAttribuerBadges(@PathVariable Long idUtilisateur,
+                                                        @RequestParam String type,
+                                                        @RequestParam LocalDate date,
+                                                        @RequestParam int duree,
+                                                        @RequestParam double distance,
+                                                        HttpSession session) {
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            return "redirect:/user/login";
+        }
+
+        Activite activite = new Activite();
+        activite.setNom(type);
+        activite.setDate(date);
+        activite.setDuree(duree);
+        activite.setDistance(distance);
+
+        List<String> badgesAttribues = badgeAttributionService.enregistrerActiviteEtAttribuerBadges(idUtilisateur, activite);
+        boolean badgeAttribue = !badgesAttribues.isEmpty();
+
+        return "redirect:/user/profile/" + idUtilisateur + (badgeAttribue ? "?badge=attribue" : "");
+    }
+
+    @PostMapping("/admin/users/{idUtilisateur}/badges/auto")
+    public String attribuerBadgesAutomatiques(@PathVariable Long idUtilisateur,
+                                              HttpSession session) {
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            return "redirect:/user/login";
+        }
+
+        badgeAttributionService.attribuerBadgesAutomatiques(idUtilisateur);
+        return "redirect:/user/profile/" + idUtilisateur;
     }
 
 }

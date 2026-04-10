@@ -7,22 +7,47 @@
     <link rel="stylesheet" th:href="@{/css/sport.css}">
 </head>
 <body>
+<h2>Chercher des amis</h2>
+<div th:if="${success}" style="background-color: #d4edda; color: #155724; padding: 10px; margin-bottom: 15px; border: 1px solid #c3e6cb; border-radius: 4px;">
+    <span th:text="${success}"></span>
+</div>
+
+<div th:if="${error}" style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border: 1px solid #f5c6cb; border-radius: 4px;">
+    <span th:text="${error}"></span>
+</div>
+<a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}">← Retour au profil</a>
+<hr/>
+<form th:action="@{/user/ami/chercher}" method="get" style="margin-bottom: 20px;">
+    <input type="text" name="motCle" th:value="${motCle}" placeholder="Rechercher par nom ou prénom..." style="padding: 5px; width: 250px;"/>
+    <button type="submit" style="padding: 5px 10px;">🔍 Chercher</button>
+    <a th:if="${motCle != null and !motCle.isEmpty()}" th:href="@{/user/ami/chercher}" style="margin-left: 10px; color: red; text-decoration: none;">✖ Annuler</a>
+</form>
 <table>
     <tr>
-        <th>Nom</th>
-        <th>Prénom</th>
-        <th>Mail</th>
-        <th>Sexe</th>
-        <th>Age</th>
-        <th>Niveau de pratique</th>
+        <td>Nom</td>
+        <td>Prenom</td>
+        <td>Mail</td>
+        <td>Sexe</td>
+        <td>Age</td>
+<!--        <td>Niveau de pratique</td>-->
     </tr>
-    <tr th:each="u : ${utiliste}">
+    <tr th:each="u : ${utiliste}" th:if="${u.id != session.loggedInUser.id}">
         <td th:text="${u.nom}"></td>
         <td th:text="${u.prenom}"></td>
         <td th:text="${u.mail}"></td>
         <td th:text="${u.sexe}"></td>
         <td th:text="${u.age}"></td>
-        <td th:text="${u.niveauPratique}"></td>
+<!--        <td th:text="${u.niveauPratique}"></td>-->
+        <td>
+            <span th:if="${#lists.contains(mesAmis, u)}" style="color: green;">✅ Déjà ami</span>
+
+            <span th:if="${!#lists.contains(mesAmis, u) && #lists.contains(waitingIds, u.id)}" style="color: orange;">⏳ En attente...</span>
+
+            <form th:if="${!#lists.contains(mesAmis, u) && !#lists.contains(waitingIds, u.id)}"
+                  th:action="@{/user/ami/demander/{id}(id=${u.id})}" method="post">
+                <button type="submit">➕ Ajouter</button>
+            </form>
+        </td>
     </tr>
 </table>
 

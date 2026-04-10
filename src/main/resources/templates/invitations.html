@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Mes Invitations</title>
+    <style>
+        .request-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-accept { background-color: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        .btn-refuse { background-color: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-left: 10px; }
+    </style>
+</head>
+<body>
+<h2>Demandes d'ami en attente</h2>
+<div th:if="${accepter}" style="background-color: #d4edda; color: #155724; padding: 10px; margin-bottom: 15px; border: 1px solid #c3e6cb; border-radius: 4px;">
+    <span th:text="${accepter}"></span>
+</div>
+<div th:if="${refuser}" style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border: 1px solid #f5c6cb; border-radius: 4px;">
+    <span th:text="${refuser}"></span>
+</div>
+<div th:if="${error}" style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border: 1px solid #f5c6cb; border-radius: 4px;">
+    <span th:text="${error}"></span>
+</div>
+<a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}">← Retour au profil</a>
+<hr/>
+
+<div th:if="${#lists.isEmpty(invitations)}">
+    <p>Vous n'avez aucune invitation pour le moment.</p>
+</div>
+
+<div th:each="invit : ${invitations}" class="request-card">
+    <div>
+        <strong th:text="${invit.expediteur.prenom + ' ' + invit.expediteur.nom}"></strong>
+        <span> vous a envoyé une demande d'ami.</span>
+    </div>
+
+    <div style="display: flex;">
+        <form th:action="@{/user/ami/accepter/{demandeId}(demandeId=${invit.id})}" method="post">
+            <button type="submit" class="btn-accept">✔ Accepter</button>
+        </form>
+        <form th:action="@{/user/ami/refuser/{demandeId}(demandeId=${invit.id})}" method="post">
+            <button type="submit" class="btn-refuse">✖ Refuser</button>
+        </form>
+
+    </div>
+</div>
+</body>
+</html>
