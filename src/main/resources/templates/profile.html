@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -6,14 +6,15 @@
 </head>
 <body>
 <h2>Mon Profil</h2>
+<p th:if="${param.badge != null}" style="color: green; font-weight: bold;">Un nouveau badge a ete attribue automatiquement.</p>
 <a th:href="@{/user/profile/update/{IdU}(IdU=${userProfile.id})}">
-    <button type="button">✏️ Modifier mes infos</button>
+    <button type="button">Modifier mes infos</button>
 </a>
 <a th:href="@{/user/profile/update-password/{IdU}(IdU=${userProfile.id})}">
-    <button type="button">🔒 Modifier le mot de passe</button>
+    <button type="button">Modifier le mot de passe</button>
 </a>
-<a th:href="@{/user/profile/voirUtilisateur}">
-    <button type="button">Voir liste des utilisateurs</button>
+<a th:href="@{/user/ami/chercher}">
+    <button type="button">🔍 Chercher des amis</button>
 </a>
 <a th:href="@{/user/profile/ajouterNivPratique}">
     <button type="button">Ajouter niv pratique</button>
@@ -40,10 +41,50 @@
 </div>
 
 <hr/>
+<h3>Mes badges</h3>
+<p th:if="${#lists.isEmpty(userProfile.badges)}">Aucun badge pour le moment.</p>
+<ul th:unless="${#lists.isEmpty(userProfile.badges)}">
+    <li th:each="badge : ${userProfile.badges}" th:text="${badge.entitule}"></li>
+</ul>
 
+<br>
+<hr/>
+
+<div style="margin-top: 10px;">
+    <a th:href="@{/user/ami/invitations}">
+        <button type="button" style="background-color: #f0ad4e; color: white; border: none; padding: 10px;">
+            📩 Voir mes invitations (Demandes d'amis)
+        </button>
+    </a>
+</div>
+<h3>👥 Mes Amis (<span th:text="${#lists.size(userProfile.amis)}">0</span>)</h3>
+
+<br>
+<hr/>
+<div th:if="${#lists.isEmpty(userProfile.amis)}">
+    <p>Vous n'avez pas encore d'amis. <a th:href="@{/user/ami/chercher}">Chercher des amis</a></p>
+</div>
+<ul>
+    <li th:each="ami : ${userProfile.amis}">
+        <strong th:text="${ami.prenom} + ' ' + ${ami.nom}"></strong>
+        (<span th:text="${ami.mail}"></span>)
+        <a th:href="@{/user/profile/{id}(id=${ami.id})}">Voir le profil</a>
+    </li>
+</ul>
 <div>
     <a th:href="@{/user/logout}">
         <button type="button">Se déconnecter</button>
+    </a>
+</div>
+<br>
+<div>
+    <a th:href="@{/activite/add-activite}">
+        <button type="button">Ajouter une activité</button>
+    </a>
+</div>
+<div>
+    <a th:href="@{/activite/list}">
+        <button type="button">Voir mes activités</button>
     </a>
 </div>
 

@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import utcapitole.miage.projet_web.model.DemandeAmi;
 import utcapitole.miage.projet_web.model.Utilisateur;
 
 import java.util.List;
@@ -15,11 +16,15 @@ public class UtilisateurService {
     private final UtilisateurRepository utilisateurRepository;
     @Autowired
     private final BCryptPasswordEncoder passwordEncoder;
+    @Autowired
+    private final DemandeAmiRepository demandeAmiRepository;
 
-    public UtilisateurService(UtilisateurRepository utilisateurRepository, BCryptPasswordEncoder passwordEncoder) {
+    public UtilisateurService(UtilisateurRepository utilisateurRepository, BCryptPasswordEncoder passwordEncoder, DemandeAmiRepository demandeAmiRepository) {
         this.utilisateurRepository = utilisateurRepository;
         this.passwordEncoder = passwordEncoder;
+        this.demandeAmiRepository = demandeAmiRepository;
     }
+
 
     public Utilisateur registerUser(Utilisateur utilisateur) {
         String encodedPassword = passwordEncoder.encode(utilisateur.getMdp());
@@ -62,15 +67,63 @@ public class UtilisateurService {
         utilisateurRepository.save(user);
     }
 
-    public Optional<Utilisateur> findByIdU(Long IdU){
+    public void envoyerDemande(Long expId, Long destId) {
+        Utilisateur exp = utilisateurRepository.findById(expId).orElseThrow();
+        Utilisateur dest = utilisateurRepository.findById(destId).orElseThrow();
+
+        if (exp.getAmis().contains(dest)) {
+            throw new IllegalArgumentException("Vous êtes déjà amis !");
+        }
+
+        if (demandeAmiRepository.existsByExpediteurAndDestinataireAndStatut(exp, dest, "PENDING")) {
+            throw new IllegalArgumentException("Une demande est déjà en cours.");
+        }
+
+        //vrifier s'il y a deja une demande de A a B quand B veut ajouter A
+        // si oui, A et B va devenir amis directement apres B click "Ajouter ami" de A
+        Optional<DemandeAmi> demandeInverse = demandeAmiRepository
+                .findByExpediteurAndDestinataireAndStatut(dest, exp, "PENDING");
+
+        if (demandeInverse.isPresent()) {
+            this.accepterDemande(demandeInverse.get().getId());
+            return;
+        }
+
+        DemandeAmi demande = new DemandeAmi();
+        demande.setExpediteur(exp);
+        demande.setDestinataire(dest);
+        demande.setStatut("PENDING");
+        demandeAmiRepository.save(demande);
+    }
+
+    // @jakarta.transaction.Transactional soit toutes les actions de BD succes, soit annuler tout
+    @jakarta.transaction.Transactional
+    public void accepterDemande(Long demandeId) {
+        DemandeAmi demande = demandeAmiRepository.findById(demandeId).orElseThrow();
+        Utilisateur exp = demande.getExpediteur();
+        Utilisateur dest = demande.getDestinataire();
+
+        exp.addAmi(dest);
+
+        utilisateurRepository.save(exp);
+        utilisateurRepository.save(dest);
+
+        demandeAmiRepository.delete(demande);
+    }
+
+    public void refuserDemande(Long demandeId) {
+        demandeAmiRepository.deleteById(demandeId);
+    }
+
+    public Optional<Utilisateur> findById(Long IdU){
         return utilisateurRepository.findById(IdU);
     }
 
-    public Optional<Utilisateur> findByMailU(String mailU){
+    public Optional<Utilisateur> findByMail(String mailU){
         return utilisateurRepository.findByMail(mailU);
     }
 
-    public Optional<Utilisateur> findByNomU(String nomU){
+    public Optional<Utilisateur> findByNom(String nomU){
         return utilisateurRepository.findByNom(nomU);
     }
 
@@ -78,9 +131,8 @@ public class UtilisateurService {
         return utilisateurRepository.findAll();
     }
 
-
-    public List<Utilisateur> getAll() {
-        return utilisateurRepository.findAll();
+    public List<Utilisateur> rechercherParNomOuPrenom(String motCle) {
+        return utilisateurRepository.findByNomContainingIgnoreCaseOrPrenomContainingIgnoreCase(motCle, motCle);
     }
 
     @Transactional
