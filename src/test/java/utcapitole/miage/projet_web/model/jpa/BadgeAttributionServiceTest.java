@@ -1,0 +1,113 @@
+package utcapitole.miage.projet_web.model.jpa;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import utcapitole.miage.projet_web.model.Activite;
+import utcapitole.miage.projet_web.model.Badge;
+import utcapitole.miage.projet_web.model.Utilisateur;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class BadgeAttributionServiceTest {
+
+    private static final Long USER_ID = 1L;
+
+    @Mock
+    private UtilisateurRepository utilisateurRepository;
+
+    @Mock
+    private ActiviteRepository activiteRepository;
+
+    @Mock
+    private BadgeRepository badgeRepository;
+
+    @InjectMocks
+    private BadgeAttributionService badgeAttributionService;
+
+    private Utilisateur utilisateur;
+
+    @BeforeEach
+    void setUp() {
+        utilisateur = new Utilisateur();
+        utilisateur.setId(USER_ID);
+        utilisateur.setBadges(new ArrayList<>());
+    }
+
+    @Test
+    void attribuerBadgesAutomatiquesAttribuePremier10Km() {
+        when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.of(utilisateur));
+        when(activiteRepository.existsByUtilisateurIdAndDistanceGreaterThanEqual(USER_ID, 10.0)).thenReturn(true);
+        when(badgeRepository.findByEntitule(BadgeAttributionService.BADGE_PREMIER_10KM)).thenReturn(Optional.empty());
+        when(badgeRepository.save(any(Badge.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        List<String> badgesAttribues = badgeAttributionService.attribuerBadgesAutomatiques(USER_ID);
+
+        assertEquals(1, badgesAttribues.size());
+        assertEquals(BadgeAttributionService.BADGE_PREMIER_10KM, badgesAttribues.get(0));
+        assertEquals(1, utilisateur.getBadges().size());
+        assertEquals(BadgeAttributionService.BADGE_PREMIER_10KM, utilisateur.getBadges().get(0).getEntitule());
+        verify(utilisateurRepository).save(utilisateur);
+    }
+
+    @Test
+    void attribuerBadgesAutomatiquesNAttribuePasSiPalierNonAtteint() {
+        when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.of(utilisateur));
+        when(activiteRepository.existsByUtilisateurIdAndDistanceGreaterThanEqual(USER_ID, 10.0)).thenReturn(false);
+
+        List<String> badgesAttribues = badgeAttributionService.attribuerBadgesAutomatiques(USER_ID);
+
+        assertTrue(badgesAttribues.isEmpty());
+        assertTrue(utilisateur.getBadges().isEmpty());
+        verify(utilisateurRepository, never()).save(any(Utilisateur.class));
+    }
+
+    @Test
+    void attribuerBadgesAutomatiquesNAttribuePasDeuxFoisLeMemeBadge() {
+        Badge dejaAttribue = new Badge(1L, BadgeAttributionService.BADGE_PREMIER_10KM);
+        utilisateur.setBadges(new ArrayList<>(List.of(dejaAttribue)));
+
+        when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.of(utilisateur));
+        when(activiteRepository.existsByUtilisateurIdAndDistanceGreaterThanEqual(USER_ID, 10.0)).thenReturn(true);
+
+        List<String> badgesAttribues = badgeAttributionService.attribuerBadgesAutomatiques(USER_ID);
+
+        assertTrue(badgesAttribues.isEmpty());
+        assertEquals(1, utilisateur.getBadges().size());
+        verify(utilisateurRepository, never()).save(any(Utilisateur.class));
+    }
+
+    @Test
+    void enregistrerActiviteEtAttribuerBadgesSauvegardeActiviteEtRetourneBadges() {
+        Activite activite = new Activite();
+        activite.setNom("Course");
+        activite.setDistance(10.2);
+
+        Badge badge = new Badge(2L, BadgeAttributionService.BADGE_PREMIER_10KM);
+
+        when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.of(utilisateur));
+        when(activiteRepository.save(activite)).thenReturn(activite);
+        when(activiteRepository.existsByUtilisateurIdAndDistanceGreaterThanEqual(USER_ID, 10.0)).thenReturn(true);
+        when(badgeRepository.findByEntitule(BadgeAttributionService.BADGE_PREMIER_10KM)).thenReturn(Optional.of(badge));
+
+        List<String> badgesAttribues = badgeAttributionService.enregistrerActiviteEtAttribuerBadges(USER_ID, activite);
+
+        assertEquals(1, badgesAttribues.size());
+        assertEquals(BadgeAttributionService.BADGE_PREMIER_10KM, badgesAttribues.get(0));
+        verify(activiteRepository).save(activite);
+        verify(utilisateurRepository).save(utilisateur);
+    }
+}

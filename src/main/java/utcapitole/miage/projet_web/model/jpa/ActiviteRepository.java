@@ -18,4 +18,9 @@ public interface ActiviteRepository extends JpaRepository<Activite, Long> {
 
     List<Activite> findByUtilisateur(Utilisateur user);
 
+    boolean existsByUtilisateurIdAndDistanceGreaterThanEqual(Long utilisateurId, double distance);
+
+    List<Activite> findByUtilisateurId(Long utilisateurId);
+
 }
+

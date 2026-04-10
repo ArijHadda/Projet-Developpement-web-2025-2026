@@ -29,6 +29,7 @@ public class ActiviteTest {
     private final int duree = 60;
     private final float distance = 10;
     private final int note = 5;
+    private final int niveauIntensiteTest = 3;
     private final int caloriesConsommeestest = 500;
 
     private Validator validator;
@@ -50,6 +51,7 @@ public class ActiviteTest {
         activite.setDuree(duree);
         activite.setDistance(distance);
         activite.setNote(note);
+        activite.setNiveauIntensite(niveauIntensiteTest);
         activite.setCaloriesConsommees(caloriesConsommeestest);
         assertAll(
             () -> assertEquals(1L, activite.getId()),
@@ -59,6 +61,7 @@ public class ActiviteTest {
             () -> assertEquals(60, activite.getDuree()),
             () -> assertEquals(10, activite.getDistance()),
             () -> assertEquals(5, activite.getNote()),
+            () -> assertEquals(3, activite.getNiveauIntensite()),
             () -> assertEquals(500, activite.getCaloriesConsommees())
         );
     }
@@ -66,15 +69,15 @@ public class ActiviteTest {
 
     @Test
     void testActiviteToString() {
-        Activite activite = new Activite(id, nom, date, conditionsMeteo, duree, distance, note, caloriesConsommeestest);
+        Activite activite = new Activite(id, nom, date, conditionsMeteo, duree, distance, note, niveauIntensiteTest, caloriesConsommeestest);
         assertEquals("Activite [id=" + id + ", nom=" + nom + ", date=" + date + ", conditionsMeteo=" + conditionsMeteo
-                + ", duree=" + duree + ", distance=" + distance + ", note=" + note + ", caloriesConsommees="
+                + ", duree=" + duree + ", distance=" + distance + ", note=" + note + ", niveauIntensite=" + niveauIntensiteTest + ", caloriesConsommees="
                 + caloriesConsommeestest + "]", activite.toString());
     }
 
     @Test
     void testActiviteConstructor() {
-        Activite activite = new Activite(id, nom, date, conditionsMeteo, duree, distance, note, caloriesConsommeestest);
+        Activite activite = new Activite(id, nom, date, conditionsMeteo, duree, distance, note, niveauIntensiteTest, caloriesConsommeestest);
         assertAll(
             () -> assertEquals(1L, activite.getId()),
             () -> assertEquals("Course", activite.getNom()),
@@ -83,6 +86,7 @@ public class ActiviteTest {
             () -> assertEquals(60, activite.getDuree()),
             () -> assertEquals(10, activite.getDistance()),
             () -> assertEquals(5, activite.getNote()),
+            () -> assertEquals(3, activite.getNiveauIntensite()),
             () -> assertEquals(500, activite.getCaloriesConsommees())
         );
     }
@@ -98,6 +102,7 @@ public class ActiviteTest {
             () -> assertEquals(0, activite.getDuree()),
             () -> assertEquals(0, activite.getDistance()),
             () -> assertEquals(0, activite.getNote()),
+            () -> assertEquals(0, activite.getNiveauIntensite()),
             () -> assertEquals(0, activite.getCaloriesConsommees())
         );
     }
@@ -121,14 +126,14 @@ public class ActiviteTest {
 
     @Test
     void testActiviteHashCode() {
-        Activite activite = new Activite(id, nom, date, conditionsMeteo, duree, distance, note, caloriesConsommeestest);
+        Activite activite = new Activite(id, nom, date, conditionsMeteo, duree, distance, note, niveauIntensiteTest, caloriesConsommeestest);
         assertEquals(activite.hashCode(), activite.hashCode());
     }
 
     // Tests pour #44 : Champ obligatoire manquant
     @Test
     void testNomObligatoire() {
-        Activite activite = new Activite(id, "", date, conditionsMeteo, duree, distance, note, caloriesConsommeestest);
+        Activite activite = new Activite(id, "", date, conditionsMeteo, duree, distance, note, niveauIntensiteTest, caloriesConsommeestest);
         Set<ConstraintViolation<Activite>> violations = validator.validate(activite);
         assertFalse(violations.isEmpty(), "Le nom doit comporter une erreur de validation (NotBlank)");
         
@@ -139,14 +144,14 @@ public class ActiviteTest {
 
     @Test
     void testDateObligatoire() {
-        Activite activite = new Activite(id, nom, null, conditionsMeteo, duree, distance, note, caloriesConsommeestest);
+        Activite activite = new Activite(id, nom, null, conditionsMeteo, duree, distance, note, niveauIntensiteTest, caloriesConsommeestest);
         Set<ConstraintViolation<Activite>> violations = validator.validate(activite);
         assertFalse(violations.isEmpty(), "La date doit comporter une erreur de validation (NotNull)");
     }
 
     @Test
     void testDureeObligatoire() {
-        Activite activite = new Activite(id, nom, date, conditionsMeteo, 0, distance, note, caloriesConsommeestest);
+        Activite activite = new Activite(id, nom, date, conditionsMeteo, 0, distance, note, niveauIntensiteTest, caloriesConsommeestest);
         Set<ConstraintViolation<Activite>> violations = validator.validate(activite);
         assertFalse(violations.isEmpty(), "La durée doit comporter une erreur de validation (Min)");
         activite.setDuree(-15);
@@ -156,7 +161,7 @@ public class ActiviteTest {
 
     @Test
     void testDistancePasNegative() {
-        Activite activite = new Activite(id, nom, date, conditionsMeteo, duree, -2.5, note, caloriesConsommeestest);
+        Activite activite = new Activite(id, nom, date, conditionsMeteo, duree, -2.5, note, niveauIntensiteTest, caloriesConsommeestest);
         Set<ConstraintViolation<Activite>> violations = validator.validate(activite);
         assertFalse(violations.isEmpty(), "La distance ne peut pas être négative (PositiveOrZero)");
     }
@@ -165,16 +170,34 @@ public class ActiviteTest {
     @Test
     void testDatePasDansLeFutur() {
         LocalDate dateFuture = LocalDate.now().plusDays(1);
-        Activite activite = new Activite(id, nom, dateFuture, conditionsMeteo, duree, distance, note, caloriesConsommeestest);
+        Activite activite = new Activite(id, nom, dateFuture, conditionsMeteo, duree, distance, note, niveauIntensiteTest, caloriesConsommeestest);
         Set<ConstraintViolation<Activite>> violations = validator.validate(activite);
         assertFalse(violations.isEmpty(), "La date ne peut pas être dans le futur (PastOrPresent)");
     }
 
     @Test
     void testActiviteValide() {
-        Activite activite = new Activite(id, nom, LocalDate.now(), conditionsMeteo, duree, distance, note, caloriesConsommeestest);
+        Activite activite = new Activite(id, nom, LocalDate.now(), conditionsMeteo, duree, distance, note, niveauIntensiteTest, caloriesConsommeestest);
         Set<ConstraintViolation<Activite>> violations = validator.validate(activite);
         assertTrue(violations.isEmpty(), "L'activité devrait être valide sans erreurs de validation");
+    }
+
+    @Test
+    void testNiveauIntensiteValidation() {
+        // Test min value (1)
+        Activite activite = new Activite(id, nom, date, conditionsMeteo, duree, distance, note, 0, caloriesConsommeestest);
+        Set<ConstraintViolation<Activite>> violations = validator.validate(activite);
+        assertFalse(violations.isEmpty(), "Le niveau d'intensité 0 doit comporter une erreur de validation (Min)");
+
+        // Test max value (5)
+        activite.setNiveauIntensite(6);
+        violations = validator.validate(activite);
+        assertFalse(violations.isEmpty(), "Le niveau d'intensité 6 doit comporter une erreur de validation (Max)");
+
+        // Test valid value
+        activite.setNiveauIntensite(3);
+        violations = validator.validate(activite);
+        assertTrue(violations.isEmpty(), "Le niveau d'intensité 3 est valide");
     }
 
 }
