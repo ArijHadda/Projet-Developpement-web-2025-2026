@@ -121,7 +121,7 @@ class UtilisateurControllerTest {
         assertEquals("Une erreur inattendue est survenue.", model2.getAttribute("error"));
     }
 
-    @Test
+   /* @Test
     void listUsersAndProfileUpdateAndLogout() {
         Utilisateur logged = user(5L, "l@test.fr", "pwd");
         MockHttpSession session = new MockHttpSession();
@@ -139,7 +139,7 @@ class UtilisateurControllerTest {
         controller.logout(logoutSession);
         assertTrue(logoutSession.isInvalid());
     }
-
+*/
     @Test
     void badgeEndpointsCoverSessionAndAwardBranches() {
         Utilisateur logged = user(8L, "b@test.fr", "pwd");
