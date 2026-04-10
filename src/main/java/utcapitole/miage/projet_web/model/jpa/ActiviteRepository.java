@@ -28,7 +28,7 @@ public interface ActiviteRepository extends JpaRepository<Activite, Long> {
             "AND a.date <= :dateFin")
     Integer calculerCaloriesPourChallenge(
             @Param("userId") Long userId,
-            @Param("sportCible") String sportCible, // <--- 新增参数
+            @Param("sportCible") String sportCible,
             @Param("dateDebut") LocalDate dateDebut,
             @Param("dateFin") LocalDate dateFin
     );
