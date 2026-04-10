@@ -85,20 +85,16 @@ public class UtilisateurController {
         if (loggedInUser == null) {
             return "redirect:/user/login";
         }
+        Optional<Utilisateur> targetOpt = utilisateurService.findById(IdU);
+        if (targetOpt.isEmpty()) {
+            return "redirect:/user/login";
+        }
         Utilisateur user = utilisateurService.getUtilisateurAvecSports(loggedInUser.getId());
         if (user == null) {
             return "redirect:/user/login";
         }
-        model.addAttribute("userProfile",user);
+        model.addAttribute("userProfile", user);
         return "profile";
-        /*Optional<Utilisateur> userOpt = utilisateurService.findByIdU(IdU);
-        if (userOpt.isPresent()) {
-            model.addAttribute("userProfile", userOpt.get());
-            return "profile";
-        } else {
-            return "redirect:/user/login";
-        }*/
-
     }
 
     @PostMapping("/profile/update/{IdU}")
@@ -138,6 +134,9 @@ public class UtilisateurController {
 
         // Charger l'utilisateur AVEC ses sports
         Utilisateur user = utilisateurService.getUtilisateurAvecSports(IdU);
+        if (user == null) {
+            return "redirect:/user/login";
+        }
         model.addAttribute("userUpdate", user);
 
         return "update";

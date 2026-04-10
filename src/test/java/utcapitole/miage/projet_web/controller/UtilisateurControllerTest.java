@@ -128,7 +128,7 @@ class UtilisateurControllerTest {
         session.setAttribute("loggedInUser", logged);
 
         utilisateurService.allUsers = List.of(logged, user(6L, "x@test.fr", "pwd"));
-        String listView = controller.VoirListUtilisateur(new ExtendedModelMap(), session);
+        String listView = controller.voirListUtilisateur(new ExtendedModelMap(), session);
         assertEquals("redirect:/user/ami/chercher", listView);
 
         String update = controller.modifierProfile(5L, "n@test.fr", "F", 20, 1.6f, 50f, "debutant", session);
@@ -224,6 +224,11 @@ class UtilisateurControllerTest {
             if (passwordException != null) {
                 throw passwordException;
             }
+        }
+
+        @Override
+        public Utilisateur getUtilisateurAvecSports(Long id) {
+            return byId.get(id);
         }
 
         @Override

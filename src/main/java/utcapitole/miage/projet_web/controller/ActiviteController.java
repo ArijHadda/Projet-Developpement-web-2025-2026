@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.jpa.ActiviteService;
-import utcapitole.miage.projet_web.model.jpa.SportRepository;
+import utcapitole.miage.projet_web.model.jpa.SportService;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 
 @Controller
@@ -20,7 +20,7 @@ public class ActiviteController {
     private ActiviteService activiteService;
 
     @Autowired
-    private SportRepository sportRepository;
+    private SportService sportService;
 
     @GetMapping("/add-activite")
     public String showAddActiviteForm(Model model, jakarta.servlet.http.HttpSession session) {
@@ -29,7 +29,7 @@ public class ActiviteController {
             return "redirect:/user/login";
         }
         model.addAttribute("activite", new Activite());
-        model.addAttribute("sports", sportRepository.findAll());
+        model.addAttribute("sports", sportService.getAll());
         model.addAttribute("user", user);
         return "add-activite";
     }

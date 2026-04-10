@@ -75,14 +75,17 @@ public class ActiviteService {
         double met = 4.0; // Valeur par défaut
 
         if (sport != null) {
-            if (sport.isEstBaseSurVitesse()) {
+            double base = (sport.getIntensiteBase() != null) ? sport.getIntensiteBase() : 0.0;
+            double coeff = (sport.getCoeffIntensite() != null) ? sport.getCoeffIntensite() : 0.0;
+            
+            if (Boolean.TRUE.equals(sport.getEstBaseSurVitesse())) {
                 double distance = activite.getDistance();
                 double speedKmH = (durationHours > 0) ? (distance / durationHours) : 0;
-                met = sport.getIntensiteBase() + sport.getCoeffIntensite() * speedKmH;
+                met = base + coeff * speedKmH;
             } else {
                 // Utilise le niveau d'intensité de l'activité (par défaut 3 si non renseigné)
                 int niveau = (activite.getNiveauIntensite() > 0) ? activite.getNiveauIntensite() : 3;
-                met = sport.getIntensiteBase() + sport.getCoeffIntensite() * niveau;
+                met = base + coeff * niveau;
             }
         } else {
             // Logique de repli minimaliste si le Sport n'est pas trouvé

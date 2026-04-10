@@ -35,9 +35,9 @@ class SportTest {
             () -> assertNull(sport1.getId()),
             () -> assertNull(sport1.getNom()),
             () -> assertNull(sport1.getType()),
-            () -> assertEquals(0.0, sport1.getIntensiteBase()),
-            () -> assertEquals(0.0, sport1.getCoeffIntensite()),
-            () -> assertFalse(sport1.isEstBaseSurVitesse())
+            () -> assertNull(sport1.getIntensiteBase()),
+            () -> assertNull(sport1.getCoeffIntensite()),
+            () -> assertNull(sport1.getEstBaseSurVitesse())
         );
 
         // Parameters constructor
@@ -47,7 +47,7 @@ class SportTest {
             () -> assertEquals("Endurance", sport2.getType()),
             () -> assertEquals(0.0, sport2.getIntensiteBase()),
             () -> assertEquals(1.0, sport2.getCoeffIntensite()),
-            () -> assertTrue(sport2.isEstBaseSurVitesse())
+            () -> assertTrue(sport2.getEstBaseSurVitesse())
         );
     }
 
@@ -64,7 +64,7 @@ class SportTest {
         assertEquals("Eau", sport.getType());
         assertEquals(4.0, sport.getIntensiteBase());
         assertEquals(1.2, sport.getCoeffIntensite());
-        assertFalse(sport.isEstBaseSurVitesse());
+        assertFalse(sport.getEstBaseSurVitesse());
     }
 
     @Test

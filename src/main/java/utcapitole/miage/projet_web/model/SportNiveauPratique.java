@@ -21,6 +21,8 @@ public class SportNiveauPratique {
     private NiveauPratique niveau;
 
     public SportNiveauPratique(Sport s, NiveauPratique niveau) {
+        this.sport = s;
+        this.niveau = niveau;
     }
 
     public SportNiveauPratique(){}
