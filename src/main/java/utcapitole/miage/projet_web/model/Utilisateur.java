@@ -53,14 +53,9 @@ public class Utilisateur {
     )
     private List<Utilisateur> amis = new ArrayList<>();
 
-    @ElementCollection
-    @CollectionTable(
-            name = "sport_niveau_pratique",
-            joinColumns = @JoinColumn(name = "IdU")
-    )
-    @MapKeyJoinColumn(name = "id_sport")
-    @Column(name = "niveau_pratique")
-    private Map<Sport, NiveauPratique> listSportNivPratique = new HashMap<>();
+    @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SportNiveauPratique> listSportNivPratique = new ArrayList<>();
+
 
         @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL, orphanRemoval = true)
         private List<Activite> activites = new ArrayList<>();
@@ -154,14 +149,18 @@ public class Utilisateur {
         this.amis = amis;
     }
 
-    public Map<Sport, NiveauPratique> getListSportNivPratique() {
+    public List<SportNiveauPratique> getListSportNivPratique() {
         return listSportNivPratique;
     }
 
-    public void setListSportNivPratique(Map<Sport, NiveauPratique> listSportNivPratique) {
+    public void setListSportNivPratique(List<SportNiveauPratique> listSportNivPratique) {
         this.listSportNivPratique = listSportNivPratique;
     }
 
+    public void addSportNiveau(Sport s, NiveauPratique niveau) {
+        SportNiveauPratique sn = new SportNiveauPratique(s,niveau);
+        this.listSportNivPratique.add(sn);
+    }
     public List<Activite> getActivites() {
         return activites;
     }

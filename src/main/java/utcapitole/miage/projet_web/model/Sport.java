@@ -10,15 +10,17 @@ public class Sport {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "idSport")
+    @Column(name = "id_sport")
     private Long id;
-
+  
     @NotBlank(message = "Le nom du sport est obligatoire")
-    @Column(name = "nomSport", nullable = false)
+    //@Column(name = "nomSport", nullable = false)
+    @Column(name = "nom_sport", nullable = false)
     private String nom;
 
     @NotBlank(message = "Le type de sport est obligatoire")
-    @Column(name = "typeSport")
+    //@Column(name = "typeSport")
+    @Column(name = "type_sport")
     private String type;
 
     @PositiveOrZero(message = "L'intensité de base ne peut pas être négative")
