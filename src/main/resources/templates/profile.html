@@ -8,7 +8,7 @@
 <h2>Mon Profil</h2>
 <p th:if="${param.badge != null}" style="color: green; font-weight: bold;">Un nouveau badge a ete attribue automatiquement.</p>
 <a th:href="@{/user/profile/update/{IdU}(IdU=${userProfile.id})}">
-    <button type="button">Modifier mes infos</button>
+    <button type="button">✏️ Modifier mes infos</button>
 </a>
 <a th:href="@{/user/profile/update-password/{IdU}(IdU=${userProfile.id})}">
     <button type="button">Modifier le mot de passe</button>
