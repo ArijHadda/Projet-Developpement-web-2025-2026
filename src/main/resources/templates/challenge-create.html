@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Créer un Challenge</title>
+</head>
+<body>
+<h2>➕ Créer un Challenge</h2>
+
+<form th:action="@{/challenge/create}" th:object="${challenge}" method="post" style="max-width: 400px; display: flex; flex-direction: column; gap: 15px;">
+
+    <div>
+        <label for="titre">Titre du Challenge :</label>
+        <input type="text" id="titre" th:field="*{titre}" required placeholder="ex: Courir 50km ce mois" style="width: 100%;"/>
+    </div>
+
+    <div>
+        <label for="sportCible">Sport ciblé (Type d'activité) :</label>
+        <select id="sportCible" th:field="*{sportCible}" required style="width: 100%; padding: 5px;">
+            <option value="" disabled selected>-- Choisir un sport --</option>
+            <option th:each="sport : ${sports}"
+                    th:value="${sport.nom}"
+                    th:text="${sport.nom}">
+            </option>
+        </select>
+    </div>
+
+    <div>
+        <label for="dateDebut">Date de début :</label>
+        <input type="date" id="dateDebut" th:field="*{dateDebut}" required style="width: 100%;"/>
+    </div>
+
+    <div>
+        <label for="dateFin">Date de fin :</label>
+        <input type="date" id="dateFin" th:field="*{dateFin}" required style="width: 100%;"/>
+    </div>
+
+    <div>
+        <button type="submit" style="background-color: #0275d8; color: white; padding: 10px; width: 100%;">Enregistrer le Challenge</button>
+    </div>
+</form>
+
+<br>
+<a th:href="@{/challenge/list}">
+    <button type="button">🔙 Annuler et Retour</button>
+</a>
+
+</body>
+</html>

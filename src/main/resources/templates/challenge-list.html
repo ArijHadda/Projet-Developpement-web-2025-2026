@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des Challenges</title>
+</head>
+<body>
+<h2>🏆 Tous les Challenges</h2>
+
+<div>
+    <a th:href="@{/challenge/create}">
+        <button type="button" style="background-color: #0275d8; color: white; padding: 8px;">➕ Créer un nouveau Challenge</button>
+    </a>
+    <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}"> <button type="button">🏠 Retour au profil</button>
+    </a>
+</div>
+
+<hr/>
+
+<div th:if="${#lists.isEmpty(challenges)}">
+    <p>Aucun challenge pour le moment. Soyez le premier à en créer un !</p>
+</div>
+
+<ul>
+    <li th:each="challenge : ${challenges}" style="margin-bottom: 20px; border: 1px solid #ccc; padding: 10px; max-width: 500px;">
+        <h3 th:text="${challenge.titre}">Titre du challenge</h3>
+        <p><strong>Sport Ciblé :</strong> <span th:text="${challenge.sportCible}" style="color: #0275d8; font-weight: bold;">Sport</span></p>
+        <p><strong>Créé par :</strong> <span th:text="${challenge.createur.prenom} + ' ' + ${challenge.createur.nom}">Créateur</span></p>
+        <p><strong>Période :</strong> du <span th:text="${challenge.dateDebut}"></span> au <span th:text="${challenge.dateFin}"></span></p>
+
+        <div style="display: flex; gap: 10px;">
+            <form th:action="@{/challenge/{id}/join(id=${challenge.id})}" method="post">
+                <button type="submit" style="background-color: #5cb85c; color: white;">🎯 Rejoindre</button>
+            </form>
+
+            <a th:href="@{/challenge/{id}/classement(id=${challenge.id})}">
+                <button type="button" style="background-color: #f0ad4e; color: white;">📊 Voir le classement</button>
+            </a>
+
+            <div th:if="${challenge.createur.id == session.loggedInUser.id}" style="display: flex; gap: 10px; margin-left: 20px; border-left: 2px solid #ccc; padding-left: 20px;">
+                <a th:href="@{/challenge/{id}/edit(id=${challenge.id})}">
+                    <button type="button" style="background-color: #17a2b8; color: white;">✏️ Modifier</button>
+                </a>
+                <form th:action="@{/challenge/{id}/delete(id=${challenge.id})}" method="post" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce challenge ? Cette action est irréversible.');">
+                    <button type="submit" style="background-color: #d9534f; color: white;">🗑️ Supprimer</button>
+                </form>
+            </div>
+        </div>
+    </li>
+</ul>
+
+</body>
+</html>
