@@ -37,4 +37,26 @@ public interface ActiviteRepository extends JpaRepository<Activite, Long> {
 
     List<Activite> findByUtilisateurId(Long utilisateurId);
 
+    // 计算某用户、某运动、在特定时间段内的总距离 (返回 Double)
+    @Query("SELECT COALESCE(SUM(a.distance), 0.0) FROM Activite a " +
+            "WHERE a.utilisateur.id = :userId " +
+            "AND a.sport.id = :sportId " +
+            "AND a.date >= :debut " +
+            "AND a.date <= :fin")
+    Double calculerDistanceTotale(@Param("userId") Long userId,
+                                  @Param("sportId") Long sportId,
+                                  @Param("debut") LocalDate debut,
+                                  @Param("fin") LocalDate fin);
+
+    // 计算某用户、某运动、在特定时间段内的总时长 (注意：SUM 默认返回 Long)
+    @Query("SELECT COALESCE(SUM(a.duree), 0) FROM Activite a " +
+            "WHERE a.utilisateur.id = :userId " +
+            "AND a.sport.id = :sportId " +
+            "AND a.date >= :debut " +
+            "AND a.date <= :fin")
+    Long calculerDureeTotale(@Param("userId") Long userId,
+                             @Param("sportId") Long sportId,
+                             @Param("debut") LocalDate debut,
+                             @Param("fin") LocalDate fin);
+
 }
