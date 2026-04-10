@@ -10,13 +10,20 @@ public class SportNiveauPratique {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "IdU", nullable = false)
     private Utilisateur utilisateur;
 
     @ManyToOne
+    @JoinColumn(name = "id_sport", nullable = false)
     private Sport sport;
 
     @Enumerated(EnumType.STRING)
     private NiveauPratique niveau;
+
+    public SportNiveauPratique(Sport s, NiveauPratique niveau) {
+    }
+
+    public SportNiveauPratique(){}
 
     public Long getId() {
         return id;

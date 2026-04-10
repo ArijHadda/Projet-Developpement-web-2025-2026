@@ -8,7 +8,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import utcapitole.miage.projet_web.model.NiveauPratique;
 import utcapitole.miage.projet_web.model.Sport;
+import utcapitole.miage.projet_web.model.SportNiveauPratique;
 import utcapitole.miage.projet_web.model.Utilisateur;
+import utcapitole.miage.projet_web.model.jpa.SportNiveauPratiqueService;
 import utcapitole.miage.projet_web.model.jpa.SportService;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 
@@ -24,6 +26,8 @@ public class UtilisateurController {
     private UtilisateurService utilisateurService;
     @Autowired
     private SportService sportService;
+    @Autowired
+    private SportNiveauPratiqueService sportNiveauPratiqueService;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -76,14 +80,20 @@ public class UtilisateurController {
         if (loggedInUser == null) {
             return "redirect:/user/login";
         }
-
-        Optional<Utilisateur> userOpt = utilisateurService.findByIdU(IdU);
+        Utilisateur user = utilisateurService.getUtilisateurAvecSports(loggedInUser.getId());
+        if (user == null) {
+            return "redirect:/user/login";
+        }
+        model.addAttribute("userProfile",user);
+        return "profile";
+        /*Optional<Utilisateur> userOpt = utilisateurService.findByIdU(IdU);
         if (userOpt.isPresent()) {
             model.addAttribute("userProfile", userOpt.get());
             return "profile";
         } else {
             return "redirect:/user/login";
-        }
+        }*/
+
     }
 
     @PostMapping("/profile/update/{IdU}")
@@ -98,13 +108,12 @@ public class UtilisateurController {
         return "redirect:/user/profile/" + currentUser.getId();
     }
 
-    @GetMapping("/profile/update/{IdU}")
+    /*@GetMapping("/profile/update/{IdU}")
     public String updateProfile(@PathVariable Long IdU, HttpSession session, Model model){
         Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
         if (loggedInUser == null) {
             return "redirect:/user/login";
         }
-
         Optional<Utilisateur> userOpt = utilisateurService.findByIdU(IdU);
         if (userOpt.isPresent()) {
             model.addAttribute("userUpdate", userOpt.get());
@@ -113,6 +122,19 @@ public class UtilisateurController {
             return "redirect:/user/login";
         }
 
+    }*/
+    @GetMapping("/profile/update/{IdU}")
+    public String updateProfile(@PathVariable Long IdU, HttpSession session, Model model){
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (loggedInUser == null) {
+            return "redirect:/user/login";
+        }
+
+        // Charger l'utilisateur AVEC ses sports
+        Utilisateur user = utilisateurService.getUtilisateurAvecSports(IdU);
+        model.addAttribute("userUpdate", user);
+
+        return "update";
     }
 
     // changer mot de passe
@@ -191,25 +213,38 @@ public class UtilisateurController {
     }
     @PostMapping("/nivPratique")
     public String ajouterNiveauratique(Model model, HttpSession session, @RequestParam Long sport,@RequestParam NiveauPratique niveau){
-        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
-        if (loggedInUser == null) {
+        Utilisateur sessionUser = (Utilisateur) session.getAttribute("loggedInUser");
+        if (sessionUser == null) {
             return "redirect:/user/login";
         }
-        Utilisateur user = utilisateurService.getUtilisateurAvecSports(loggedInUser.getId());
-        Sport s = sportService.getById(sport);
-        user.addSportNiveau(s, niveau);
-        utilisateurService.save(user);
-        session.setAttribute("loggedInUser", user);
-        model.addAttribute("userProfile", user);
-        return "profile";
+        Utilisateur user = utilisateurService.getUtilisateurAvecSports(sessionUser.getId());
+        if (user == null){ return "redirect:/user/login";}
+        Sport sports = sportService.getById(sport);
+        Optional<SportNiveauPratique> existing = sportNiveauPratiqueService.findByUtilisateurIdAndSportId(user.getId(),sport);
+        if(existing.isPresent()){
+            SportNiveauPratique sn = existing.get();
+            sn.setNiveau(niveau);
+            sportNiveauPratiqueService.save(sn);
+        }
+        else{
+            SportNiveauPratique sn = new SportNiveauPratique();
+            sn.setSport(sports);
+            sn.setNiveau(niveau);
+            sn.setUtilisateur(user);
+            user.getListSportNivPratique().add(sn);
+            utilisateurService.save(user);
+        }
+        return "redirect:/user/profile/"+ user.getId();
     }
-    @GetMapping("/deleteSportNiveau/{id}")
-    public String deleteSportNiveau(@PathVariable Long id, HttpSession session){
+    @GetMapping("/deleteSportNiveau/{idSn}")
+    public String deleteSportNiveau(@PathVariable Long idSn, HttpSession session){
 
         Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
         if (loggedInUser == null) {
             return "redirect:/user/login";
         }
+        sportNiveauPratiqueService.deleteById(idSn);
+        return "redirect:/user/profile/" + loggedInUser.getId();
     }
 
 

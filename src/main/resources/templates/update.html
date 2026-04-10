@@ -41,14 +41,23 @@
     </div>
 
     <div style="margin-bottom: 15px;">
-        <label for="sport">Sport & niveau pratique :</label><br/>
-        <input type="text" id="sport" name="nivPratique" th:value="${userUpdate.listSportNivPratique}" required />
-        <ol th:each="u : ${userUpdate.listSportNivPratique}">
-            <li th:text="${u}"></li>
-            <input type="button" value="supprimer">
-        </ol>
+        <table>
+            <tr>
+                <th>Sport</th>
+                <th>Niveau</th>
+                <th>Action</th>
+            </tr>
 
-
+            <tr th:each="sn : ${userUpdate.listSportNivPratique}">
+                <td th:text="${sn.sport.nom}"></td>
+                <td th:text="${sn.niveau}"></td>
+                <td>
+                    <a th:href="@{'/user/deleteSportNiveau/' + ${sn.id}}">
+                        Supprimer
+                    </a>
+                </td>
+            </tr>
+        </table>
     </div>
 
 
@@ -56,9 +65,8 @@
 
     <div>
         <button type="submit">💾 Enregistrer </button>
-        &nbsp;
         <a th:href="@{/user/profile/{IdU}(IdU=${userUpdate.id})}">
-            <button type="button">Annuler</button>
+            Annuler
         </a>
     </div>
 

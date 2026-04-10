@@ -29,7 +29,14 @@
     <p><strong>Age :</strong> <span th:text="${userProfile.age}"></span></p>
     <p><strong>Taille :</strong> <span th:text="${userProfile.taille}"></span></p>
     <p><strong>Poids :</strong> <span th:text="${userProfile.poids}"></span></p>
-    <p><strong>Sport & niveau de Pratique :</strong> <span th:text="${userProfile.listSportNivPratique}"></span></p>
+    <p><strong>Sports & niveaux de pratique :</strong></p>
+
+    <ul>
+        <li th:each="sn : ${userProfile.listSportNivPratique}">
+            <span th:text="${sn.sport.nom}"></span> :
+            <span th:text="${sn.niveau}"></span>
+        </li>
+    </ul>
 </div>
 
 <hr/>
