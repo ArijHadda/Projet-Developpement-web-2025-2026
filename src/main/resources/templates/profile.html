@@ -9,15 +9,17 @@
 <body>
 <h2>Mon Profil</h2>
 <p th:if="${param.badge != null}" style="color: green; font-weight: bold;">Un nouveau badge a ete attribue automatiquement.</p>
-<a th:href="@{/user/profile/update/{IdU}(IdU=${userProfile.id})}">
-    <button type="button">Modifier mes infos</button>
-</a>
-<a th:href="@{/user/profile/update-password/{IdU}(IdU=${userProfile.id})}">
-    <button type="button">Modifier le mot de passe</button>
-</a>
-<a th:href="@{/user/ami/chercher}">
-    <button type="button">🔍 Chercher des amis</button>
-</a>
+<div class="profile-actions">
+    <a th:href="@{/user/profile/update/{IdU}(IdU=${userProfile.id})}">
+        <button type="button">Modifier mes infos</button>
+    </a>
+    <a th:href="@{/user/profile/update-password/{IdU}(IdU=${userProfile.id})}">
+        <button type="button">Modifier le mot de passe</button>
+    </a>
+    <a th:href="@{/user/ami/chercher}">
+        <button type="button">🔍 Chercher des amis</button>
+    </a>
+</div>
 <hr/> <p>Bienvenue sur votre espace personnel ! Voici vos informations :</p>
 
 <div style="margin-bottom: 20px;">
@@ -43,7 +45,7 @@
 
 <div style="margin-top: 10px;">
     <a th:href="@{/user/ami/invitations}">
-        <button type="button" style="background-color: #f0ad4e; color: white; border: none; padding: 10px;">
+        <button type="button" class="btn-warning">
             📩 Voir mes invitations (Demandes d'amis)
         </button>
     </a>
@@ -62,18 +64,14 @@
         <a th:href="@{/user/profile/{id}(id=${ami.id})}">Voir le profil</a>
     </li>
 </ul>
-<div>
+
+<div class="profile-actions" style="margin-top: 16px;">
     <a th:href="@{/user/logout}">
         <button type="button">Se déconnecter</button>
     </a>
-</div>
-<br>
-<div>
     <a th:href="@{/activite/add-activite}">
         <button type="button">Ajouter une activité</button>
     </a>
-</div>
-<div>
     <a th:href="@{/activite/list}">
         <button type="button">Voir mes activités</button>
     </a>
