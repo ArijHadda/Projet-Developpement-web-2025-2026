@@ -3,47 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <title>Mes Activités</title>
+    <style>
+        .activite-card {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+            max-width: 600px;
+        }
+        .activite-header {
+            font-weight: bold;
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+        .activite-stats span {
+            margin-right: 15px;
+            font-size: 0.9em;
+            color: #555;
+        }
+    </style>
 </head>
 <body>
-    <h1>Liste des activités</h1>
-    
-    <div id="stats-summary" th:if="${stats != null}" style="margin-bottom: 20px; border: 1px solid #ccc; padding: 10px;">
-        <h3>Résumé de votre parcours</h3>
-        <p>Nombre total d'activités : <span th:text="${stats.count}">0</span></p>
-        <p>Durée totale : <span th:text="${stats.totalDuree}">0</span> min</p>
-        <p>Distance totale : <span th:text="${stats.totalDistance}">0</span> km</p>
-        <p>Calories totales brûlées : <span th:text="${stats.totalCalories}">0</span> kcal</p>
+<h1>🎯 Mes Activités</h1>
+
+<a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}">
+    <button type="button">← Retour au profil</button>
+</a>
+<hr/>
+
+<div id="stats-summary" th:if="${stats != null}" style="margin-bottom: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 8px; max-width: 600px; background-color: #e9ecef;">
+    <h3>📊 Résumé de votre parcours</h3>
+    <p>🏃‍♂️ Nombre total d'activités : <strong th:text="${stats.count}">0</strong></p>
+    <p>⏱️ Durée totale : <strong th:text="${stats.totalDuree}">0</strong> min</p>
+    <p>📏 Distance totale : <strong th:text="${stats.totalDistance}">0</strong> km</p>
+    <p>🔥 Calories totales : <strong th:text="${stats.totalCalories}">0</strong> kcal</p>
+</div>
+
+<div th:if="${#lists.isEmpty(activites)}">
+    <p>Aucune activité enregistrée. Allez faire du sport !</p>
+</div>
+
+<div th:each="act : ${activites}" class="activite-card">
+    <div class="activite-header">
+        J'ai fait du <span th:text="${act.nom}"></span> !
     </div>
-    
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Activité</th>
-                <th>Date</th>
-                <th>Durée (min)</th>
-                <th>Distance (km)</th>
-                <th>Note (/10)</th>
-                <th>Calories (kcal)</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="activite : ${activites}">
-                <td th:text="${activite.nom}"></td>
-                <td th:text="${activite.date}"></td>
-                <td th:text="${activite.duree}"></td>
-                <td th:text="${activite.distance}"></td>
-                <td th:text="${activite.note}"></td>
-                <td th:text="${activite.caloriesConsommees}"></td>
-            </tr>
-            <tr th:if="${#lists.isEmpty(activites)}">
-                <td colspan="6">Aucune activité enregistrée.</td>
-            </tr>
-        </tbody>
-    </table>
+
+    <p style="font-size: 0.85em; color: gray;">
+        📅 Le <span th:text="${act.date}"></span>
+        <span th:if="${act.note != null}"> | ⭐ Note: <span th:text="${act.note}"></span>/10</span>
+    </p>
+
+    <div class="activite-stats">
+        <span>⏱️ Durée : <span th:text="${act.duree}"></span> min</span>
+        <span th:if="${act.distance > 0}">📏 Distance : <span th:text="${act.distance}"></span> km</span>
+        <span>🔥 Calories : <span th:text="${act.caloriesConsommees}"></span> kcal</span>
+        <span style="color: #ff9800; font-weight: bold;">👍 <span th:text="${act.nbKudos}"></span> Kudos</span>
+    </div>
 
     <br>
-    <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}">
-        <button type="button">Retour au profil</button>
-    </a>
+    <form th:action="@{/activite/flux/kudos/{id}(id=${act.id})}" method="post" style="display: inline;">
+        <button th:if="${!#lists.contains(act.likers.![id], session.loggedInUser.id)}"
+                type="submit" style="background-color: #ff9800; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+            👏 S'auto-féliciter !
+        </button>
+        <button th:if="${#lists.contains(act.likers.![id], session.loggedInUser.id)}"
+                type="submit" style="background-color: #ccc; color: #333; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+            ✖ Retirer
+        </button>
+    </form>
+
+    <hr/>
+    <div class="comments-section" style="font-size: 0.9em; background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+        <p><strong>💬 Commentaires :</strong></p>
+        <div th:if="${#lists.isEmpty(act.commentaires)}">
+            <span style="color: gray; font-style: italic;">Aucun commentaire pour l'instant.</span>
+        </div>
+        <div th:each="com : ${act.commentaires}" style="margin-bottom: 5px; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
+            <b th:text="${com.auteur.prenom}" th:style="${com.auteur.id == session.loggedInUser.id ? 'color: #007bff;' : 'color: #333;'}"></b> :
+            <span th:text="${com.contenu}"></span>
+        </div>
+
+        <form th:action="@{/activite/flux/comment/{id}(id=${act.id})}" method="post" style="margin-top: 10px;">
+            <input type="text" name="contenu" placeholder="Ajouter un commentaire..." required style="width: 70%; padding: 4px;">
+            <button type="submit" style="padding: 5px 10px; cursor: pointer;">Envoyer</button>
+        </form>
+    </div>
+</div>
+
 </body>
 </html>

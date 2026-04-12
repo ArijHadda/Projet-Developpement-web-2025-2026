@@ -230,6 +230,12 @@ class UtilisateurControllerTest {
         public List<Utilisateur> findAll() {
             return allUsers;
         }
+
+        @Override
+        public Utilisateur getUtilisateurAvecSports(Long id) {
+            // Retourne l'utilisateur s'il existe dans notre map de test, sinon null
+            return byId.get(id);
+        }
     }
 
     private static class FakeBadgeAttributionService extends BadgeAttributionService {

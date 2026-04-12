@@ -1,4 +1,4 @@
-package utcapitole.miage.projet_web;
+package utcapitole.miage.projet_web.model;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -13,7 +13,6 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
-import utcapitole.miage.projet_web.model.Sport;
 
 import java.util.Set;
 
@@ -32,22 +31,22 @@ class SportTest {
         // No-args constructor
         Sport sport1 = new Sport();
         assertAll(
-            () -> assertNull(sport1.getId()),
-            () -> assertNull(sport1.getNom()),
-            () -> assertNull(sport1.getType()),
-            () -> assertEquals(0.0, sport1.getIntensiteBase()),
-            () -> assertEquals(0.0, sport1.getCoeffIntensite()),
-            () -> assertFalse(sport1.isEstBaseSurVitesse())
+                () -> assertNull(sport1.getId()),
+                () -> assertNull(sport1.getNom()),
+                () -> assertNull(sport1.getType()),
+                () -> assertNull(sport1.getIntensiteBase()),
+                () -> assertNull(sport1.getCoeffIntensite()),
+                () -> assertNull(sport1.getEstBaseSurVitesse())
         );
 
         // Parameters constructor
         Sport sport2 = new Sport("Course", "Endurance", 0.0, 1.0, true);
         assertAll(
-            () -> assertEquals("Course", sport2.getNom()),
-            () -> assertEquals("Endurance", sport2.getType()),
-            () -> assertEquals(0.0, sport2.getIntensiteBase()),
-            () -> assertEquals(1.0, sport2.getCoeffIntensite()),
-            () -> assertTrue(sport2.isEstBaseSurVitesse())
+                () -> assertEquals("Course", sport2.getNom()),
+                () -> assertEquals("Endurance", sport2.getType()),
+                () -> assertEquals(0.0, sport2.getIntensiteBase()),
+                () -> assertEquals(1.0, sport2.getCoeffIntensite()),
+                () -> assertTrue(sport2.getEstBaseSurVitesse())
         );
     }
 
@@ -64,7 +63,7 @@ class SportTest {
         assertEquals("Eau", sport.getType());
         assertEquals(4.0, sport.getIntensiteBase());
         assertEquals(1.2, sport.getCoeffIntensite());
-        assertFalse(sport.isEstBaseSurVitesse());
+        assertFalse(sport.getEstBaseSurVitesse());
     }
 
     @Test

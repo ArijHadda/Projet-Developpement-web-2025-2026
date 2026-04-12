@@ -1,4 +1,4 @@
-package utcapitole.miage.projet_web;
+package utcapitole.miage.projet_web.model;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -6,9 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
-
-import utcapitole.miage.projet_web.model.Activite;
-import utcapitole.miage.projet_web.model.Utilisateur;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -198,6 +195,36 @@ public class ActiviteTest {
         activite.setNiveauIntensite(3);
         violations = validator.validate(activite);
         assertTrue(violations.isEmpty(), "Le niveau d'intensité 3 est valide");
+    }
+
+    // --- Tests pour Kudos et Commentaires ---
+
+    @Test
+    void testKudosAndCommentaires() {
+        Activite activite = new Activite();
+
+        // Test initial: 0 kudos
+        assertEquals(0, activite.getNbKudos(), "Une nouvelle activité devrait avoir 0 kudos");
+
+        // Test Likers (Kudos)
+        Utilisateur u1 = new Utilisateur();
+        u1.setId(1L);
+        java.util.List<Utilisateur> likers = new java.util.ArrayList<>();
+        likers.add(u1);
+        activite.setLikers(likers);
+
+        assertEquals(1, activite.getNbKudos(), "Le nombre de kudos doit correspondre à la taille de la liste des likers");
+        assertTrue(activite.getLikers().contains(u1));
+
+        // Test Commentaires
+        utcapitole.miage.projet_web.model.Commentaire com = new utcapitole.miage.projet_web.model.Commentaire();
+        com.setContenu("Bravo !");
+        java.util.List<utcapitole.miage.projet_web.model.Commentaire> commentaires = new java.util.ArrayList<>();
+        commentaires.add(com);
+        activite.setCommentaires(commentaires);
+
+        assertEquals(1, activite.getCommentaires().size());
+        assertEquals("Bravo !", activite.getCommentaires().get(0).getContenu());
     }
 
 }

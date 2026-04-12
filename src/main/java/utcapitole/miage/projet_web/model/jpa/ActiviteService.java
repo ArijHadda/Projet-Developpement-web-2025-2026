@@ -1,14 +1,17 @@
 package utcapitole.miage.projet_web.model.jpa;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import utcapitole.miage.projet_web.model.Activite;
+import utcapitole.miage.projet_web.model.Commentaire;
 import utcapitole.miage.projet_web.model.Utilisateur;
 
 @Service
@@ -16,12 +19,18 @@ public class ActiviteService {
 
     private final ActiviteRepository activiteRepository;
     private final SportRepository sportRepository;
+    @Autowired
+    private final CommentaireRepository commentaireRepository;
+    @Autowired
+    private final UtilisateurRepository utilisateurRepository;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public ActiviteService(ActiviteRepository activiteRepository, SportRepository sportRepository) {
+    public ActiviteService(ActiviteRepository activiteRepository, SportRepository sportRepository, CommentaireRepository commentaireRepository, UtilisateurRepository utilisateurRepository) {
         this.activiteRepository = activiteRepository;
         this.sportRepository = sportRepository;
+        this.commentaireRepository = commentaireRepository;
+        this.utilisateurRepository = utilisateurRepository;
     }
 
     public Activite enregistrerActivite(Activite activite) {
@@ -156,5 +165,43 @@ public class ActiviteService {
         stats.put("totalCalories", totalCalories);
         
         return stats;
+    }
+
+    public List<Activite> getFluxActivitesAmis(Utilisateur utilisateur) {
+        List<Utilisateur> amis = utilisateur.getAmis();
+
+        if (amis == null || amis.isEmpty()) {
+            return List.of();
+        }
+
+        return activiteRepository.findByUtilisateurInOrderByDateDesc(amis);
+    }
+
+    @Transactional
+    public void toggleKudos(Long activiteId, Long userId) {
+        Activite a = activiteRepository.findById(activiteId).orElseThrow();
+        Utilisateur u = utilisateurRepository.findById(userId).orElseThrow();
+
+        if (a.getLikers().contains(u)) {
+            a.getLikers().remove(u);
+        } else {
+            a.getLikers().add(u);
+        }
+
+        activiteRepository.save(a);
+    }
+
+    @Transactional
+    public void ajouterCommentaire(Long activiteId, Long userId, String contenu) {
+        Activite a = activiteRepository.findById(activiteId).orElseThrow();
+        Utilisateur u = utilisateurRepository.findById(userId).orElseThrow();
+
+        Commentaire com = new Commentaire();
+        com.setContenu(contenu);
+        com.setActivite(a);
+        com.setAuteur(u);
+        com.setDateCreation(LocalDateTime.now());
+
+        commentaireRepository.save(com);
     }
 }
