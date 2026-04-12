@@ -21,8 +21,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -208,5 +210,189 @@ public class ActiviteControllerTest {
         assertEquals("activiteList", viewName);
         verify(model).addAttribute(eq("activites"), any());
         verify(model).addAttribute(eq("stats"), any());
+    }
+
+    // addActivite note validation
+
+    @Test
+    void addActivite_noteInferieureA1_resteSurLeFormulaire() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(utilisateurService.getUtilisateurAvecSports(mockUser.getId())).thenReturn(mockUser);
+
+        Activite badNoteActivite = new Activite();
+        badNoteActivite.setNom("Running");
+        badNoteActivite.setDate(LocalDate.now());
+        badNoteActivite.setNote(0);
+
+        String viewName = activiteController.addActivite(badNoteActivite, model, session);
+
+        assertEquals("add-activite", viewName);
+        verify(activiteService, never()).enregistrerActivite(any());
+        verify(model).addAttribute(eq("error"), any());
+    }
+
+    @Test
+    void addActivite_noteSuperieureA10_resteSurLeFormulaire() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(utilisateurService.getUtilisateurAvecSports(mockUser.getId())).thenReturn(mockUser);
+
+        Activite badNoteActivite = new Activite();
+        badNoteActivite.setNom("Running");
+        badNoteActivite.setDate(LocalDate.now());
+        badNoteActivite.setNote(11);
+
+        String viewName = activiteController.addActivite(badNoteActivite, model, session);
+
+        assertEquals("add-activite", viewName);
+        verify(activiteService, never()).enregistrerActivite(any());
+        verify(model).addAttribute(eq("error"), any());
+    }
+
+    // supprimerActivite
+
+    @Test
+    void supprimerActivite_notLoggedIn_redirectsToLogin() {
+        when(session.getAttribute("loggedInUser")).thenReturn(null);
+
+        String viewName = activiteController.supprimerActivite(1L, session, model);
+
+        assertEquals("redirect:/user/login", viewName);
+        verify(activiteService, never()).supprimer(any());
+    }
+
+    @Test
+    void supprimerActivite_loggedIn_supprimeEtRedirige() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        String viewName = activiteController.supprimerActivite(1L, session, model);
+
+        assertEquals("redirect:/activite/list", viewName);
+        verify(activiteService).supprimer(1L);
+    }
+
+    // ShowModifierActivite (GET)
+
+    @Test
+    void showModifierActivite_notLoggedIn_redirectsToLogin() {
+        when(session.getAttribute("loggedInUser")).thenReturn(null);
+
+        String viewName = activiteController.ShowModifierActivite(1L, session, model);
+
+        assertEquals("redirect:/user/login", viewName);
+    }
+
+    @Test
+    void showModifierActivite_loggedIn_afficheLeFormulaire() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(activiteService.getById(1L)).thenReturn(Optional.of(mockActivite));
+
+        String viewName = activiteController.ShowModifierActivite(1L, session, model);
+
+        assertEquals("modifier-activite", viewName);
+        verify(model).addAttribute("activite", mockActivite);
+        verify(model).addAttribute(eq("today"), any(LocalDate.class));
+    }
+
+    @Test
+    void showModifierActivite_activiteIntrouvable_throwsException() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(activiteService.getById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> {
+            activiteController.ShowModifierActivite(999L, session, model);
+        });
+    }
+
+    // modifierActivite (POST)
+
+    @Test
+    void modifierActivite_notLoggedIn_redirectsToLogin() {
+        when(session.getAttribute("loggedInUser")).thenReturn(null);
+
+        String viewName = activiteController.modifierActivite(
+                1L, session, model, LocalDate.now(), 30, null, null, 5);
+
+        assertEquals("redirect:/user/login", viewName);
+        verify(activiteService, never()).enregistrerActivite(any());
+    }
+
+    @Test
+    void modifierActivite_futureDate_resteSurLeFormulaire() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(activiteService.getById(1L)).thenReturn(Optional.of(mockActivite));
+
+        String viewName = activiteController.modifierActivite(
+                1L, session, model, LocalDate.of(2027, 1, 1), 30, null, null, 5);
+
+        assertEquals("modifier-activite", viewName);
+        verify(activiteService, never()).enregistrerActivite(any());
+        verify(model).addAttribute(eq("error"), any());
+    }
+
+    @Test
+    void modifierActivite_noteInferieureA1_resteSurLeFormulaire() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(activiteService.getById(1L)).thenReturn(Optional.of(mockActivite));
+
+        String viewName = activiteController.modifierActivite(
+                1L, session, model, LocalDate.now(), 30, null, null, 0);
+
+        assertEquals("modifier-activite", viewName);
+        verify(activiteService, never()).enregistrerActivite(any());
+        verify(model).addAttribute(eq("error"), any());
+    }
+
+    @Test
+    void modifierActivite_noteSuperieureA10_resteSurLeFormulaire() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(activiteService.getById(1L)).thenReturn(Optional.of(mockActivite));
+
+        String viewName = activiteController.modifierActivite(
+                1L, session, model, LocalDate.now(), 30, null, null, 11);
+
+        assertEquals("modifier-activite", viewName);
+        verify(activiteService, never()).enregistrerActivite(any());
+        verify(model).addAttribute(eq("error"), any());
+    }
+
+    @Test
+    void modifierActivite_valide_enregistreEtRedirige() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(activiteService.getById(1L)).thenReturn(Optional.of(mockActivite));
+
+        String viewName = activiteController.modifierActivite(
+                1L, session, model, LocalDate.now(), 45, null, null, 7);
+
+        assertEquals("redirect:/activite/list", viewName);
+        verify(activiteService).enregistrerActivite(mockActivite);
+        assertEquals(45, mockActivite.getDuree());
+        assertEquals(7, mockActivite.getNote());
+    }
+
+    @Test
+    void modifierActivite_avecDistanceEtIntensite() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(activiteService.getById(1L)).thenReturn(Optional.of(mockActivite));
+
+        String viewName = activiteController.modifierActivite(
+                1L, session, model, LocalDate.now(), 60, 5.5, 3, 8);
+
+        assertEquals("redirect:/activite/list", viewName);
+        verify(activiteService).enregistrerActivite(mockActivite);
+        assertEquals(5.5, mockActivite.getDistance(), 0.01);
+        assertEquals(3, mockActivite.getNiveauIntensite());
+    }
+
+    @Test
+    void modifierActivite_activiteIntrouvable_throwsException() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(activiteService.getById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> {
+            activiteController.modifierActivite(
+                    999L, session, model, LocalDate.now(), 30, null, null, 5);
+        });
     }
 }
