@@ -7,11 +7,11 @@ import utcapitole.miage.projet_web.model.NiveauPratique;
 import utcapitole.miage.projet_web.model.Sport;
 import utcapitole.miage.projet_web.model.Utilisateur;
 
+import utcapitole.miage.projet_web.model.SportNiveauPratique;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -44,8 +44,8 @@ class UtilisateurTest {
         amis.add(new Utilisateur());
 
         Sport sport = new Sport("Course", "Endurance", 0.0, 1.0, true);
-        Map<Sport, NiveauPratique> niveaux = new HashMap<>();
-        niveaux.put(sport, NiveauPratique.DEBUTANT);
+        List<SportNiveauPratique> niveaux = new ArrayList<>();
+        niveaux.add(new SportNiveauPratique(sport, NiveauPratique.DEBUTANT));
 
         Activite activite = new Activite();
         activite.setNom("Course footing");
@@ -94,8 +94,8 @@ class UtilisateurTest {
         List<Utilisateur> amis = List.of(ami);
 
         Sport sport = new Sport("Natation", "Cardio", 0.0, 1.0, true);
-        Map<Sport, NiveauPratique> niveaux = new HashMap<>();
-        niveaux.put(sport, NiveauPratique.INTERMEDIAIRE);
+        List<SportNiveauPratique> niveaux = new ArrayList<>();
+        niveaux.add(new SportNiveauPratique(sport, NiveauPratique.INTERMEDIAIRE));
 
         List<Activite> activites = List.of(new Activite());
         List<Badge> badges = List.of(new Badge(2L, "Finisher"));
@@ -113,7 +113,9 @@ class UtilisateurTest {
                 amis,
                 niveaux,
                 activites,
-                badges
+                badges,
+                new ArrayList<>(),
+                new ArrayList<>()
         );
 
         assertAll(

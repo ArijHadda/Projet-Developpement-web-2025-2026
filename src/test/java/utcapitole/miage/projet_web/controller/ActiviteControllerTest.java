@@ -12,8 +12,10 @@ import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.jpa.ActiviteService;
 import utcapitole.miage.projet_web.model.jpa.SportRepository;
+import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 
 import jakarta.servlet.http.HttpSession;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -33,6 +35,9 @@ public class ActiviteControllerTest {
 
     @Mock
     private SportRepository sportRepository;
+
+    @Mock
+    private UtilisateurService utilisateurService;
 
     @Mock
     private Model model;
@@ -55,6 +60,8 @@ public class ActiviteControllerTest {
         mockActivite = new Activite();
         mockActivite.setId(100L);
         mockActivite.setNom("Running");
+        mockActivite.setDate(LocalDate.now());
+        mockActivite.setNote(5);
     }
 
     // showAddActiviteForm
@@ -73,6 +80,7 @@ public class ActiviteControllerTest {
     void showAddActiviteForm_loggedIn_returnsAddActiviteView() {
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
         when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(utilisateurService.getUtilisateurAvecSports(mockUser.getId())).thenReturn(mockUser);
 
         String viewName = activiteController.showAddActiviteForm(model, session);
 
@@ -87,6 +95,7 @@ public class ActiviteControllerTest {
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
         List<?> sports = Arrays.asList("Football", "Tennis");
         when(sportRepository.findAll()).thenReturn((List) sports);
+        when(utilisateurService.getUtilisateurAvecSports(mockUser.getId())).thenReturn(mockUser);
 
         activiteController.showAddActiviteForm(model, session);
 
@@ -125,6 +134,24 @@ public class ActiviteControllerTest {
         String viewName = activiteController.addActivite(mockActivite, model, session);
 
         assertEquals("redirect:/user/profile/" + mockUser.getId(), viewName);
+    }
+
+    @Test
+    void addActivite_futureDate_resteSurLeFormulaire() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(utilisateurService.getUtilisateurAvecSports(mockUser.getId())).thenReturn(mockUser);
+
+        Activite futureActivite = new Activite();
+        futureActivite.setNom("Running");
+        futureActivite.setDate(LocalDate.of(2027, 1, 1));
+        futureActivite.setNote(5);
+
+        String viewName = activiteController.addActivite(futureActivite, model, session);
+
+        assertEquals("add-activite", viewName);
+        verify(activiteService, never()).enregistrerActivite(any());
+        verify(model).addAttribute(eq("error"), any());
     }
 
     // listActivites

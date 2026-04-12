@@ -15,13 +15,13 @@
         <p>Calories totales brûlées : <span th:text="${stats.totalCalories}">0</span> kcal</p>
     </div>
     
-    <table border="1">
+    <table border="1" cellpadding="10" cellspacing="0" width="90%" align="center">
         <thead>
             <tr>
                 <th>Activité</th>
                 <th>Date</th>
                 <th>Durée (min)</th>
-                <th>Distance (km)</th>
+                <th>Distance / Intensité</th>
                 <th>Note (/10)</th>
                 <th>Calories (kcal)</th>
                 <th>Modifier</th>
@@ -34,7 +34,14 @@
                 <td th:text="${activite.nom}"></td>
                 <td th:text="${activite.date}"></td>
                 <td th:text="${activite.duree}"></td>
-                <td th:text="${activite.distance}"></td>
+                <td>
+                    <span th:if="${activite.sport != null and activite.sport.estBaseSurVitesse}">
+                        <span th:text="${activite.distance}"></span> km
+                    </span>
+                    <span th:unless="${activite.sport != null and activite.sport.estBaseSurVitesse}">
+                        Niveau <span th:text="${activite.niveauIntensite}"></span>
+                    </span>
+                </td>
                 <td th:text="${activite.note}"></td>
                 <td th:text="${activite.caloriesConsommees}"></td>
                 <td><a th:href="@{/activite/modifier/{idActivite}(idActivite=${activite.id})}">Modifier</a></td>

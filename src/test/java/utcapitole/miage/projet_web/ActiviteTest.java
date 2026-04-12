@@ -200,4 +200,19 @@ public class ActiviteTest {
         assertTrue(violations.isEmpty(), "Le niveau d'intensité 3 est valide");
     }
 
+    @Test
+    void testNoteValidation() {
+        Activite activite = new Activite(id, nom, date, conditionsMeteo, duree, distance, 0, niveauIntensiteTest, caloriesConsommeestest);
+        Set<ConstraintViolation<Activite>> violations = validator.validate(activite);
+        assertFalse(violations.isEmpty(), "La note 0 doit comporter une erreur de validation (Min)");
+
+        activite.setNote(11);
+        violations = validator.validate(activite);
+        assertFalse(violations.isEmpty(), "La note 11 doit comporter une erreur de validation (Max)");
+
+        activite.setNote(7);
+        violations = validator.validate(activite);
+        assertTrue(violations.isEmpty(), "La note 7 est valide");
+    }
+
 }

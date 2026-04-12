@@ -230,6 +230,11 @@ class UtilisateurControllerTest {
         public List<Utilisateur> findAll() {
             return allUsers;
         }
+
+        @Override
+        public Utilisateur getUtilisateurAvecSports(Long id) {
+            return byId.get(id);
+        }
     }
 
     private static class FakeBadgeAttributionService extends BadgeAttributionService {
