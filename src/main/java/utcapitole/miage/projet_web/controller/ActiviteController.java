@@ -1,8 +1,11 @@
 package utcapitole.miage.projet_web.controller;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpSession;
 import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,5 +105,49 @@ public class ActiviteController {
         }
         String referer = request.getHeader("Referer");
         return "redirect:" + (referer != null ? referer : "/activite/flux-amis");
+    }
+
+    @GetMapping("/supprimer/{idActivite}")
+    public String supprimerActivite(@PathVariable Long idActivite, HttpSession session, Model model) {
+        Utilisateur userSession = (Utilisateur) session.getAttribute("loggedInUser");
+        if (userSession == null) {
+            return "redirect:/user/login";
+        }
+        activiteService.supprimer(idActivite);
+        //model.addAttribute("msg", "Suppression reussie!!");
+        return "redirect:/activite/list";
+    }
+
+    @GetMapping("/modifier/{idActivite}")
+    public String ShowModifierActivite(@PathVariable Long idActivite, HttpSession session, Model model){
+        Utilisateur userSession = (Utilisateur) session.getAttribute("loggedInUser");
+        if (userSession == null) {
+            return "redirect:/user/login";
+        }
+        Activite act = activiteService.getById(idActivite)
+                .orElseThrow(() -> new RuntimeException("Activité introuvable"));
+        model.addAttribute("activite",act);
+        return "modifier-activite";
+    }
+    @PostMapping("/modifier/{idActivite}")
+    public String modifierActivite(@PathVariable Long idActivite, HttpSession session, Model model,
+                                   @RequestParam LocalDate date,
+                                   @RequestParam int duree,
+                                   @RequestParam double distance,
+                                   @RequestParam int note){
+
+        Utilisateur userSession = (Utilisateur) session.getAttribute("loggedInUser");
+        if (userSession == null) {
+            return "redirect:/user/login";
+        }
+        Activite act = activiteService.getById(idActivite)
+                .orElseThrow(() -> new RuntimeException("Activité introuvable"));
+
+        act.setDuree(duree);
+        act.setDate(date);
+        act.setDistance(distance);
+        act.setNote(note);
+        activiteService.enregistrerActivite(act);
+        return "redirect:/activite/list";
     }
 }

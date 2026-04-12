@@ -5,7 +5,9 @@
     <title>Set niveau pratique d'un sport</title>
 </head>
 <body>
+<h2>Ajouter un niveau pratique a un sport</h2>
 <form th:action="@{/user/nivPratique}"  method="post">
+    <label for="sport">Sport:</label>
     <select name="sport" id="sport">
         <option value="" disabled selected>-- Choisir un sport --</option>
         <option th:each="s : ${sports}"
@@ -14,13 +16,15 @@
         </option>
     </select>
     <br><br>
-    <select name="niveau">
+    <label for="niveau">Niveau Pratique:</label>
+    <select id="niveau" name="niveau">
         <option value="" disabled selected>-- Choisir un niveau --</option>
         <option th:each="n : ${niveaux}"
                 th:value="${n}"
                 th:text="${n}">
         </option>
     </select>
+    <br><br>
     <input type="submit" value="valider">
 
 </form>
