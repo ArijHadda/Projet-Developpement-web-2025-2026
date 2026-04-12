@@ -1,7 +1,6 @@
-package utcapitole.miage.projet_web;
+package utcapitole.miage.projet_web.model;
 
 import org.junit.jupiter.api.Test;
-import utcapitole.miage.projet_web.model.Badge;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;

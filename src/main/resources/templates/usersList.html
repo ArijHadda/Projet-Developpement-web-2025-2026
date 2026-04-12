@@ -27,7 +27,7 @@
         <td>Mail</td>
         <td>Sexe</td>
         <td>Age</td>
-<!--        <td>Niveau de pratique</td>-->
+        <td>Niveau de pratique</td>
     </tr>
     <tr th:each="u : ${utiliste}" th:if="${u.id != session.loggedInUser.id}">
         <td th:text="${u.nom}"></td>
@@ -35,8 +35,15 @@
         <td th:text="${u.mail}"></td>
         <td th:text="${u.sexe}"></td>
         <td th:text="${u.age}"></td>
-        <td th:text="${u.listSportNivPratique}"></td>
-<!--        <td th:text="${u.niveauPratique}"></td>-->
+        <td th:switch="${#lists.isEmpty(u.listSportNivPratique)}">
+            <span th:case="true" style="color: gray;">Aucune information</span>
+
+            <ul th:case="*">
+                <li th:each="sn : ${u.listSportNivPratique}">
+                    <span th:text="${sn.sport.nom}"></span> : <span th:text="${sn.niveau}"></span>
+                </li>
+            </ul>
+        </td>
         <td>
             <span th:if="${#lists.contains(mesAmis, u)}" style="color: green;">✅ Déjà ami</span>
 
