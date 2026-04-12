@@ -1,8 +1,6 @@
 package utcapitole.miage.projet_web.model.jpa;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
@@ -28,6 +26,9 @@ import org.springframework.web.client.RestTemplate;
 import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Sport;
 import utcapitole.miage.projet_web.model.Utilisateur;
+import utcapitole.miage.projet_web.model.jpa.CommentaireRepository;
+import utcapitole.miage.projet_web.model.jpa.UtilisateurRepository;
+import utcapitole.miage.projet_web.model.Commentaire;
 
 @ExtendWith(MockitoExtension.class)
 class ActiviteServiceTest {
@@ -37,6 +38,12 @@ class ActiviteServiceTest {
 
     @Mock
     private SportRepository sportRepository;
+
+    @Mock
+    private CommentaireRepository commentaireRepository;
+
+    @Mock
+    private UtilisateurRepository utilisateurRepository;
 
     @Mock
     private RestTemplate restTemplate;
@@ -68,7 +75,7 @@ class ActiviteServiceTest {
 
     @BeforeEach
     void setUp() {
-        activiteService = new ActiviteService(activiteRepository, sportRepository);
+        activiteService = new ActiviteService(activiteRepository, sportRepository, commentaireRepository, utilisateurRepository);
         ReflectionTestUtils.setField(activiteService, "restTemplate", restTemplate);
 
         lenient().when(sportRepository.findByNom(any())).thenAnswer(invocation -> {
@@ -434,5 +441,57 @@ class ActiviteServiceTest {
         Activite saved = activiteService.enregistrerActivite(activite);
         assertEquals(expectedCalories, saved.getCaloriesConsommees(),
                 nomSport + " à " + distanceKm + " km/h devrait donner " + expectedCalories + " cal");
+    }
+    // ═══════════════════════════════════════════════════════════════════════
+    // [Test] Nouveaux tests pour Flux, Kudos et Commentaires
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Test
+    void testGetFluxActivitesAmis_sansAmis_retourneListeVide() {
+        Utilisateur user = new Utilisateur();
+        user.setAmis(new java.util.ArrayList<>()); // Pas d'amis
+
+        List<Activite> flux = activiteService.getFluxActivitesAmis(user);
+        assertTrue(flux.isEmpty());
+    }
+
+    @Test
+    void testToggleKudos_ajouteEtSupprime() {
+        Activite activite = new Activite();
+        activite.setId(10L);
+        activite.setLikers(new java.util.ArrayList<>());
+
+        Utilisateur user = new Utilisateur();
+        user.setId(5L);
+
+        when(activiteRepository.findById(10L)).thenReturn(java.util.Optional.of(activite));
+        when(utilisateurRepository.findById(5L)).thenReturn(java.util.Optional.of(user));
+
+        // 1er clic : Ajoute le Kudo
+        activiteService.toggleKudos(10L, 5L);
+        assertEquals(1, activite.getNbKudos());
+        assertTrue(activite.getLikers().contains(user));
+        verify(activiteRepository).save(activite);
+
+        // 2ème clic : Retire le Kudo
+        activiteService.toggleKudos(10L, 5L);
+        assertEquals(0, activite.getNbKudos());
+        assertFalse(activite.getLikers().contains(user));
+    }
+
+    @Test
+    void testAjouterCommentaire() {
+        Activite activite = new Activite();
+        activite.setId(10L);
+
+        Utilisateur user = new Utilisateur();
+        user.setId(5L);
+
+        when(activiteRepository.findById(10L)).thenReturn(java.util.Optional.of(activite));
+        when(utilisateurRepository.findById(5L)).thenReturn(java.util.Optional.of(user));
+
+        activiteService.ajouterCommentaire(10L, 5L, "Super course !");
+
+        verify(commentaireRepository).save(any(Commentaire.class));
     }
 }

@@ -36,6 +36,8 @@ public interface ActiviteRepository extends JpaRepository<Activite, Long> {
     boolean existsByUtilisateurIdAndDistanceGreaterThanEqual(Long utilisateurId, double distance);
 
     List<Activite> findByUtilisateurId(Long utilisateurId);
+    // Trouve les activités d'une liste des amis triées par date la plus récente
+    List<Activite> findByUtilisateurInOrderByDateDesc(List<Utilisateur> amis);
 
     // calculerDistanceTotale pour objectif
     @Query("SELECT COALESCE(SUM(a.distance), 0.0) FROM Activite a " +
