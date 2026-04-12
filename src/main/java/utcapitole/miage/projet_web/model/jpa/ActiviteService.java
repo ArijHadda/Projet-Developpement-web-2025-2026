@@ -19,9 +19,7 @@ public class ActiviteService {
 
     private final ActiviteRepository activiteRepository;
     private final SportRepository sportRepository;
-    @Autowired
     private final CommentaireRepository commentaireRepository;
-    @Autowired
     private final UtilisateurRepository utilisateurRepository;
 
     private final RestTemplate restTemplate = new RestTemplate();
