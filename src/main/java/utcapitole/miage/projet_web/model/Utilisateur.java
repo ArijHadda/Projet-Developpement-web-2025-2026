@@ -68,6 +68,12 @@ public class Utilisateur {
         )
         private List<Badge> badges = new ArrayList<>();
 
+    @OneToMany(mappedBy = "createur")
+    private List<Challenge> challengesCrees = new ArrayList<>();
+
+    @OneToMany(mappedBy = "utilisateur")
+    private List<Participation> participations = new ArrayList<>();
+
     public Long getId() {
         return id;
     }
