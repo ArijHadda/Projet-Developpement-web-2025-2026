@@ -1,11 +1,6 @@
-package utcapitole.miage.projet_web;
+package utcapitole.miage.projet_web.model;
 
 import org.junit.jupiter.api.Test;
-import utcapitole.miage.projet_web.model.Activite;
-import utcapitole.miage.projet_web.model.Badge;
-import utcapitole.miage.projet_web.model.NiveauPratique;
-import utcapitole.miage.projet_web.model.Sport;
-import utcapitole.miage.projet_web.model.Utilisateur;
 
 import utcapitole.miage.projet_web.model.SportNiveauPratique;
 
@@ -29,6 +24,8 @@ class UtilisateurTest {
                 () -> assertNotNull(utilisateur.getListSportNivPratique()),
                 () -> assertNotNull(utilisateur.getActivites()),
                 () -> assertNotNull(utilisateur.getBadges()),
+                () -> assertNotNull(utilisateur.getChallengesCrees()),
+                () -> assertNotNull(utilisateur.getParticipations()),
                 () -> assertTrue(utilisateur.getAmis().isEmpty()),
                 () -> assertTrue(utilisateur.getListSportNivPratique().isEmpty()),
                 () -> assertTrue(utilisateur.getActivites().isEmpty()),
@@ -93,12 +90,16 @@ class UtilisateurTest {
         Utilisateur ami = new Utilisateur();
         List<Utilisateur> amis = List.of(ami);
 
-        Sport sport = new Sport("Natation", "Cardio", 0.0, 1.0, true);
+Sport sport = new Sport("Natation", "Cardio", 0.0, 1.0, true);
+
         List<SportNiveauPratique> niveaux = new ArrayList<>();
         niveaux.add(new SportNiveauPratique(sport, NiveauPratique.INTERMEDIAIRE));
 
         List<Activite> activites = List.of(new Activite());
         List<Badge> badges = List.of(new Badge(2L, "Finisher"));
+
+        List<Challenge> challenges = new ArrayList<>();
+        List<Participation> participations = new ArrayList<>();
 
         Utilisateur utilisateur = new Utilisateur(
                 10L,
@@ -114,8 +115,8 @@ class UtilisateurTest {
                 niveaux,
                 activites,
                 badges,
-                new ArrayList<>(),
-                new ArrayList<>()
+                challenges,
+                participations
         );
 
         assertAll(
@@ -131,7 +132,9 @@ class UtilisateurTest {
                 () -> assertEquals(amis, utilisateur.getAmis()),
                 () -> assertEquals(niveaux, utilisateur.getListSportNivPratique()),
                 () -> assertEquals(activites, utilisateur.getActivites()),
-                () -> assertEquals(badges, utilisateur.getBadges())
+                () -> assertEquals(badges, utilisateur.getBadges()),
+                () -> assertEquals(challenges, utilisateur.getChallengesCrees()),
+                () -> assertEquals(participations, utilisateur.getParticipations())
         );
     }
 

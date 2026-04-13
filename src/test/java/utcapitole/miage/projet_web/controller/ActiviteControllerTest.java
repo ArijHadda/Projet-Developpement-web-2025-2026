@@ -42,6 +42,9 @@ public class ActiviteControllerTest {
     private UtilisateurService utilisateurService;
 
     @Mock
+    private jakarta.servlet.http.HttpServletRequest request;
+
+    @Mock
     private Model model;
 
     @Mock
@@ -211,8 +214,7 @@ public class ActiviteControllerTest {
         verify(model).addAttribute(eq("activites"), any());
         verify(model).addAttribute(eq("stats"), any());
     }
-
-    // addActivite note validation
+// addActivite note validation
 
     @Test
     void addActivite_noteInferieureA1_resteSurLeFormulaire() {
@@ -394,5 +396,50 @@ public class ActiviteControllerTest {
             activiteController.modifierActivite(
                     999L, session, model, LocalDate.now(), 30, null, null, 5);
         });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Tests pour le flux, kudos et commentaires
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Test
+    void afficherFluxAmis_notLoggedIn_redirectsToLogin() {
+        when(session.getAttribute("loggedInUser")).thenReturn(null);
+        String viewName = activiteController.afficherFluxAmis(model, session);
+        assertEquals("redirect:/user/login", viewName);
+    }
+
+    @Test
+    void afficherFluxAmis_loggedIn_returnsFluxAmis() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(utilisateurService.findById(mockUser.getId())).thenReturn(java.util.Optional.of(mockUser));
+        when(activiteService.getFluxActivitesAmis(mockUser)).thenReturn(java.util.Collections.emptyList());
+
+        String viewName = activiteController.afficherFluxAmis(model, session);
+
+        assertEquals("fluxAmis", viewName);
+        verify(model).addAttribute(eq("fluxActivites"), any());
+    }
+
+    @Test
+    void liker_avecReferer_redirectsToReferer() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(request.getHeader("Referer")).thenReturn("/activite/list");
+
+        String viewName = activiteController.liker(100L, session, request);
+
+        verify(activiteService).toggleKudos(100L, mockUser.getId());
+        assertEquals("redirect:/activite/list", viewName); // Doit retourner au referer
+    }
+
+    @Test
+    void commenter_avecContenuValide_redirectsToReferer() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(request.getHeader("Referer")).thenReturn("/activite/flux-amis");
+
+        String viewName = activiteController.commenter(100L, "Beau travail !", session, request);
+
+        verify(activiteService).ajouterCommentaire(100L, mockUser.getId(), "Beau travail !");
+        assertEquals("redirect:/activite/flux-amis", viewName);
     }
 }

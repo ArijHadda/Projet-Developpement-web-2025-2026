@@ -94,6 +94,9 @@ public class Sport {
         this.estBaseSurVitesse = estBaseSurVitesse;
     }
 
+    public Boolean getEstBaseSurVitesse() {
+        return estBaseSurVitesse;
+    }
 
     // toString (utile pour debug)
     @Override
@@ -108,8 +111,6 @@ public class Sport {
                 '}';
     }
 
-    public Boolean getEstBaseSurVitesse() {
-        return estBaseSurVitesse;
-    }
+
 }
 

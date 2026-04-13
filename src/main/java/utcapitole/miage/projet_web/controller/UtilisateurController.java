@@ -89,16 +89,9 @@ public class UtilisateurController {
         if (user == null) {
             return "redirect:/user/login";
         }
-        model.addAttribute("userProfile",user);
-        return "profile";
-        /*Optional<Utilisateur> userOpt = utilisateurService.findByIdU(IdU);
-        if (userOpt.isPresent()) {
-            model.addAttribute("userProfile", userOpt.get());
-            return "profile";
-        } else {
-            return "redirect:/user/login";
-        }*/
 
+        model.addAttribute("userProfile", user);
+        return "profile";
     }
 
     @PostMapping("/profile/update/{IdU}")
@@ -108,31 +101,17 @@ public class UtilisateurController {
                                   @RequestParam float poidsU,@RequestParam String niveauPratique,HttpSession session){
 
         Utilisateur currentUser = (Utilisateur) session.getAttribute("loggedInUser");
-        if (currentUser == null) return "redirect:/user/login";
+        if (currentUser == null || !currentUser.getId().equals(IdU)) {
+            return "redirect:/user/login";
+        }
         utilisateurService.modifierProfile(IdU,mailU,sexeU,ageU,tailleU,poidsU,niveauPratique);
         return "redirect:/user/profile/" + currentUser.getId();
     }
 
-    /*@GetMapping("/profile/update/{IdU}")
-    public String updateProfile(@PathVariable Long IdU, HttpSession session, Model model){
-        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
-        if (loggedInUser == null) {
-            return "redirect:/user/login";
-        }
-
-        Optional<Utilisateur> userOpt = utilisateurService.findById(IdU);
-        if (userOpt.isPresent()) {
-            model.addAttribute("userUpdate", userOpt.get());
-            return "update";
-        } else {
-            return "redirect:/user/login";
-        }
-
-    }*/
     @GetMapping("/profile/update/{IdU}")
     public String updateProfile(@PathVariable Long IdU, HttpSession session, Model model){
         Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
-        if (loggedInUser == null) {
+        if (loggedInUser == null || !loggedInUser.getId().equals(IdU)) {
             return "redirect:/user/login";
         }
 
@@ -141,8 +120,8 @@ public class UtilisateurController {
         if (user == null) {
             return "redirect:/user/login";
         }
-        model.addAttribute("userUpdate", user);
 
+        model.addAttribute("userUpdate", user);
         return "update";
     }
 
