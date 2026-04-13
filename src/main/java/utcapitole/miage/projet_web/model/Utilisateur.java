@@ -57,22 +57,25 @@ public class Utilisateur {
     private List<SportNiveauPratique> listSportNivPratique = new ArrayList<>();
 
 
-        @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL, orphanRemoval = true)
-        private List<Activite> activites = new ArrayList<>();
+    @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Activite> activites = new ArrayList<>();
 
-        @ManyToMany(fetch = FetchType.EAGER)
-        @JoinTable(
-            name = "utilisateur_badges",
-            joinColumns = @JoinColumn(name = "IdU"),
-            inverseJoinColumns = @JoinColumn(name = "idBadge")
-        )
-        private List<Badge> badges = new ArrayList<>();
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "utilisateur_badges",
+        joinColumns = @JoinColumn(name = "IdU"),
+        inverseJoinColumns = @JoinColumn(name = "idBadge")
+    )
+    private List<Badge> badges = new ArrayList<>();
 
     @OneToMany(mappedBy = "createur")
     private List<Challenge> challengesCrees = new ArrayList<>();
 
     @OneToMany(mappedBy = "utilisateur")
     private List<Participation> participations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Objectif> objectifs = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -190,5 +193,13 @@ public class Utilisateur {
             this.amis.add(nouveauAmi);
             nouveauAmi.getAmis().add(this);
         }
+    }
+
+    public List<Objectif> getObjectifs() {
+        return objectifs;
+    }
+
+    public void setObjectifs(List<Objectif> objectifs) {
+        this.objectifs = objectifs;
     }
 }

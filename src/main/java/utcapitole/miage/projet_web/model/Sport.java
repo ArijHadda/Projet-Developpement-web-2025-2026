@@ -35,7 +35,8 @@ public class Sport {
     private Boolean estBaseSurVitesse;
 
     // Constructeurs
-    public Sport() {}
+    public Sport() {
+    }
 
     public Sport(String nom, String type, Double intensiteBase, Double coeffIntensite, Boolean estBaseSurVitesse) {
         this.nom = nom;
@@ -46,6 +47,9 @@ public class Sport {
     }
 
     // Getters & Setters
+    public void setId(Long id) {
+        this.id = id;
+    }
     public Long getId() {
         return id;
     }
@@ -90,6 +94,9 @@ public class Sport {
         this.estBaseSurVitesse = estBaseSurVitesse;
     }
 
+    public Boolean getEstBaseSurVitesse() {
+        return estBaseSurVitesse;
+    }
 
     // toString (utile pour debug)
     @Override
@@ -104,8 +111,6 @@ public class Sport {
                 '}';
     }
 
-    public Boolean getEstBaseSurVitesse() {
-        return estBaseSurVitesse;
-    }
+
 }
 

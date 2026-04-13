@@ -1,22 +1,20 @@
 package utcapitole.miage.projet_web.model;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PositiveOrZero;
+import lombok.*;
 
 @Entity
+@AllArgsConstructor
 public class Activite {
 
     @Id
@@ -44,6 +42,8 @@ public class Activite {
     @Column(name = "distanceAct")
     private double distance;
 
+    @Min(value = 1, message = "La note doit être au moins de 1")
+    @Max(value = 10, message = "La note ne peut pas dépasser 10")
     @Column(name = "noteAct")
     private int note;
 
@@ -62,6 +62,17 @@ public class Activite {
     @ManyToOne
     @JoinColumn(name = "idSport")
     private Sport sport;
+
+    @OneToMany(mappedBy = "activite", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Commentaire> commentaires = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "activite_kudos",
+            joinColumns = @JoinColumn(name = "id_activite"),
+            inverseJoinColumns = @JoinColumn(name = "id_utilisateur")
+    )
+    private List<Utilisateur> likers = new ArrayList<>();
 
     public Activite() {
     }
@@ -165,6 +176,26 @@ public class Activite {
 
     public void setSport(Sport sport) {
         this.sport = sport;
+    }
+
+    public int getNbKudos() {
+        return this.likers != null ? this.likers.size() : 0;
+    }
+
+    public List<Utilisateur> getLikers() {
+        return likers;
+    }
+
+    public void setLikers(List<Utilisateur> likers) {
+        this.likers = likers;
+    }
+
+    public void setCommentaires(List<Commentaire> commentaires) {
+        this.commentaires = commentaires;
+    }
+
+    public List<Commentaire> getCommentaires() {
+        return commentaires;
     }
 
     @Override

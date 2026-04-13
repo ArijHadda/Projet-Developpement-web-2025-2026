@@ -71,20 +71,32 @@
         <a th:href="@{/user/profile/{id}(id=${ami.id})}">Voir le profil</a>
     </li>
 </ul>
-<div>
-    <a th:href="@{/user/logout}">
-        <button type="button">Se déconnecter</button>
-    </a>
-</div>
 <br>
 <div>
     <a th:href="@{/activite/add-activite}">
         <button type="button">Ajouter une activité</button>
     </a>
 </div>
+<br>
 <div>
     <a th:href="@{/activite/list}">
         <button type="button">Voir mes activités</button>
+    </a>
+</div>
+<br>
+<div>
+    <a th:href="@{/objectif/list}">
+        <button type="button" style="background-color: #17a2b8; color: white; border: none; padding: 10px; cursor: pointer;">
+            🎯 Mes Objectifs Mensuels
+        </button>
+    </a>
+</div>
+<br>
+<div>
+    <a th:href="@{/activite/flux-amis}">
+        <button type="button" style="background-color: #e83e8c; color: white; border: none; padding: 10px; cursor: pointer; margin-top: 10px;">
+            🌍 Voir le flux d'activités de mes amis
+        </button>
     </a>
 </div>
 <br>
@@ -93,6 +105,12 @@
         <button type="button" style="background-color: #5cb85c; color: white; border: none; padding: 10px; cursor: pointer;">
             🏆 Espace Challenges (Découvrir et Rejoindre)
         </button>
+    </a>
+</div>
+<br>
+<div>
+    <a th:href="@{/user/logout}">
+        <button type="button">Se déconnecter</button>
     </a>
 </div>
 
