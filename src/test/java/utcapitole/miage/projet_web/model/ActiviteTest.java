@@ -24,7 +24,7 @@ public class ActiviteTest {
     private final LocalDate date = LocalDate.of(2022, 1, 1);
     private final String conditionsMeteo = "Soleil";
     private final int duree = 60;
-    private final float distance = 10;
+    private final double distance = 10;
     private final int note = 5;
     private final int niveauIntensiteTest = 3;
     private final int caloriesConsommeestest = 500;
@@ -56,7 +56,7 @@ public class ActiviteTest {
             () -> assertEquals(LocalDate.of(2022, 1, 1), activite.getDate()),
             () -> assertEquals("Soleil", activite.getConditionsMeteo()),
             () -> assertEquals(60, activite.getDuree()),
-            () -> assertEquals(10, activite.getDistance()),
+            () -> assertEquals(10.0, activite.getDistance()),
             () -> assertEquals(5, activite.getNote()),
             () -> assertEquals(3, activite.getNiveauIntensite()),
             () -> assertEquals(500, activite.getCaloriesConsommees())
@@ -81,7 +81,7 @@ public class ActiviteTest {
             () -> assertEquals(LocalDate.of(2022, 1, 1), activite.getDate()),
             () -> assertEquals("Soleil", activite.getConditionsMeteo()),
             () -> assertEquals(60, activite.getDuree()),
-            () -> assertEquals(10, activite.getDistance()),
+            () -> assertEquals(10.0, activite.getDistance()),
             () -> assertEquals(5, activite.getNote()),
             () -> assertEquals(3, activite.getNiveauIntensite()),
             () -> assertEquals(500, activite.getCaloriesConsommees())
@@ -97,7 +97,7 @@ public class ActiviteTest {
             () -> assertEquals(null, activite.getDate()),
             () -> assertEquals(null, activite.getConditionsMeteo()),
             () -> assertEquals(0, activite.getDuree()),
-            () -> assertEquals(0, activite.getDistance()),
+            () -> assertEquals(0.0, activite.getDistance()),
             () -> assertEquals(0, activite.getNote()),
             () -> assertEquals(0, activite.getNiveauIntensite()),
             () -> assertEquals(0, activite.getCaloriesConsommees())

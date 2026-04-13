@@ -36,9 +36,6 @@ public class Sport {
 
     // Constructeurs
     public Sport() {
-        this.intensiteBase = 0.0;
-        this.coeffIntensite = 0.0;
-        this.estBaseSurVitesse = false;
     }
 
     public Sport(String nom, String type, Double intensiteBase, Double coeffIntensite, Boolean estBaseSurVitesse) {
