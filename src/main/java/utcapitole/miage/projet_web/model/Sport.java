@@ -35,7 +35,8 @@ public class Sport {
     private Boolean estBaseSurVitesse;
 
     // Constructeurs
-    public Sport() {}
+    public Sport() {
+    }
 
     public Sport(String nom, String type, Double intensiteBase, Double coeffIntensite, Boolean estBaseSurVitesse) {
         this.nom = nom;

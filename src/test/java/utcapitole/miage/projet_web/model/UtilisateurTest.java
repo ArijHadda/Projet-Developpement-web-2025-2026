@@ -30,6 +30,9 @@ class UtilisateurTest {
                 () -> assertTrue(utilisateur.getListSportNivPratique().isEmpty()),
                 () -> assertTrue(utilisateur.getActivites().isEmpty()),
                 () -> assertTrue(utilisateur.getBadges().isEmpty()),
+                () -> assertTrue(utilisateur.getChallengesCrees().isEmpty()),
+                () -> assertTrue(utilisateur.getParticipations().isEmpty()),
+                () -> assertTrue(utilisateur.getBadges().isEmpty()),
                 () -> assertTrue(utilisateur.getObjectifs().isEmpty())
         );
     }
@@ -48,7 +51,7 @@ class UtilisateurTest {
 
         Activite activite = new Activite();
         activite.setNom("Course footing");
-        activite.setDate(LocalDate.of(2026, 4, 1));
+        activite.setDate(LocalDate.now());
         List<Activite> activites = new ArrayList<>();
         activites.add(activite);
 

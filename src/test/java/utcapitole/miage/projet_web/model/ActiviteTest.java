@@ -24,7 +24,7 @@ public class ActiviteTest {
     private final LocalDate date = LocalDate.of(2022, 1, 1);
     private final String conditionsMeteo = "Soleil";
     private final int duree = 60;
-    private final float distance = 10;
+    private final double distance = 10;
     private final int note = 5;
     private final int niveauIntensiteTest = 3;
     private final int caloriesConsommeestest = 500;
@@ -56,7 +56,7 @@ public class ActiviteTest {
             () -> assertEquals(LocalDate.of(2022, 1, 1), activite.getDate()),
             () -> assertEquals("Soleil", activite.getConditionsMeteo()),
             () -> assertEquals(60, activite.getDuree()),
-            () -> assertEquals(10, activite.getDistance()),
+            () -> assertEquals(10.0, activite.getDistance()),
             () -> assertEquals(5, activite.getNote()),
             () -> assertEquals(3, activite.getNiveauIntensite()),
             () -> assertEquals(500, activite.getCaloriesConsommees())
@@ -81,7 +81,7 @@ public class ActiviteTest {
             () -> assertEquals(LocalDate.of(2022, 1, 1), activite.getDate()),
             () -> assertEquals("Soleil", activite.getConditionsMeteo()),
             () -> assertEquals(60, activite.getDuree()),
-            () -> assertEquals(10, activite.getDistance()),
+            () -> assertEquals(10.0, activite.getDistance()),
             () -> assertEquals(5, activite.getNote()),
             () -> assertEquals(3, activite.getNiveauIntensite()),
             () -> assertEquals(500, activite.getCaloriesConsommees())
@@ -97,7 +97,7 @@ public class ActiviteTest {
             () -> assertEquals(null, activite.getDate()),
             () -> assertEquals(null, activite.getConditionsMeteo()),
             () -> assertEquals(0, activite.getDuree()),
-            () -> assertEquals(0, activite.getDistance()),
+            () -> assertEquals(0.0, activite.getDistance()),
             () -> assertEquals(0, activite.getNote()),
             () -> assertEquals(0, activite.getNiveauIntensite()),
             () -> assertEquals(0, activite.getCaloriesConsommees())
@@ -197,16 +197,29 @@ public class ActiviteTest {
         assertTrue(violations.isEmpty(), "Le niveau d'intensité 3 est valide");
     }
 
+@Test
+    void testNoteValidation() {
+        Activite activite = new Activite(id, nom, date, conditionsMeteo, duree, distance, 0, niveauIntensiteTest, caloriesConsommeestest);
+        Set<ConstraintViolation<Activite>> violations = validator.validate(activite);
+        assertFalse(violations.isEmpty(), "La note 0 doit comporter une erreur de validation (Min)");
+
+        activite.setNote(11);
+        violations = validator.validate(activite);
+        assertFalse(violations.isEmpty(), "La note 11 doit comporter une erreur de validation (Max)");
+
+        activite.setNote(7);
+        violations = validator.validate(activite);
+        assertTrue(violations.isEmpty(), "La note 7 est valide");
+    }
+
     // --- Tests pour Kudos et Commentaires ---
 
     @Test
     void testKudosAndCommentaires() {
         Activite activite = new Activite();
 
-        // Test initial: 0 kudos
         assertEquals(0, activite.getNbKudos(), "Une nouvelle activité devrait avoir 0 kudos");
 
-        // Test Likers (Kudos)
         Utilisateur u1 = new Utilisateur();
         u1.setId(1L);
         java.util.List<Utilisateur> likers = new java.util.ArrayList<>();
@@ -216,10 +229,9 @@ public class ActiviteTest {
         assertEquals(1, activite.getNbKudos(), "Le nombre de kudos doit correspondre à la taille de la liste des likers");
         assertTrue(activite.getLikers().contains(u1));
 
-        // Test Commentaires
-        utcapitole.miage.projet_web.model.Commentaire com = new utcapitole.miage.projet_web.model.Commentaire();
+        Commentaire com = new Commentaire();
         com.setContenu("Bravo !");
-        java.util.List<utcapitole.miage.projet_web.model.Commentaire> commentaires = new java.util.ArrayList<>();
+        java.util.List<Commentaire> commentaires = new java.util.ArrayList<>();
         commentaires.add(com);
         activite.setCommentaires(commentaires);
 

@@ -85,9 +85,7 @@ public class UtilisateurController {
         if (loggedInUser == null) {
             return "redirect:/user/login";
         }
-
         Utilisateur user = utilisateurService.getUtilisateurAvecSports(IdU);
-
         if (user == null) {
             return "redirect:/user/login";
         }
@@ -119,7 +117,6 @@ public class UtilisateurController {
 
         // Charger l'utilisateur AVEC ses sports
         Utilisateur user = utilisateurService.getUtilisateurAvecSports(IdU);
-
         if (user == null) {
             return "redirect:/user/login";
         }
