@@ -236,4 +236,17 @@ public class ActiviteControllerTest {
         verify(activiteService).ajouterCommentaire(100L, mockUser.getId(), "Beau travail !");
         assertEquals("redirect:/activite/flux-amis", viewName);
     }
+
+    @Test
+    void testSuppressionActiviteShouldWork(){
+
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        // Act
+        String viewName = activiteController.supprimerActivite(10L, session, model);
+
+        // Assert
+        assertEquals("redirect:/activite/list", viewName);
+        verify(activiteService).supprimer(10L);
+    }
 }
