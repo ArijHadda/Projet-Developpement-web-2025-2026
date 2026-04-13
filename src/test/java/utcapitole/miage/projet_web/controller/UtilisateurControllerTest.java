@@ -16,6 +16,7 @@ import utcapitole.miage.projet_web.model.jpa.BadgeAttributionService;
 import utcapitole.miage.projet_web.model.jpa.SportNiveauPratiqueService;
 import utcapitole.miage.projet_web.model.jpa.SportService;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
+import org.springframework.web.client.RestTemplate;
 
 import java.lang.reflect.Field;
 import java.time.LocalDate;
@@ -28,6 +29,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.*;
 
 class UtilisateurControllerTest {
 
@@ -38,6 +40,7 @@ class UtilisateurControllerTest {
     // Utilisation de Mockito pour les nouveaux services afin d'éviter les problèmes de constructeur
     private SportService sportService;
     private SportNiveauPratiqueService sportNiveauPratiqueService;
+    private RestTemplate restTemplate;
 
     @BeforeEach
     void setUp() {
@@ -52,6 +55,9 @@ class UtilisateurControllerTest {
         setField(controller, "badgeAttributionService", badgeService);
         setField(controller, "sportService", sportService);
         setField(controller, "sportNiveauPratiqueService", sportNiveauPratiqueService);
+
+        restTemplate = mock(RestTemplate.class);
+        setField(controller, "restTemplate", restTemplate);
     }
 
     @Test
@@ -264,6 +270,110 @@ class UtilisateurControllerTest {
 
         String blocked = controller.attribuerBadgesAutomatiques(8L, new MockHttpSession());
         assertEquals("redirect:/user/login", blocked);
+    }
+
+    @Test
+    void testAfficherProfileAvecMeteoSucces() {
+        Utilisateur logged = user(1L, "p@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+        utilisateurService.byId.put(1L, logged);
+
+        // 1. Mock IP-API (Localisation)
+        Map<String, Object> ipApiResponse = new HashMap<>();
+        ipApiResponse.put("lat", 43.6);
+        ipApiResponse.put("lon", 1.4);
+        ipApiResponse.put("city", "Toulouse");
+        when(restTemplate.getForObject(eq("http://ip-api.com/json/"), eq(Map.class))).thenReturn(ipApiResponse);
+
+        // 2. Mock Reverse Geocoding (Ville précise)
+        Map<String, Object> geoResponse = new HashMap<>();
+        List<Map<String, Object>> results = new ArrayList<>();
+        Map<String, Object> cityData = new HashMap<>();
+        cityData.put("name", "Toulouse-Centre");
+        results.add(cityData);
+        geoResponse.put("results", results);
+        when(restTemplate.getForObject(contains("geocoding-api.open-meteo.com"), eq(Map.class))).thenReturn(geoResponse);
+
+        // 3. Mock Weather API
+        Map<String, Object> weatherResponse = new HashMap<>();
+        Map<String, Object> currentWeather = new HashMap<>();
+        currentWeather.put("temperature", 20.5);
+        currentWeather.put("weathercode", 0);
+        currentWeather.put("windspeed", 15.0);
+        currentWeather.put("winddirection", 0);
+        currentWeather.put("is_day", 1);
+        weatherResponse.put("current_weather", currentWeather);
+        when(restTemplate.getForObject(contains("api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(weatherResponse);
+
+        Model model = new ExtendedModelMap();
+        String view = controller.afficherProfile(1L, session, model);
+
+        assertEquals("profile", view);
+        assertEquals("20.5°C", model.getAttribute("meteoTemperature"));
+        assertEquals("☀️", model.getAttribute("meteoIcone"));
+        assertEquals("Toulouse-Centre", model.getAttribute("meteoVille"));
+        assertEquals("Ensoleille (Code 0)", model.getAttribute("meteoEtatCiel"));
+        assertEquals("15 km/h", model.getAttribute("meteoVentVitesse"));
+        assertEquals("Nord (0°)", model.getAttribute("meteoVentDirection"));
+        assertEquals("Jour (1 = Oui)", model.getAttribute("meteoMoment"));
+    }
+
+    @Test
+    void testAfficherProfileMeteoEchecLocalisation() {
+        Utilisateur logged = user(1L, "p@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+        utilisateurService.byId.put(1L, logged);
+
+        // Mock failure de localisation (retourne null)
+        when(restTemplate.getForObject(anyString(), eq(Map.class))).thenReturn(null);
+
+        Model model = new ExtendedModelMap();
+        controller.afficherProfile(1L, session, model);
+
+        assertEquals("Meteo indisponible", model.getAttribute("meteoTemperature"));
+        assertEquals("🌤️", model.getAttribute("meteoIcone"));
+        assertEquals("Ville inconnue", model.getAttribute("meteoVille"));
+    }
+
+    @Test
+    void testAfficherProfileMeteoFallbackVille() {
+        Utilisateur logged = user(1L, "p@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+        utilisateurService.byId.put(1L, logged);
+
+        // 1. Mock IP-API (Succès)
+        Map<String, Object> ipApiResponse = new HashMap<>();
+        ipApiResponse.put("lat", 43.6);
+        ipApiResponse.put("lon", 1.4);
+        ipApiResponse.put("city", "Toulouse-IP");
+        when(restTemplate.getForObject(eq("http://ip-api.com/json/"), eq(Map.class))).thenReturn(ipApiResponse);
+
+        // 2. Mock Reverse Geocoding (Échec - On lance une exception)
+        when(restTemplate.getForObject(contains("geocoding-api.open-meteo.com"), eq(Map.class)))
+                .thenThrow(new RuntimeException("API Geocoding Down"));
+
+        // 3. Mock Weather API (Succès)
+        Map<String, Object> weatherResponse = new HashMap<>();
+        Map<String, Object> currentWeather = new HashMap<>();
+        currentWeather.put("temperature", 10.0);
+        currentWeather.put("weathercode", 3);
+        currentWeather.put("windspeed", 5.0);
+        currentWeather.put("winddirection", 90);
+        currentWeather.put("is_day", 0);
+        weatherResponse.put("current_weather", currentWeather);
+        when(restTemplate.getForObject(contains("api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(weatherResponse);
+
+        Model model = new ExtendedModelMap();
+        controller.afficherProfile(1L, session, model);
+
+        // Vérification du fallback : utilise la ville de l'IP car la géocodage a échoué
+        assertEquals("Toulouse-IP", model.getAttribute("meteoVille"));
+        assertEquals("10.0°C", model.getAttribute("meteoTemperature"));
+        assertEquals("☁️", model.getAttribute("meteoIcone"));
+        assertEquals("Nuit (1 = Non)", model.getAttribute("meteoMoment"));
     }
 
     private Utilisateur user(Long id, String mail, String mdp) {
