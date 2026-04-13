@@ -40,7 +40,7 @@ public class ObjectifController {
         return "objectif-form";
     }
 
-    // Create/Update
+    // Créer/Mettre à jour
     @PostMapping("/save")
     public String saveObjectif(@ModelAttribute("objectif") Objectif objectif, HttpSession session) {
         Utilisateur currentUser = (Utilisateur) session.getAttribute("loggedInUser");
