@@ -5,11 +5,11 @@ import utcapitole.miage.projet_web.model.Objectif;
 public class ObjectifProgressDTO {
     private Objectif objectif;
 
-    // 距离的进度
+    // progression pour dustance
     private double distanceActuelle;
     private double pourcentageDistance;
 
-    // 时长的进度
+    // progression pour duree
     private double dureeActuelle;
     private double pourcentageDuree;
 
@@ -21,7 +21,6 @@ public class ObjectifProgressDTO {
         this.pourcentageDuree = pourcentageDuree;
     }
 
-    // --- 生成这 5 个变量的 Getters ---
     public Objectif getObjectif() { return objectif; }
     public double getDistanceActuelle() { return distanceActuelle; }
     public double getPourcentageDistance() { return pourcentageDistance; }

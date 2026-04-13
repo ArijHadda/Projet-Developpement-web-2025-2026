@@ -1,6 +1,5 @@
 package utcapitole.miage.projet_web.model.jpa;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import utcapitole.miage.projet_web.dto.ObjectifProgressDTO;
 import utcapitole.miage.projet_web.model.Objectif;
@@ -14,10 +13,13 @@ import java.util.Optional;
 @Service
 public class ObjectifService {
 
-    @Autowired
-    private ObjectifRepository objectifRepository;
-    @Autowired
-    private ActiviteRepository activiteRepository;
+    private final ObjectifRepository objectifRepository;
+    private final ActiviteRepository activiteRepository;
+
+    public ObjectifService(ObjectifRepository objectifRepository, ActiviteRepository activiteRepository) {
+        this.objectifRepository = objectifRepository;
+        this.activiteRepository = activiteRepository;
+    }
 
     public List<ObjectifProgressDTO> getObjectifsAvecProgression(Utilisateur user) {
         List<Objectif> objectifs = objectifRepository.findByUtilisateur(user);
