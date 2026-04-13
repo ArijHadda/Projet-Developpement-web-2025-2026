@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ui.Model;
 
 import utcapitole.miage.projet_web.model.Activite;
+import utcapitole.miage.projet_web.model.Sport;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.jpa.ActiviteService;
 import utcapitole.miage.projet_web.model.jpa.SportRepository;
@@ -442,7 +443,6 @@ public class ActiviteControllerTest {
         verify(activiteService).ajouterCommentaire(100L, mockUser.getId(), "Beau travail !");
         assertEquals("redirect:/activite/flux-amis", viewName);
     }
-
     @Test
     void testSuppressionActiviteShouldWork(){
 
@@ -454,5 +454,329 @@ public class ActiviteControllerTest {
         // Assert
         assertEquals("redirect:/activite/list", viewName);
         verify(activiteService).supprimer(10L);
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Tests manquants pour améliorer la couverture
+    // ═══════════════════════════════════════════════════════════════════════
+
+    // --- listActivites avec paramètres ---
+
+    @Test
+    void listActivites_avecPeriode7j_filtreCorrectement() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        Activite aRecent = new Activite();
+        aRecent.setNom("Running");
+        aRecent.setDate(LocalDate.now());
+        aRecent.setDuree(30);
+        aRecent.setDistance(5.0);
+        aRecent.setCaloriesConsommees(300);
+
+        Activite aOlder = new Activite();
+        aOlder.setNom("Running");
+        aOlder.setDate(LocalDate.now().minusDays(10));
+        aOlder.setDuree(45);
+        aOlder.setDistance(8.0);
+        aOlder.setCaloriesConsommees(500);
+
+        List<Activite> activites = Arrays.asList(aRecent, aOlder);
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(activites);
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(activiteService.getStatsActivites(any())).thenReturn(new HashMap<>());
+
+        String viewName = activiteController.listActivites(model, session, "7j", "jour", null);
+
+        assertEquals("activiteList", viewName);
+        verify(model).addAttribute(eq("selectedPeriode"), eq("7j"));
+    }
+
+    @Test
+    void listActivites_avecPeriode12m_filtreCorrectement() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(Collections.emptyList());
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(activiteService.getStatsActivites(any())).thenReturn(new HashMap<>());
+
+        String viewName = activiteController.listActivites(model, session, "12m", "jour", null);
+
+        assertEquals("activiteList", viewName);
+        verify(model).addAttribute(eq("selectedPeriode"), eq("12m"));
+    }
+
+    @Test
+    void listActivites_avecPeriodeTout_nexclutAucuneActivite() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        Activite a = new Activite();
+        a.setNom("Running");
+        a.setDate(LocalDate.now().minusYears(2));
+        a.setDuree(30);
+        a.setDistance(5.0);
+        a.setCaloriesConsommees(300);
+
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(Arrays.asList(a));
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(activiteService.getStatsActivites(any())).thenReturn(new HashMap<>());
+
+        String viewName = activiteController.listActivites(model, session, "tout", "jour", null);
+
+        assertEquals("activiteList", viewName);
+        verify(model).addAttribute(eq("selectedPeriode"), eq("tout"));
+    }
+
+    @Test
+    void listActivites_periodeInvalide_reinitialiseA30j() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(Collections.emptyList());
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(activiteService.getStatsActivites(any())).thenReturn(new HashMap<>());
+
+        String viewName = activiteController.listActivites(model, session, "invalid", "jour", null);
+
+        assertEquals("activiteList", viewName);
+        verify(model).addAttribute(eq("selectedPeriode"), eq("30j"));
+    }
+
+    @Test
+    void listActivites_regroupementSemaine() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        Activite a = new Activite();
+        a.setNom("Running");
+        a.setDate(LocalDate.now());
+        a.setDuree(30);
+        a.setDistance(5.0);
+        a.setCaloriesConsommees(300);
+
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(Arrays.asList(a));
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(activiteService.getStatsActivites(any())).thenReturn(new HashMap<>());
+
+        String viewName = activiteController.listActivites(model, session, "30j", "semaine", null);
+
+        assertEquals("activiteList", viewName);
+        verify(model).addAttribute(eq("selectedRegroupement"), eq("semaine"));
+    }
+
+    @Test
+    void listActivites_regroupementMois() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        Activite a = new Activite();
+        a.setNom("Running");
+        a.setDate(LocalDate.now());
+        a.setDuree(30);
+        a.setDistance(5.0);
+        a.setCaloriesConsommees(300);
+
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(Arrays.asList(a));
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(activiteService.getStatsActivites(any())).thenReturn(new HashMap<>());
+
+        String viewName = activiteController.listActivites(model, session, "30j", "mois", null);
+
+        assertEquals("activiteList", viewName);
+        verify(model).addAttribute(eq("selectedRegroupement"), eq("mois"));
+    }
+
+    @Test
+    void listActivites_regroupementInvalide_reinitialiseAJour() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(Collections.emptyList());
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(activiteService.getStatsActivites(any())).thenReturn(new HashMap<>());
+
+        String viewName = activiteController.listActivites(model, session, "30j", "invalid", null);
+
+        assertEquals("activiteList", viewName);
+        verify(model).addAttribute(eq("selectedRegroupement"), eq("jour"));
+    }
+
+    @Test
+    void listActivites_avecSportId_filtreParSport() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        Sport sport1 = new Sport();
+        sport1.setId(1L);
+        sport1.setNom("Course");
+
+        Sport sport2 = new Sport();
+        sport2.setId(2L);
+        sport2.setNom("Cyclisme");
+
+        Activite a1 = new Activite();
+        a1.setNom("Course");
+        a1.setDate(LocalDate.now());
+        a1.setDuree(30);
+        a1.setDistance(5.0);
+        a1.setCaloriesConsommees(300);
+        a1.setSport(sport1);
+
+        Activite a2 = new Activite();
+        a2.setNom("Cyclisme");
+        a2.setDate(LocalDate.now());
+        a2.setDuree(60);
+        a2.setDistance(20.0);
+        a2.setCaloriesConsommees(500);
+        a2.setSport(sport2);
+
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(Arrays.asList(a1, a2));
+        when(sportRepository.findAll()).thenReturn(Arrays.asList(sport1, sport2));
+        when(activiteService.getStatsActivites(any())).thenReturn(new HashMap<>());
+
+        String viewName = activiteController.listActivites(model, session, "30j", "jour", 1L);
+
+        assertEquals("activiteList", viewName);
+        verify(model).addAttribute(eq("selectedSportId"), eq(1L));
+    }
+
+    @Test
+    void listActivites_avecActiviteDateNull_estFiltree() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        Activite a = new Activite();
+        a.setNom("Running");
+        a.setDate(null);
+        a.setDuree(30);
+
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(Arrays.asList(a));
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(activiteService.getStatsActivites(any())).thenReturn(new HashMap<>());
+
+        String viewName = activiteController.listActivites(model, session, "7j", "jour", null);
+
+        assertEquals("activiteList", viewName);
+        verify(model).addAttribute(eq("selectedPeriode"), eq("7j"));
+    }
+
+    // --- liker : cas non couverts ---
+
+    @Test
+    void liker_notLoggedIn_neAppellePasToggleKudos() {
+        when(session.getAttribute("loggedInUser")).thenReturn(null);
+        when(request.getHeader("Referer")).thenReturn("/activite/flux-amis");
+
+        String viewName = activiteController.liker(100L, session, request);
+
+        verify(activiteService, never()).toggleKudos(any(), any());
+        assertEquals("redirect:/activite/flux-amis", viewName);
+    }
+
+    @Test
+    void liker_sansReferer_redirigeVersFluxAmis() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(request.getHeader("Referer")).thenReturn(null);
+
+        String viewName = activiteController.liker(100L, session, request);
+
+        verify(activiteService).toggleKudos(100L, mockUser.getId());
+        assertEquals("redirect:/activite/flux-amis", viewName);
+    }
+
+    // --- commenter : cas non couverts ---
+
+    @Test
+    void commenter_notLoggedIn_neAppellePasAjouterCommentaire() {
+        when(session.getAttribute("loggedInUser")).thenReturn(null);
+        when(request.getHeader("Referer")).thenReturn("/activite/flux-amis");
+
+        String viewName = activiteController.commenter(100L, "Hello", session, request);
+
+        verify(activiteService, never()).ajouterCommentaire(any(), any(), any());
+        assertEquals("redirect:/activite/flux-amis", viewName);
+    }
+
+    @Test
+    void commenter_contenuVide_neAppellePasAjouterCommentaire() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(request.getHeader("Referer")).thenReturn("/activite/flux-amis");
+
+        String viewName = activiteController.commenter(100L, "   ", session, request);
+
+        verify(activiteService, never()).ajouterCommentaire(any(), any(), any());
+        assertEquals("redirect:/activite/flux-amis", viewName);
+    }
+
+    @Test
+    void commenter_contenuNull_neAppellePasAjouterCommentaire() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(request.getHeader("Referer")).thenReturn("/activite/flux-amis");
+
+        String viewName = activiteController.commenter(100L, null, session, request);
+
+        verify(activiteService, never()).ajouterCommentaire(any(), any(), any());
+        assertEquals("redirect:/activite/flux-amis", viewName);
+    }
+
+    @Test
+    void commenter_sansReferer_redirigeVersFluxAmis() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(request.getHeader("Referer")).thenReturn(null);
+
+        String viewName = activiteController.commenter(100L, "Super !", session, request);
+
+        verify(activiteService).ajouterCommentaire(100L, mockUser.getId(), "Super !");
+        assertEquals("redirect:/activite/flux-amis", viewName);
+    }
+
+    // --- addActivite : date null ---
+
+    @Test
+    void addActivite_dateNull_passeLaValidationNoteEtEnregistre() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        Activite nullDateActivite = new Activite();
+        nullDateActivite.setNom("Running");
+        nullDateActivite.setDate(null);
+        nullDateActivite.setNote(5);
+
+        String viewName = activiteController.addActivite(nullDateActivite, model, session);
+
+        verify(activiteService).enregistrerActivite(nullDateActivite);
+        assertEquals("redirect:/user/profile/1", viewName);
+    }
+
+    // --- modifierActivite : date null n'est pas testée, mais @RequestParam requis ---
+
+    @Test
+    void modifierActivite_valideMiseAJourChamps() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(activiteService.getById(1L)).thenReturn(Optional.of(mockActivite));
+
+        String viewName = activiteController.modifierActivite(
+                1L, session, model, LocalDate.now(), 90, 12.0, 4, 8);
+
+        assertEquals("redirect:/activite/list", viewName);
+        assertEquals(90, mockActivite.getDuree());
+        assertEquals(12.0, mockActivite.getDistance(), 0.01);
+        assertEquals(4, mockActivite.getNiveauIntensite());
+        assertEquals(8, mockActivite.getNote());
+    }
+
+    // --- listActivites : progression chart data ---
+
+    @Test
+    void listActivites_avecDonnees_progressionEstDansLeModel() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        Activite a = new Activite();
+        a.setNom("Running");
+        a.setDate(LocalDate.now().minusDays(1));
+        a.setDuree(30);
+        a.setDistance(5.0);
+        a.setCaloriesConsommees(300);
+
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(Arrays.asList(a));
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(activiteService.getStatsActivites(any())).thenReturn(new HashMap<>());
+
+        String viewName = activiteController.listActivites(model, session, "30j", "jour", null);
+
+        assertEquals("activiteList", viewName);
+        verify(model).addAttribute(eq("chartLabels"), any());
+        verify(model).addAttribute(eq("chartDistances"), any());
+        verify(model).addAttribute(eq("chartCalories"), any());
     }
 }
