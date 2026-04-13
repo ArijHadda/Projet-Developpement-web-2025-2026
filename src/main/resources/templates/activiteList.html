@@ -104,7 +104,7 @@
         .btn-delete { background-color: #dc3545; }
         .btn-delete:hover { background-color: #c82333; }
 
-        /* activite wrapper */
+        /* conteneur d'activité */
         .activite-wrapper {
             margin-bottom: 30px;
             max-width: 800px;
@@ -115,7 +115,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
-        /* activite card */
+        /* carte d'activité */
         .activite-info-card {
             border: 1px solid #ccc;
             border-radius: 12px;
@@ -124,7 +124,7 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        /* comments card */
+        /* carte des commentaires */
         .comments-card {
             border: 1px solid #ddd;
             border-radius: 8px;
@@ -216,7 +216,7 @@
         </div>
 
         <div th:each="act : ${activites}" class="activite-wrapper">
-            <!-- activite card-->
+            <!-- carte d'activité -->
             <div class="activite-info-card">
                 <div class="activite-header">
                     J'ai fait du <span th:text="${act.nom}"></span> !
@@ -279,7 +279,7 @@
 
     <aside class="right-column">
         <div class="panel">
-            <h3 class="chart-title">Progression distance / calories</h3>
+            <h3 class="chart-title">Progression durée / calories</h3>
             <canvas id="progressChart" height="240"></canvas>
         </div>
     </aside>
@@ -287,7 +287,7 @@
 
 <script th:inline="javascript">
     const labels = /*[[${chartLabels}]]*/ [];
-    const distances = /*[[${chartDistances}]]*/ [];
+    const durees = /*[[${chartDurees}]]*/ [];
     const calories = /*[[${chartCalories}]]*/ [];
 
     const ctx = document.getElementById('progressChart');
@@ -298,11 +298,11 @@
                 labels: labels,
                 datasets: [
                     {
-                        label: 'Distance (km)',
-                        data: distances,
+                        label: 'Durée (min)',
+                        data: durees,
                         borderColor: '#0284c7',
                         backgroundColor: 'rgba(2, 132, 199, 0.15)',
-                        yAxisID: 'yDistance',
+                        yAxisID: 'yDuree',
                         tension: 0.35,
                         fill: true
                     },
@@ -324,11 +324,11 @@
                     intersect: false
                 },
                 scales: {
-                    yDistance: {
+                    yDuree: {
                         type: 'linear',
                         position: 'left',
                         beginAtZero: true,
-                        title: { display: true, text: 'Distance (km)' }
+                        title: { display: true, text: 'Durée (min)' }
                     },
                     yCalories: {
                         type: 'linear',

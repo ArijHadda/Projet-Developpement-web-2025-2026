@@ -120,7 +120,7 @@ public class ActiviteController {
         model.addAttribute("selectedRegroupement", regroupement);
         model.addAttribute("selectedSportId", sportId);
         model.addAttribute("chartLabels", progression.get("labels"));
-        model.addAttribute("chartDistances", progression.get("distances"));
+        model.addAttribute("chartDurees", progression.get("durees"));
         model.addAttribute("chartCalories", progression.get("calories"));
         return "activiteList";
     }
@@ -173,12 +173,12 @@ public class ActiviteController {
             }
 
             double[] valeurs = agregats.computeIfAbsent(cle, k -> new double[]{0.0, 0.0});
-            valeurs[0] += activite.getDistance();
+            valeurs[0] += activite.getDuree();
             valeurs[1] += activite.getCaloriesConsommees();
         }
 
         List<String> labels = new ArrayList<>();
-        List<Double> distances = new ArrayList<>();
+        List<Double> durees = new ArrayList<>();
         List<Integer> calories = new ArrayList<>();
 
         WeekFields weekFields = WeekFields.of(Locale.FRANCE);
@@ -194,13 +194,13 @@ public class ActiviteController {
                 label = key.format(formatterJour);
             }
             labels.add(label);
-            distances.add(Math.round(entry.getValue()[0] * 100.0) / 100.0);
+            durees.add(Math.round(entry.getValue()[0] * 100.0) / 100.0);
             calories.add((int) Math.round(entry.getValue()[1]));
         }
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("labels", labels);
-        result.put("distances", distances);
+        result.put("durees", durees);
         result.put("calories", calories);
         return result;
     }

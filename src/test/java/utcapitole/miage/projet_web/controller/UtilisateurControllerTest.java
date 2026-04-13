@@ -126,12 +126,12 @@ class UtilisateurControllerTest {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("loggedInUser", logged);
 
-        String view = controller.modifierProfile(5L, "n@test.fr", "F", 20, 1.6f, 50f, "debutant", session);
+        String view = controller.modifierProfile(5L, "n@test.fr", "F", 20, 1.6f, 50f,  session);
         assertEquals("redirect:/user/profile/5", view);
         assertEquals("n@test.fr", utilisateurService.lastModifiedMail);
 
         // Test hacker (tentative de modification du profil d'un autre)
-        String denied = controller.modifierProfile(99L, "n@test.fr", "F", 20, 1.6f, 50f, "debutant", session);
+        String denied = controller.modifierProfile(99L, "n@test.fr", "F", 20, 1.6f, 50f, session);
         assertEquals("redirect:/user/login", denied);
     }
 
@@ -342,7 +342,7 @@ class UtilisateurControllerTest {
         }
 
         @Override
-        public Utilisateur modifierProfile(Long IdU, String mailU, String sexeU, int ageU, float tailleU, float poidsU, String niveauPratique) {
+        public Utilisateur modifierProfile(Long IdU, String mailU, String sexeU, int ageU, float tailleU, float poidsU) {
             this.lastModifiedMail = mailU;
             return byId.getOrDefault(IdU, new Utilisateur());
         }

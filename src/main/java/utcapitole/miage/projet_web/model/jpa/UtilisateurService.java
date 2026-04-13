@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import utcapitole.miage.projet_web.model.DemandeAmi;
+import utcapitole.miage.projet_web.model.NiveauPratique;
+import utcapitole.miage.projet_web.model.SportNiveauPratique;
 import utcapitole.miage.projet_web.model.Utilisateur;
 
 import java.util.List;

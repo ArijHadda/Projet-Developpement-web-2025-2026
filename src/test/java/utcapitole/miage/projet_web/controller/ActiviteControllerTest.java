@@ -175,7 +175,7 @@ public class ActiviteControllerTest {
 
     @Test
     void listActivites_loggedIn_addsActivitesAndStatsToModel() {
-        // Given
+        // Initialisation
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
         
         Activite a1 = new Activite();
@@ -190,10 +190,10 @@ public class ActiviteControllerTest {
         mockStats.put("count", 1);
         when(activiteService.getStatsActivites(activites)).thenReturn(mockStats);
 
-        // When
+        // Action
         String viewName = activiteController.listActivites(model, session);
 
-        // Then
+        // Vérification
         assertEquals("activiteList", viewName);
         verify(model).addAttribute("activites", activites);
         verify(model).addAttribute("stats", mockStats);
@@ -215,7 +215,7 @@ public class ActiviteControllerTest {
         verify(model).addAttribute(eq("activites"), any());
         verify(model).addAttribute(eq("stats"), any());
     }
-// addActivite note validation
+// Validation de la note d'addActivite
 
     @Test
     void addActivite_noteInferieureA1_resteSurLeFormulaire() {
@@ -430,7 +430,7 @@ public class ActiviteControllerTest {
         String viewName = activiteController.liker(100L, session, request);
 
         verify(activiteService).toggleKudos(100L, mockUser.getId());
-        assertEquals("redirect:/activite/list", viewName); // Doit retourner au referer
+        assertEquals("redirect:/activite/list", viewName); // Doit retourner à la page d'origine
     }
 
     @Test
@@ -448,10 +448,10 @@ public class ActiviteControllerTest {
 
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
 
-        // Act
+// Action
         String viewName = activiteController.supprimerActivite(10L, session, model);
 
-        // Assert
+        // Vérification
         assertEquals("redirect:/activite/list", viewName);
         verify(activiteService).supprimer(10L);
     }
@@ -776,7 +776,7 @@ public class ActiviteControllerTest {
 
         assertEquals("activiteList", viewName);
         verify(model).addAttribute(eq("chartLabels"), any());
-        verify(model).addAttribute(eq("chartDistances"), any());
+        verify(model).addAttribute(eq("chartDurees"), any());
         verify(model).addAttribute(eq("chartCalories"), any());
     }
 
