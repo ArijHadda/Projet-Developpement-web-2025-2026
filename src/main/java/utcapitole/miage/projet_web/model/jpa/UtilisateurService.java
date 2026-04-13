@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import utcapitole.miage.projet_web.model.DemandeAmi;
+import utcapitole.miage.projet_web.model.NiveauPratique;
+import utcapitole.miage.projet_web.model.SportNiveauPratique;
 import utcapitole.miage.projet_web.model.Utilisateur;
 
 import java.util.List;
@@ -33,7 +35,7 @@ public class UtilisateurService {
     }
 
     public Utilisateur modifierProfile(Long IdU, String mailU,String sexeU,int ageU,
-                                       float tailleU, float poidsU, String niveauPratique){
+                                       float tailleU, float poidsU){
         Optional<Utilisateur> userOpt= utilisateurRepository.findById(IdU);
 
         Utilisateur user = userOpt.get();
