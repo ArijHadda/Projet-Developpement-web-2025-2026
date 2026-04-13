@@ -145,4 +145,16 @@ class ObjectifControllerTest {
         // On vérifie que la méthode de suppression n'a JAMAIS été appelée
         verify(objectifService, never()).supprimerObjectif(any());
     }
+
+    @Test
+    void testShowEditForm_ObjectifIntrouvable_RedirectsToList() throws Exception {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        when(objectifService.getObjectifById(10L)).thenReturn(Optional.empty());
+
+        String returnValue = objectifController.showEditForm(10L,model,session);
+        assertEquals("redirect:/objectif/list",returnValue);
+        verify(model, never()).addAttribute(eq("objectif"), any());
+        verify(model, never()).addAttribute(eq("sports"), any());
+    }
 }
