@@ -121,6 +121,7 @@ public class UtilisateurController {
             return "redirect:/user/login";
         }
 
+
         model.addAttribute("userUpdate", user);
         return "update";
     }

@@ -362,4 +362,7 @@ class UtilisateurControllerTest {
             return autoBadgesToReturn;
         }
     }
+
+
+
 }
