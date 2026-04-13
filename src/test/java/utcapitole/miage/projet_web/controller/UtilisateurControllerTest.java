@@ -8,8 +8,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
 import utcapitole.miage.projet_web.model.Activite;
+import utcapitole.miage.projet_web.model.NiveauPratique;
+import utcapitole.miage.projet_web.model.Sport;
+import utcapitole.miage.projet_web.model.SportNiveauPratique;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.jpa.BadgeAttributionService;
+import utcapitole.miage.projet_web.model.jpa.SportNiveauPratiqueService;
+import utcapitole.miage.projet_web.model.jpa.SportService;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 
 import java.lang.reflect.Field;
@@ -22,6 +27,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
 
 class UtilisateurControllerTest {
 
@@ -29,15 +35,34 @@ class UtilisateurControllerTest {
     private FakeUtilisateurService utilisateurService;
     private FakeBadgeAttributionService badgeService;
 
+    // Utilisation de Mockito pour les nouveaux services afin d'éviter les problèmes de constructeur
+    private SportService sportService;
+    private SportNiveauPratiqueService sportNiveauPratiqueService;
+
     @BeforeEach
     void setUp() {
         controller = new UtilisateurController();
         utilisateurService = new FakeUtilisateurService();
         badgeService = new FakeBadgeAttributionService();
+        sportService = mock(SportService.class);
+        sportNiveauPratiqueService = mock(SportNiveauPratiqueService.class);
 
         setField(controller, "utilisateurService", utilisateurService);
         setField(controller, "passwordEncoder", new BCryptPasswordEncoder());
         setField(controller, "badgeAttributionService", badgeService);
+        setField(controller, "sportService", sportService);
+        setField(controller, "sportNiveauPratiqueService", sportNiveauPratiqueService);
+    }
+
+    @Test
+    void testShowLoginAndRegisterForms() {
+        // Test de la route GET /login
+        assertEquals("login", controller.showLoginForm());
+
+        // Test de la route GET /register
+        Model model = new ExtendedModelMap();
+        assertEquals("register", controller.showRegisterForm(model));
+        assertTrue(model.containsAttribute("utilisateur"));
     }
 
     @Test
@@ -96,6 +121,100 @@ class UtilisateurControllerTest {
     }
 
     @Test
+    void testModifierProfile() {
+        Utilisateur logged = user(5L, "l@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+
+        String view = controller.modifierProfile(5L, "n@test.fr", "F", 20, 1.6f, 50f, "debutant", session);
+        assertEquals("redirect:/user/profile/5", view);
+        assertEquals("n@test.fr", utilisateurService.lastModifiedMail);
+
+        // Test hacker (tentative de modification du profil d'un autre)
+        String denied = controller.modifierProfile(99L, "n@test.fr", "F", 20, 1.6f, 50f, "debutant", session);
+        assertEquals("redirect:/user/login", denied);
+    }
+
+    @Test
+    void testVoirListUtilisateurAndLogout() {
+        Utilisateur logged = user(5L, "l@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+
+        // Test voir utilisateurs
+        String view = controller.voirListUtilisateur(new ExtendedModelMap(), session);
+        assertEquals("redirect:/user/ami/chercher", view);
+
+        // Sans session
+        assertEquals("redirect:/user/login", controller.voirListUtilisateur(new ExtendedModelMap(), new MockHttpSession()));
+
+        // Test logout
+        controller.logout(session);
+        assertTrue(session.isInvalid());
+    }
+
+    @Test
+    void testAjouterNivPratiqueForm() {
+        Utilisateur logged = user(5L, "l@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+
+        Model model = new ExtendedModelMap();
+        String view = controller.ajouterNivPratique(model, session);
+
+        assertEquals("setSportNivPratique", view);
+        assertTrue(model.containsAttribute("sports"));
+        assertTrue(model.containsAttribute("niveaux"));
+
+        // Sans session
+        assertEquals("redirect:/user/login", controller.ajouterNivPratique(model, new MockHttpSession()));
+    }
+
+    @Test
+    void testAjouterNiveauPratique() {
+        Utilisateur logged = user(5L, "l@test.fr", "pwd");
+        logged.setListSportNivPratique(new ArrayList<>());
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+        utilisateurService.byId.put(5L, logged);
+
+        Sport mockSport = new Sport();
+        when(sportService.getById(1L)).thenReturn(mockSport);
+
+        // Cas 1 : Niveau de pratique existant, on met à jour
+        SportNiveauPratique existing = new SportNiveauPratique();
+        when(sportNiveauPratiqueService.findByUtilisateurIdAndSportId(5L, 1L)).thenReturn(Optional.of(existing));
+
+        String viewExisting = controller.ajouterNiveauratique(new ExtendedModelMap(), session, 1L, NiveauPratique.DEBUTANT);
+        assertEquals("redirect:/user/profile/5", viewExisting);
+        verify(sportNiveauPratiqueService).save(existing);
+
+        // Cas 2 : Nouveau sport, on crée la relation
+        when(sportNiveauPratiqueService.findByUtilisateurIdAndSportId(5L, 2L)).thenReturn(Optional.empty());
+        String viewNew = controller.ajouterNiveauratique(new ExtendedModelMap(), session, 2L, NiveauPratique.EXPERT);
+        assertEquals("redirect:/user/profile/5", viewNew);
+        assertEquals(1, logged.getListSportNivPratique().size());
+        assertTrue(utilisateurService.saved); // Vérifie que la modification a été sauvegardée
+
+        // Cas sans session
+        assertEquals("redirect:/user/login", controller.ajouterNiveauratique(new ExtendedModelMap(), new MockHttpSession(), 1L, NiveauPratique.EXPERT));
+    }
+
+    @Test
+    void testDeleteSportNiveau() {
+        Utilisateur logged = user(5L, "l@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+
+        String view = controller.deleteSportNiveau(100L, session);
+        assertEquals("redirect:/user/profile/5", view);
+        verify(sportNiveauPratiqueService).deleteById(100L);
+
+        // Sans session
+        assertEquals("redirect:/user/login", controller.deleteSportNiveau(100L, new MockHttpSession()));
+    }
+
+    @Test
     void updatePasswordFlowCoversSuccessAndErrors() {
         Utilisateur logged = user(1L, "p@test.fr", "oldpwd");
         MockHttpSession session = new MockHttpSession();
@@ -121,25 +240,6 @@ class UtilisateurControllerTest {
         assertEquals("Une erreur inattendue est survenue.", model2.getAttribute("error"));
     }
 
-   /* @Test
-    void listUsersAndProfileUpdateAndLogout() {
-        Utilisateur logged = user(5L, "l@test.fr", "pwd");
-        MockHttpSession session = new MockHttpSession();
-        session.setAttribute("loggedInUser", logged);
-
-        utilisateurService.allUsers = List.of(logged, user(6L, "x@test.fr", "pwd"));
-        String listView = controller.voirListUtilisateur(new ExtendedModelMap(), session);
-        assertEquals("redirect:/user/ami/chercher", listView);
-
-        String update = controller.modifierProfile(5L, "n@test.fr", "F", 20, 1.6f, 50f, "debutant", session);
-        assertEquals("redirect:/user/profile/5", update);
-        assertEquals("n@test.fr", utilisateurService.lastModifiedMail);
-
-        MockHttpSession logoutSession = new MockHttpSession();
-        controller.logout(logoutSession);
-        assertTrue(logoutSession.isInvalid());
-    }
-*/
     @Test
     void badgeEndpointsCoverSessionAndAwardBranches() {
         Utilisateur logged = user(8L, "b@test.fr", "pwd");
@@ -192,9 +292,15 @@ class UtilisateurControllerTest {
         Utilisateur lastRegisteredUser;
         String lastModifiedMail;
         RuntimeException passwordException;
+        boolean saved = false;
 
         FakeUtilisateurService() {
             super(null, new BCryptPasswordEncoder(), null);
+        }
+
+        @Override
+        public void save(Utilisateur user) {
+            this.saved = true;
         }
 
         @Override
@@ -229,6 +335,11 @@ class UtilisateurControllerTest {
         @Override
         public List<Utilisateur> findAll() {
             return allUsers;
+        }
+
+        @Override
+        public Utilisateur getUtilisateurAvecSports(Long id) {
+            return byId.get(id);
         }
     }
 

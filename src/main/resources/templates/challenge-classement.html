@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Classement du Challenge</title>
+    <style>
+        table { border-collapse: collapse; width: 500px; margin-top: 20px; }
+        th, td { border: 1px solid black; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+<h2>📊 Classement du Challenge</h2>
+
+<div>
+    <a th:href="@{/challenge/list}">
+        <button type="button">🔙 Retour aux challenges</button>
+    </a>
+</div>
+
+<div th:if="${#lists.isEmpty(classementList)}">
+    <p>Il n'y a pas encore de participants ou d'activités pour ce challenge.</p>
+</div>
+
+<table th:unless="${#lists.isEmpty(classementList)}">
+    <thead>
+    <tr>
+        <th>Rang</th>
+        <th>Participant</th>
+        <th>Calories Brûlées (kcal)</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="dto, iterStat : ${classementList}">
+        <td th:text="${iterStat.count}">1</td>
+        <td th:text="${dto.nomComplet}">Nom du participant</td>
+        <td th:text="${dto.totalCalories}">0</td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

@@ -20,7 +20,9 @@ public class SportNiveauPratique {
     @Enumerated(EnumType.STRING)
     private NiveauPratique niveau;
 
-    public SportNiveauPratique(Sport s, NiveauPratique niveau) {
+    public SportNiveauPratique(Sport sport, NiveauPratique niveau) {
+        this.sport = sport;
+        this.niveau = niveau;
     }
 
     public SportNiveauPratique(){}
