@@ -10,7 +10,7 @@
             padding: 15px;
             margin-bottom: 15px;
             background-color: #f9f9f9;
-            max-width: 600px;
+            max-width: 800px;
         }
         .activite-header {
             font-weight: bold;
@@ -34,6 +34,36 @@
         .btn-edit:hover { background-color: #138496; }
         .btn-delete { background-color: #dc3545; }
         .btn-delete:hover { background-color: #c82333; }
+
+        /* activite wrapper */
+        .activite-wrapper {
+            margin-bottom: 30px;
+            max-width: 800px;
+            border: 2px solid #e0e0e0;
+            border-radius: 16px;
+            padding: 20px;
+            background-color: #f5f5f5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        /* activite card */
+        .activite-info-card {
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* comments card */
+        .comments-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px 15px;
+            background-color: #ffffff;
+            margin-top: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
     </style>
 </head>
 <body>
@@ -58,46 +88,49 @@
     <p>Aucune activité enregistrée. Allez faire du sport !</p>
 </div>
 
-<div th:each="act : ${activites}" class="activite-card">
-    <div class="activite-header">
-        J'ai fait du <span th:text="${act.nom}"></span> !
-    </div>
+<div th:each="act : ${activites}" class="activite-wrapper">
+    <!-- activite card-->
+    <div class="activite-info-card">
+        <div class="activite-header">
+            J'ai fait du <span th:text="${act.nom}"></span> !
+        </div>
+        <p style="font-size: 0.85em; color: gray;">
+            📅 Le <span th:text="${act.date}"></span>
+            <span th:if="${act.note != null}"> | ⭐ Note: <span th:text="${act.note}"></span>/10</span>
+        </p>
 
-    <p style="font-size: 0.85em; color: gray;">
-        📅 Le <span th:text="${act.date}"></span>
-        <span th:if="${act.note != null}"> | ⭐ Note: <span th:text="${act.note}"></span>/10</span>
-    </p>
+        <div class="activite-stats">
+            <span>⏱️ Durée : <span th:text="${act.duree}"></span> min</span>
+            <span th:if="${act.sport != null and act.sport.estBaseSurVitesse}">📏 Distance : <span th:text="${act.distance}"></span> km</span>
+            <span th:if="${act.sport == null or !act.sport.estBaseSurVitesse}">💪 Intensité : <span th:text="${act.niveauIntensite}"></span>/5</span>
+            <span>🔥 Calories : <span th:text="${act.caloriesConsommees}"></span> kcal</span>
+            <span style="color: #ff9800; font-weight: bold;">👍 <span th:text="${act.nbKudos}"></span> Kudos</span>
+        </div>
 
-    <div class="activite-stats">
-        <span>⏱️ Durée : <span th:text="${act.duree}"></span> min</span>
-        <span th:if="${act.distance > 0}">📏 Distance : <span th:text="${act.distance}"></span> km</span>
-        <span>🔥 Calories : <span th:text="${act.caloriesConsommees}"></span> kcal</span>
-        <span style="color: #ff9800; font-weight: bold;">👍 <span th:text="${act.nbKudos}"></span> Kudos</span>
-    </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+            <form th:action="@{/activite/flux/kudos/{id}(id=${act.id})}" method="post" style="margin: 0;">
+                <button th:if="${!#lists.contains(act.likers.![id], session.loggedInUser.id)}"
+                        type="submit" style="background-color: #ff9800; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                    👏 S'auto-féliciter !
+                </button>
+                <button th:if="${#lists.contains(act.likers.![id], session.loggedInUser.id)}"
+                        type="submit" style="background-color: #ccc; color: #333; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                    ✖ Retirer
+                </button>
+            </form>
 
-        <form th:action="@{/activite/flux/kudos/{id}(id=${act.id})}" method="post" style="margin: 0;">
-            <button th:if="${!#lists.contains(act.likers.![id], session.loggedInUser.id)}"
-                    type="submit" style="background-color: #ff9800; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
-                👏 S'auto-féliciter !
-            </button>
-            <button th:if="${#lists.contains(act.likers.![id], session.loggedInUser.id)}"
-                    type="submit" style="background-color: #ccc; color: #333; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
-                ✖ Retirer
-            </button>
-        </form>
+            <div>
+                <a th:href="@{/activite/modifier/{idActivite}(idActivite=${act.id})}" class="btn-action btn-edit">✏️ Modifier</a>
 
-        <div>
-            <a th:href="@{/activite/modifier/{idActivite}(idActivite=${act.id})}" class="btn-action btn-edit">✏️ Modifier</a>
-
-            <a th:href="@{/activite/supprimer/{idActivite}(idActivite=${act.id})}" class="btn-action btn-delete"
-               onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette activité ?');">🗑️ Supprimer</a>
+                <a th:href="@{/activite/supprimer/{idActivite}(idActivite=${act.id})}" class="btn-action btn-delete"
+                   onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette activité ?');">🗑️ Supprimer</a>
+            </div>
         </div>
     </div>
 
-    <hr/>
-    <div class="comments-section" style="font-size: 0.9em; background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+    <!-- commentaires -->
+    <div class="comments-card">
         <p><strong>💬 Commentaires :</strong></p>
         <div th:if="${#lists.isEmpty(act.commentaires)}">
             <span style="color: gray; font-style: italic;">Aucun commentaire pour l'instant.</span>
@@ -113,6 +146,5 @@
         </form>
     </div>
 </div>
-
 </body>
 </html>

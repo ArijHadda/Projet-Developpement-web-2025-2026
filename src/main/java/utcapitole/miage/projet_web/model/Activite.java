@@ -42,6 +42,8 @@ public class Activite {
     @Column(name = "distanceAct")
     private double distance;
 
+    @Min(value = 1, message = "La note doit être au moins de 1")
+    @Max(value = 10, message = "La note ne peut pas dépasser 10")
     @Column(name = "noteAct")
     private int note;
 

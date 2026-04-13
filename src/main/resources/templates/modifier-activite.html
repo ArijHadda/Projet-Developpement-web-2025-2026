@@ -2,10 +2,11 @@
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Mes Activités</title>
+    <title>Modifier une activité</title>
 </head>
 <body>
-    <h1>Modifier l'activités <span th:text="${activite.nom}"></span> (<span th:text="${activite.id}"></span>)</h1>
+    <h1>Modifier l'activité <span th:text="${activite.nom}"></span> (<span th:text="${activite.id}"></span>)</h1>
+    <p th:if="${error}" th:text="${error}" style="color: red; font-weight: bold;"></p>
     <form th:action="@{/activite/modifier/{idActivite}(idActivite=${activite.id})}" method="post">
         <table border="1">
             <thead>
@@ -13,7 +14,7 @@
                     <th>Activité</th>
                     <th>Date</th>
                     <th>Durée (min)</th>
-                    <th>Distance (km)</th>
+                    <th>Distance / Intensité</th>
                     <th>Note (/10)</th>
                 </tr>
             </thead>
@@ -22,26 +23,32 @@
                     <td th:text="${activite.nom}" rowspan="2"></td>
                     <td th:text="${activite.date}"></td>
                     <td th:text="${activite.duree}"></td>
-                    <td th:text="${activite.distance}"></td>
+                    <td>
+                        <span th:if="${activite.sport != null and activite.sport.estBaseSurVitesse}">
+                            <span th:text="${activite.distance}"></span> km
+                        </span>
+                        <span th:unless="${activite.sport != null and activite.sport.estBaseSurVitesse}">
+                            Niveau <span th:text="${activite.niveauIntensite}"></span>
+                        </span>
+                    </td>
                     <td th:text="${activite.note}"></td>
                 </tr>
                 <tr>
-                   
-                    <td><input type="date" id="date" name="date" th:value="${activite.date}"></td>
-                    <td><input type="number" id="duree" name="duree" th:value="${activite.duree}" ></td>
-                    <td><input type="number" step="0.1" id="distance" name="distance" th:value="${activite.distance}" th:readonly="${activite.nom == 'Musculation'}"></td>
-                    <td><input type="number" id="note" name="note" min="0" max="10" th:value="${activite.note}"></td>
-                    
-                </tr>
-                <tr th:if="${#lists.isEmpty(activites)}">
-                    <td colspan="5">Aucune activité enregistrée.</td>
+                    <td><input type="date" id="date" name="date" th:value="${activite.date}" th:attr="max=${today}"></td>
+                    <td><input type="number" id="duree" name="duree" th:value="${activite.duree}"></td>
+                    <td>
+                        <input th:if="${activite.sport != null and activite.sport.estBaseSurVitesse}"
+                               type="number" step="0.1" id="distance" name="distance" th:value="${activite.distance}">
+                        <input th:unless="${activite.sport != null and activite.sport.estBaseSurVitesse}"
+                               type="number" id="niveauIntensite" name="niveauIntensite" min="1" max="5" th:value="${activite.niveauIntensite}">
+                    </td>
+                    <td><input type="number" id="note" name="note" min="1" max="10" th:value="${activite.note}"></td>
                 </tr>
             </tbody>
         </table>
         <br>
         <input type="submit" value="Valider">
     </form>
-    <p th:text="${msg}"></p>
 
     <br>
     <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}">

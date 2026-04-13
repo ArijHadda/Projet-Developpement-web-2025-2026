@@ -48,7 +48,8 @@
 
     <div class="activite-stats">
         <span>⏱️ Durée : <span th:text="${act.duree}"></span> min</span>
-        <span th:if="${act.distance > 0}">📏 Distance : <span th:text="${act.distance}"></span> km</span>
+        <span th:if="${act.sport != null and act.sport.estBaseSurVitesse}">📏 Distance : <span th:text="${act.distance}"></span> km</span>
+        <span th:if="${act.sport == null or !act.sport.estBaseSurVitesse}">💪 Intensité : <span th:text="${act.niveauIntensite}"></span>/5</span>
         <span>🔥 Calories : <span th:text="${act.caloriesConsommees}"></span> kcal</span>
         <span>👍 <span th:text="${act.nbKudos}"></span> Kudos</span>
     </div>

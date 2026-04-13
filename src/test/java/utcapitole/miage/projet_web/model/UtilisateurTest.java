@@ -27,7 +27,9 @@ class UtilisateurTest {
                 () -> assertTrue(utilisateur.getAmis().isEmpty()),
                 () -> assertTrue(utilisateur.getListSportNivPratique().isEmpty()),
                 () -> assertTrue(utilisateur.getActivites().isEmpty()),
-                () -> assertTrue(utilisateur.getBadges().isEmpty())
+                () -> assertTrue(utilisateur.getBadges().isEmpty()),
+                () -> assertTrue(utilisateur.getChallengesCrees().isEmpty()),
+                () -> assertTrue(utilisateur.getParticipations().isEmpty())
         );
     }
 
@@ -39,13 +41,12 @@ class UtilisateurTest {
         amis.add(new Utilisateur());
 
         Sport sport = new Sport("Course", "Endurance", 0.0, 1.0, true);
-
         List<SportNiveauPratique> niveaux = new ArrayList<>();
         niveaux.add(new SportNiveauPratique(sport, NiveauPratique.DEBUTANT));
 
         Activite activite = new Activite();
         activite.setNom("Course footing");
-        activite.setDate(LocalDate.of(2026, 4, 1));
+        activite.setDate(LocalDate.now());
         List<Activite> activites = new ArrayList<>();
         activites.add(activite);
 
