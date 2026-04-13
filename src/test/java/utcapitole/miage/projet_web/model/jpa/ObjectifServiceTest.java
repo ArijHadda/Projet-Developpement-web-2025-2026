@@ -3,16 +3,21 @@ package utcapitole.miage.projet_web.model.jpa;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import utcapitole.miage.projet_web.dto.ObjectifProgressDTO;
+import utcapitole.miage.projet_web.model.Frequence;
 import utcapitole.miage.projet_web.model.Objectif;
 import utcapitole.miage.projet_web.model.Sport;
 import utcapitole.miage.projet_web.model.Utilisateur;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.time.DayOfWeek;
+import java.time.temporal.TemporalAdjusters;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -43,7 +48,7 @@ class ObjectifServiceTest {
         mockSport = new Sport();
         mockSport.setId(2L);
 
-        mockObj = new Objectif("100km Velo", "Mensuel", 600, 100.0, mockUser, mockSport);
+        mockObj = new Objectif("100km Velo", Frequence.MENSUEL, 600, 100.0, mockUser, mockSport);
         mockObj.setId(10L);
     }
 
@@ -116,7 +121,7 @@ class ObjectifServiceTest {
     @Test
     void testGetObjectifsAvecProgression_AvecZeroObjectif() {
         // Préparation : Un objectif où la distance et la durée sont égales à 0
-        Objectif objZero = new Objectif("Rien faire", "Mensuel", 0, 0.0, mockUser, mockSport);
+        Objectif objZero = new Objectif("Rien faire", Frequence.MENSUEL, 0, 0.0, mockUser, mockSport);
         when(objectifRepository.findByUtilisateur(mockUser)).thenReturn(List.of(objZero));
 
         List<ObjectifProgressDTO> result = objectifService.getObjectifsAvecProgression(mockUser);
@@ -132,6 +137,66 @@ class ObjectifServiceTest {
         // (car les if(>0) ont empêché l'exécution des requêtes)
         verify(activiteRepository, never()).calculerDistanceTotale(anyLong(), anyLong(), any(), any());
         verify(activiteRepository, never()).calculerDureeTotale(anyLong(), anyLong(), any(), any());
+    }
+
+    @Test
+    void testGetObjectifsAvecProgression_CalculDynamiqueDates() {
+        Objectif objHebdo = new Objectif("Hebdo", Frequence.HEBDOMADAIRE, 0, 50.0, mockUser, mockSport);
+        Objectif objDaily = new Objectif("Daily", Frequence.QUOTIDIEN, 0, 5.0, mockUser, mockSport);
+
+        when(objectifRepository.findByUtilisateur(mockUser)).thenReturn(List.of(objHebdo, objDaily));
+
+        ArgumentCaptor<LocalDate> dateCaptor = ArgumentCaptor.forClass(LocalDate.class);
+
+        objectifService.getObjectifsAvecProgression(mockUser);
+
+        verify(activiteRepository, times(2)).calculerDistanceTotale(
+                eq(mockUser.getId()), eq(mockSport.getId()), dateCaptor.capture(), dateCaptor.capture());
+
+        List<LocalDate> dates = dateCaptor.getAllValues();
+
+        assertTrue(dates.get(0).isBefore(dates.get(1)) || dates.get(0).isEqual(dates.get(1)));
+        assertEquals(dates.get(2), dates.get(3));
+    }
+
+    @Test
+    void testGetObjectifsAvecProgression_ToutesFrequences_Complet() {
+        Objectif daily = new Objectif("Daily", Frequence.QUOTIDIEN, 60, 10.0, mockUser, mockSport);
+        Objectif weekly = new Objectif("Weekly", Frequence.HEBDOMADAIRE, 300, 50.0, mockUser, mockSport);
+        Objectif monthly = new Objectif("Monthly", Frequence.MENSUEL, 1200, 200.0, mockUser, mockSport);
+        Objectif yearly = new Objectif("Yearly", Frequence.ANNUEL, 5000, 1000.0, mockUser, mockSport);
+
+        when(objectifRepository.findByUtilisateur(mockUser))
+                .thenReturn(List.of(daily, weekly, monthly, yearly));
+
+        ArgumentCaptor<LocalDate> startCaptor = ArgumentCaptor.forClass(LocalDate.class);
+        ArgumentCaptor<LocalDate> endCaptor = ArgumentCaptor.forClass(LocalDate.class);
+
+        objectifService.getObjectifsAvecProgression(mockUser);
+
+        verify(activiteRepository, times(4)).calculerDistanceTotale(anyLong(), anyLong(), startCaptor.capture(), endCaptor.capture());
+        verify(activiteRepository, times(4)).calculerDureeTotale(anyLong(), anyLong(), any(), any());
+
+        List<LocalDate> starts = startCaptor.getAllValues();
+        List<LocalDate> ends = endCaptor.getAllValues();
+        LocalDate now = LocalDate.now();
+
+        assertAll("QUOTIDIEN",
+                () -> assertEquals(now, starts.get(0)),
+                () -> assertEquals(now, ends.get(0))
+        );
+        assertAll("HEBDOMADAIRE",
+                () -> assertEquals(now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)), starts.get(1)),
+                () -> assertEquals(now.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)), ends.get(1))
+        );
+        assertAll("MENSUEL",
+                () -> assertEquals(now.withDayOfMonth(1), starts.get(2)),
+                () -> assertEquals(now.withDayOfMonth(now.lengthOfMonth()), ends.get(2))
+        );
+        assertAll("ANNUEL",
+                () -> assertEquals(now.with(TemporalAdjusters.firstDayOfYear()), starts.get(3)),
+                () -> assertEquals(now.with(TemporalAdjusters.lastDayOfYear()), ends.get(3))
+        );
     }
 
     @Test
