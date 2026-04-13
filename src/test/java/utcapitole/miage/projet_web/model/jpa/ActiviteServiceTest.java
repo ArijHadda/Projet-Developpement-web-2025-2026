@@ -91,7 +91,7 @@ class ActiviteServiceTest {
     // ═══════════════════════════════════════════════════════════════════════
     @Test
     void testEnregistrerActivite_caloriesCalculeesEtStockeesDansDB() {
-        // Given
+        // Initialisation
         Utilisateur user = buildUser(70.0f);
         Activite activite = new Activite();
         activite.setNom("Course");
@@ -103,7 +103,7 @@ class ActiviteServiceTest {
         when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(20.5));
         when(activiteRepository.save(any(Activite.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // When
+        // Action
         Activite savedActivite = activiteService.enregistrerActivite(activite);
 
         // Then
@@ -120,7 +120,7 @@ class ActiviteServiceTest {
     // ═══════════════════════════════════════════════════════════════════════
     @Test
     void testEnregistrerActivite_poissDifferentsDonnentCaloriesDifferentes() {
-        // Given
+        // Initialisation
         Utilisateur userA = buildUser(60.0f);
         Utilisateur userB = buildUser(90.0f);
 
@@ -410,7 +410,7 @@ class ActiviteServiceTest {
 
     @Test
     void testGetStatsActivites_calculeCorrectementLesAggregats() {
-        // Given
+        // Initialisation
         Activite a1 = new Activite();
         a1.setDuree(30);
         a1.setDistance(5.0);
@@ -423,7 +423,7 @@ class ActiviteServiceTest {
 
         List<Activite> list = Arrays.asList(a1, a2);
 
-        // When
+        // Action
         Map<String, Object> stats = activiteService.getStatsActivites(list);
 
         // Then

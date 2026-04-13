@@ -31,7 +31,7 @@ public class ObjectifService {
         LocalDate today = LocalDate.now();
 
         for (Objectif obj : objectifs) {
-            // --- 核心逻辑：根据频率计算当前周期的起止日期 ---
+            // --- Logique centrale : calculer les dates de début et de fin du cycle actuel selon la fréquence ---
             LocalDate dateDebut;
             LocalDate dateFin;
 

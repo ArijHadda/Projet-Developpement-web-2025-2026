@@ -33,7 +33,7 @@ class ObjectifTest {
         assertAll(
                 () -> assertEquals(10L, obj.getId()),
                 () -> assertEquals("Courir 10km", obj.getTitre()),
-                () -> assertEquals(Frequence.MENSUEL, obj.getFrequence()), // 修改点
+                () -> assertEquals(Frequence.MENSUEL, obj.getFrequence()), // Point de modification
                 () -> assertEquals(120, obj.getDuree()),
                 () -> assertEquals(10.0, obj.getDistance()),
                 () -> assertEquals(user, obj.getUtilisateur()),
