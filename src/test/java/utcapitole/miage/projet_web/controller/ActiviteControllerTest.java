@@ -779,4 +779,169 @@ public class ActiviteControllerTest {
         verify(model).addAttribute(eq("chartDistances"), any());
         verify(model).addAttribute(eq("chartCalories"), any());
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // [Test] #30 – Statistiques globales
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Test
+    void listActivites_surPeriode30j_statsContiennentTotalCaloriesEtDistance() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        Activite a1 = new Activite();
+        a1.setNom("Course");
+        a1.setDate(LocalDate.now().minusDays(5));
+        a1.setDuree(30);
+        a1.setDistance(5.0);
+        a1.setCaloriesConsommees(300);
+
+        Activite a2 = new Activite();
+        a2.setNom("Cyclisme");
+        a2.setDate(LocalDate.now().minusDays(10));
+        a2.setDuree(60);
+        a2.setDistance(20.0);
+        a2.setCaloriesConsommees(500);
+
+        List<Activite> activites = Arrays.asList(a1, a2);
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(activites);
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("count", 2);
+        stats.put("totalDuree", 90.0);
+        stats.put("totalDistance", 25.0);
+        stats.put("totalCalories", 800);
+        when(activiteService.getStatsActivites(any())).thenReturn(stats);
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+
+        String viewName = activiteController.listActivites(model, session, "30j", "jour", null);
+
+        assertEquals("activiteList", viewName);
+        verify(model).addAttribute("stats", stats);
+        assertEquals(25.0, stats.get("totalDistance"));
+        assertEquals(800, stats.get("totalCalories"));
+    }
+
+    @Test
+    void listActivites_surPeriode7j_filtreActivitesRecentesSeulement() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        Activite aRecent = new Activite();
+        aRecent.setNom("Course");
+        aRecent.setDate(LocalDate.now().minusDays(3));
+        aRecent.setDuree(30);
+        aRecent.setDistance(5.0);
+        aRecent.setCaloriesConsommees(300);
+
+        Activite aAncien = new Activite();
+        aAncien.setNom("Marche");
+        aAncien.setDate(LocalDate.now().minusDays(15));
+        aAncien.setDuree(60);
+        aAncien.setDistance(8.0);
+        aAncien.setCaloriesConsommees(200);
+
+        List<Activite> allActivites = Arrays.asList(aRecent, aAncien);
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(allActivites);
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+
+        Map<String, Object> statsRecentSeulement = new HashMap<>();
+        statsRecentSeulement.put("count", 1);
+        statsRecentSeulement.put("totalDuree", 30.0);
+        statsRecentSeulement.put("totalDistance", 5.0);
+        statsRecentSeulement.put("totalCalories", 300);
+        when(activiteService.getStatsActivites(any())).thenReturn(statsRecentSeulement);
+
+        String viewName = activiteController.listActivites(model, session, "7j", "jour", null);
+
+        assertEquals("activiteList", viewName);
+        verify(model).addAttribute(eq("stats"), eq(statsRecentSeulement));
+        assertEquals(5.0, statsRecentSeulement.get("totalDistance"));
+        assertEquals(300, statsRecentSeulement.get("totalCalories"));
+    }
+
+    @Test
+    void listActivites_surPeriode12m_statsCalculeesSurDouzeMois() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        Activite a = new Activite();
+        a.setNom("Course");
+        a.setDate(LocalDate.now().minusMonths(6));
+        a.setDuree(45);
+        a.setDistance(7.5);
+        a.setCaloriesConsommees(420);
+
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(Arrays.asList(a));
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("count", 1);
+        stats.put("totalDuree", 45.0);
+        stats.put("totalDistance", 7.5);
+        stats.put("totalCalories", 420);
+        when(activiteService.getStatsActivites(any())).thenReturn(stats);
+
+        String viewName = activiteController.listActivites(model, session, "12m", "jour", null);
+
+        assertEquals("activiteList", viewName);
+        verify(model).addAttribute("stats", stats);
+        assertEquals(7.5, stats.get("totalDistance"));
+        assertEquals(420, stats.get("totalCalories"));
+    }
+
+    @Test
+    void listActivites_periodeTout_toutesLesStatsSontIncluses() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        Activite a1 = new Activite();
+        a1.setNom("Course");
+        a1.setDate(LocalDate.now().minusYears(2));
+        a1.setDuree(45);
+        a1.setDistance(7.5);
+        a1.setCaloriesConsommees(420);
+
+        Activite a2 = new Activite();
+        a2.setNom("Cyclisme");
+        a2.setDate(LocalDate.now().minusDays(5));
+        a2.setDuree(90);
+        a2.setDistance(25.0);
+        a2.setCaloriesConsommees(800);
+
+        List<Activite> allActivites = Arrays.asList(a1, a2);
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(allActivites);
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("count", 2);
+        stats.put("totalDuree", 135.0);
+        stats.put("totalDistance", 32.5);
+        stats.put("totalCalories", 1220);
+        when(activiteService.getStatsActivites(any())).thenReturn(stats);
+
+        String viewName = activiteController.listActivites(model, session, "tout", "jour", null);
+
+        assertEquals("activiteList", viewName);
+        verify(model).addAttribute("stats", stats);
+        assertEquals(32.5, stats.get("totalDistance"));
+        assertEquals(1220, stats.get("totalCalories"));
+    }
+
+    @Test
+    void listActivites_statsVidePourAucuneActivite() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(Collections.emptyList());
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+
+        Map<String, Object> statsVides = new HashMap<>();
+        statsVides.put("count", 0);
+        statsVides.put("totalDuree", 0.0);
+        statsVides.put("totalDistance", 0.0);
+        statsVides.put("totalCalories", 0);
+        when(activiteService.getStatsActivites(any())).thenReturn(statsVides);
+
+        String viewName = activiteController.listActivites(model, session, "30j", "jour", null);
+
+        assertEquals("activiteList", viewName);
+        verify(model).addAttribute("stats", statsVides);
+        assertEquals(0, statsVides.get("totalCalories"));
+        assertEquals(0.0, statsVides.get("totalDistance"));
+    }
 }
