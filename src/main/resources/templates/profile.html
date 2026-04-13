@@ -37,7 +37,6 @@
             <span th:text="${sn.sport.nom}"></span> :
             <span th:text="${sn.niveau}"></span>
         </li>
-
     </ul>
 </div>
 
@@ -82,6 +81,14 @@
 <div>
     <a th:href="@{/activite/list}">
         <button type="button">Voir mes activités</button>
+    </a>
+</div>
+<br>
+<div>
+    <a th:href="@{/objectif/list}">
+        <button type="button" style="background-color: #17a2b8; color: white; border: none; padding: 10px; cursor: pointer;">
+            🎯 Mes Objectifs Mensuels
+        </button>
     </a>
 </div>
 <br>

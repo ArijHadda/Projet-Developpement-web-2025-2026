@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mes Objectifs</title>
+    <style>
+        table { width: 80%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .btn { padding: 5px 10px; text-decoration: none; border-radius: 3px; color: white; display: inline-block; margin-right: 5px; }
+        .btn-add { background-color: #28a745; margin-bottom: 20px; }
+        .btn-edit { background-color: #f0ad4e; }
+        .btn-delete { background-color: #d9534f; }
+        .btn-back { background-color: #6c757d; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<h2>🎯 Mes Objectifs Mensuels</h2>
+
+<div style="background-color: #e9ecef; border-left: 5px solid #17a2b8; padding: 15px; margin-bottom: 20px; border-radius: 4px; color: #333; font-size: 14px;">
+    💡 <strong>Note importante :</strong> Tous les objectifs définis ici sont valables pour le <strong>mois calendaire en cours</strong>.
+    Votre progression est calculée automatiquement depuis le 1er du mois et sera réinitialisée au début du mois suivant pour un nouveau départ !
+</div>
+
+<a th:href="@{/objectif/create}" class="btn btn-add">➕ Créer un nouvel objectif</a>
+
+<div th:if="${#lists.isEmpty(objectifsProgress)}">
+    <p>Vous n'avez défini aucun objectif pour le moment. C'est l'heure de se motiver !</p>
+</div>
+
+<table th:unless="${#lists.isEmpty(objectifsProgress)}">
+    <thead>
+    <tr>
+        <th>Titre</th>
+        <th>Sport</th>
+        <th>Fréquence</th>
+        <th>Progression (Actuel / Cible)</th>
+        <th>Avancement (%)</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="dto : ${objectifsProgress}">
+
+        <td th:text="${dto.objectif.titre}"></td>
+        <td th:text="${dto.objectif.sport.nom}"></td>
+        <td th:text="${dto.objectif.frequence}"></td>
+
+        <td>
+            <div th:if="${dto.objectif.distance > 0}" style="margin-bottom: 5px;">
+                🏃 <strong>Distance:</strong> <span th:text="${dto.distanceActuelle} + ' / ' + ${dto.objectif.distance} + ' km'"></span>
+            </div>
+            <div th:if="${dto.objectif.duree > 0}">
+                ⏱️ <strong>Temps:</strong> <span th:text="${dto.dureeActuelle} + ' / ' + ${dto.objectif.duree} + ' min'"></span>
+            </div>
+        </td>
+
+        <td>
+            <div th:if="${dto.objectif.distance > 0}" style="width: 100%; background-color: #e0e0e0; border-radius: 5px; margin-bottom: 8px;">
+                <div th:style="'width:' + ${dto.pourcentageDistance} + '%; background-color: #007bff; height: 18px; border-radius: 5px; text-align: center; color: white; line-height: 18px; font-size: 11px;'"
+                     th:text="${#numbers.formatDecimal(dto.pourcentageDistance, 1, 1)} + '%'">
+                </div>
+            </div>
+
+            <div th:if="${dto.objectif.duree > 0}" style="width: 100%; background-color: #e0e0e0; border-radius: 5px;">
+                <div th:style="'width:' + ${dto.pourcentageDuree} + '%; background-color: #28a745; height: 18px; border-radius: 5px; text-align: center; color: white; line-height: 18px; font-size: 11px;'"
+                     th:text="${#numbers.formatDecimal(dto.pourcentageDuree, 1, 1)} + '%'">
+                </div>
+            </div>
+        </td>
+        <td>
+            <a th:href="@{/objectif/{id}/edit(id=${dto.objectif.id})}" class="btn btn-edit">✏️ Éditer</a>
+            <a th:href="@{/objectif/{id}/delete(id=${dto.objectif.id})}" class="btn btn-delete"
+               onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet objectif ?');">🗑️ Supprimer</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<br>
+<a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="btn btn-back">🔙 Retour au profil</a>
+
+</body>
+</html>

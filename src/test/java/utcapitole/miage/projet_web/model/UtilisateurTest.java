@@ -24,12 +24,16 @@ class UtilisateurTest {
                 () -> assertNotNull(utilisateur.getBadges()),
                 () -> assertNotNull(utilisateur.getChallengesCrees()),
                 () -> assertNotNull(utilisateur.getParticipations()),
+                () -> assertNotNull(utilisateur.getObjectifs()),
+
                 () -> assertTrue(utilisateur.getAmis().isEmpty()),
                 () -> assertTrue(utilisateur.getListSportNivPratique().isEmpty()),
                 () -> assertTrue(utilisateur.getActivites().isEmpty()),
                 () -> assertTrue(utilisateur.getBadges().isEmpty()),
                 () -> assertTrue(utilisateur.getChallengesCrees().isEmpty()),
-                () -> assertTrue(utilisateur.getParticipations().isEmpty())
+                () -> assertTrue(utilisateur.getParticipations().isEmpty()),
+                () -> assertTrue(utilisateur.getBadges().isEmpty()),
+                () -> assertTrue(utilisateur.getObjectifs().isEmpty())
         );
     }
 
@@ -41,6 +45,7 @@ class UtilisateurTest {
         amis.add(new Utilisateur());
 
         Sport sport = new Sport("Course", "Endurance", 0.0, 1.0, true);
+
         List<SportNiveauPratique> niveaux = new ArrayList<>();
         niveaux.add(new SportNiveauPratique(sport, NiveauPratique.DEBUTANT));
 
@@ -101,6 +106,8 @@ class UtilisateurTest {
         List<Challenge> challenges = new ArrayList<>();
         List<Participation> participations = new ArrayList<>();
 
+        List<Objectif> objectifs = new ArrayList<>();
+
         Utilisateur utilisateur = new Utilisateur(
                 10L,
                 "Martin",
@@ -116,7 +123,8 @@ class UtilisateurTest {
                 activites,
                 badges,
                 challenges,
-                participations
+                participations,
+                objectifs
         );
 
         assertAll(
@@ -134,7 +142,8 @@ class UtilisateurTest {
                 () -> assertEquals(activites, utilisateur.getActivites()),
                 () -> assertEquals(badges, utilisateur.getBadges()),
                 () -> assertEquals(challenges, utilisateur.getChallengesCrees()),
-                () -> assertEquals(participations, utilisateur.getParticipations())
+                () -> assertEquals(participations, utilisateur.getParticipations()),
+                () -> assertEquals(objectifs, utilisateur.getObjectifs())
         );
     }
 
