@@ -37,6 +37,16 @@
             </select>
         </div>
 
+        <div class="form-group">
+            <label for="frequence">Période de l'objectif :</label>
+            <select id="frequence" th:field="*{frequence}" required>
+                <option value="QUOTIDIEN">Quotidien (Aujourd'hui)</option>
+                <option value="HEBDOMADAIRE">Hebdomadaire (Cette semaine)</option>
+                <option value="MENSUEL" selected>Mensuel (Ce mois-ci)</option>
+                <option value="ANNUEL">Annuel (Cette année)</option>
+            </select>
+        </div>
+
         <div class="form-group" id="distanceGroup">
             <label for="distance">Distance cible (en km) :</label>
             <input type="number" step="0.1" id="distance" th:field="*{distance}" min="0" />

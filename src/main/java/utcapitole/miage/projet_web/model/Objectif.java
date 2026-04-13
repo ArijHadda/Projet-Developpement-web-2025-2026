@@ -3,6 +3,7 @@ package utcapitole.miage.projet_web.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
+import utcapitole.miage.projet_web.model.Frequence;
 
 @Entity
 @Table(name = "Objectif")
@@ -17,8 +18,9 @@ public class Objectif {
     @Column(name = "titreObj")
     private String titre;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "frequenceObj")
-    private String frequence = "Mensuel";
+    private Frequence frequence = Frequence.MENSUEL;
 
     // La durée objective = 0 signifie qu'il n'y a pas d'objectif ou non prevue
     @PositiveOrZero(message = "La durée ne peut pas être négative")
@@ -41,7 +43,7 @@ public class Objectif {
     public Objectif() {
     }
 
-    public Objectif(String titre, String frequence, int duree, double distance, Utilisateur utilisateur, Sport sport) {
+    public Objectif(String titre, Frequence frequence, int duree, double distance, Utilisateur utilisateur, Sport sport) {
         this.titre = titre;
         this.frequence = frequence;
         this.duree = duree;
@@ -64,14 +66,6 @@ public class Objectif {
 
     public void setTitre(String titre) {
         this.titre = titre;
-    }
-
-    public String getFrequence() {
-        return frequence;
-    }
-
-    public void setFrequence(String frequence) {
-        this.frequence = frequence;
     }
 
     public int getDuree() {
@@ -105,4 +99,8 @@ public class Objectif {
     public void setSport(Sport sport) {
         this.sport = sport;
     }
+
+    public Frequence getFrequence() { return frequence; }
+
+    public void setFrequence(Frequence frequence) { this.frequence = frequence; }
 }

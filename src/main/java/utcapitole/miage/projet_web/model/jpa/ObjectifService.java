@@ -4,8 +4,11 @@ import org.springframework.stereotype.Service;
 import utcapitole.miage.projet_web.dto.ObjectifProgressDTO;
 import utcapitole.miage.projet_web.model.Objectif;
 import utcapitole.miage.projet_web.model.Utilisateur;
+import utcapitole.miage.projet_web.model.Frequence;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -22,13 +25,36 @@ public class ObjectifService {
     }
 
     public List<ObjectifProgressDTO> getObjectifsAvecProgression(Utilisateur user) {
-        List<Objectif> objectifs = objectifRepository.findByUtilisateur(user);
+        List<Objectif> objectifs = objectifRepository.findByUtilisateur(user); // [cite: 3, 4]
         List<ObjectifProgressDTO> resultList = new ArrayList<>();
 
-        LocalDate debutMois = LocalDate.now().withDayOfMonth(1);
-        LocalDate finMois = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
+        LocalDate today = LocalDate.now();
 
         for (Objectif obj : objectifs) {
+            // --- 核心逻辑：根据频率计算当前周期的起止日期 ---
+            LocalDate dateDebut;
+            LocalDate dateFin;
+
+            switch (obj.getFrequence()) {
+                case QUOTIDIEN:
+                    dateDebut = today;
+                    dateFin = today;
+                    break;
+                case HEBDOMADAIRE:
+                    dateDebut = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+                    dateFin = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+                    break;
+                case ANNUEL:
+                    dateDebut = today.with(TemporalAdjusters.firstDayOfYear());
+                    dateFin = today.with(TemporalAdjusters.lastDayOfYear());
+                    break;
+                case MENSUEL:
+                default:
+                    dateDebut = today.withDayOfMonth(1);
+                    dateFin = today.withDayOfMonth(today.lengthOfMonth());
+                    break;
+            }
+
             double distActuelle = 0.0;
             double pctDist = 0.0;
             double durActuelle = 0.0;
@@ -36,17 +62,15 @@ public class ObjectifService {
 
             if (obj.getDistance() > 0) {
                 distActuelle = activiteRepository.calculerDistanceTotale(
-                        user.getId(), obj.getSport().getId(), debutMois, finMois);
-                pctDist = (distActuelle / obj.getDistance()) * 100;
-                if (pctDist > 100) pctDist = 100;
+                        user.getId(), obj.getSport().getId(), dateDebut, dateFin);
+                pctDist = Math.min((distActuelle / obj.getDistance()) * 100, 100);
             }
 
             if (obj.getDuree() > 0) {
                 Long dureeLong = activiteRepository.calculerDureeTotale(
-                        user.getId(), obj.getSport().getId(), debutMois, finMois);
+                        user.getId(), obj.getSport().getId(), dateDebut, dateFin);
                 durActuelle = dureeLong != null ? dureeLong.doubleValue() : 0.0;
-                pctDur = (durActuelle / obj.getDuree()) * 100;
-                if (pctDur > 100) pctDur = 100;
+                pctDur = Math.min((durActuelle / obj.getDuree()) * 100, 100);
             }
 
             resultList.add(new ObjectifProgressDTO(obj, distActuelle, pctDist, durActuelle, pctDur));
