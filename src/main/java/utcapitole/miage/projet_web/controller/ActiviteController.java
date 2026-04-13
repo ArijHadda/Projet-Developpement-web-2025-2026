@@ -1,10 +1,17 @@
 package utcapitole.miage.projet_web.controller;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
+import java.time.temporal.WeekFields;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -80,15 +87,122 @@ public class ActiviteController {
     }
 
     @GetMapping("/list")
-    public String listActivites(Model model, HttpSession session) {
+    public String listActivites(Model model, HttpSession session,
+                                @RequestParam(defaultValue = "30j") String periode,
+                                @RequestParam(defaultValue = "jour") String regroupement,
+                                @RequestParam(required = false) Long sportId) {
         if (session.getAttribute("loggedInUser") == null) {
             return "redirect:/user/login";
         }
+
+        if (!isPeriodeValide(periode)) {
+            periode = "30j";
+        }
+        if (!isRegroupementValide(regroupement)) {
+            regroupement = "jour";
+        }
+
         Utilisateur user = (Utilisateur) session.getAttribute("loggedInUser");
         List<Activite> activites = activiteService.getActivitesByUtilisateur(user);
-        model.addAttribute("activites", activites);
-        model.addAttribute("stats", activiteService.getStatsActivites(activites));
+
+        LocalDate dateDebut = calculerDateDebut(periode);
+        List<Activite> activitesFiltrees = activites.stream()
+                .filter(a -> dateDebut == null || (a.getDate() != null && !a.getDate().isBefore(dateDebut)))
+                .filter(a -> sportId == null || (a.getSport() != null && sportId.equals(a.getSport().getId())))
+            .toList();
+
+        Map<String, Object> progression = construireProgression(activitesFiltrees, regroupement);
+
+        model.addAttribute("activites", activitesFiltrees);
+        model.addAttribute("stats", activiteService.getStatsActivites(activitesFiltrees));
+        model.addAttribute("sports", sportRepository.findAll());
+        model.addAttribute("selectedPeriode", periode);
+        model.addAttribute("selectedRegroupement", regroupement);
+        model.addAttribute("selectedSportId", sportId);
+        model.addAttribute("chartLabels", progression.get("labels"));
+        model.addAttribute("chartDistances", progression.get("distances"));
+        model.addAttribute("chartCalories", progression.get("calories"));
         return "activiteList";
+    }
+
+    public String listActivites(Model model, HttpSession session) {
+        return listActivites(model, session, "30j", "jour", null);
+    }
+
+    private boolean isPeriodeValide(String periode) {
+        return "7j".equals(periode) || "30j".equals(periode) || "12m".equals(periode) || "tout".equals(periode);
+    }
+
+    private boolean isRegroupementValide(String regroupement) {
+        return "jour".equals(regroupement) || "semaine".equals(regroupement) || "mois".equals(regroupement);
+    }
+
+    private LocalDate calculerDateDebut(String periode) {
+        LocalDate now = LocalDate.now();
+        switch (periode) {
+            case "7j":
+                return now.minusDays(6);
+            case "30j":
+                return now.minusDays(29);
+            case "12m":
+                return now.minusMonths(12).plusDays(1);
+            default:
+                return null;
+        }
+    }
+
+    private Map<String, Object> construireProgression(List<Activite> activites, String regroupement) {
+        DateTimeFormatter formatterJour = DateTimeFormatter.ofPattern("dd/MM");
+        DateTimeFormatter formatterMois = DateTimeFormatter.ofPattern("MM/yyyy");
+
+        Map<LocalDate, double[]> agregats = new LinkedHashMap<>();
+
+        List<Activite> triees = activites.stream()
+                .filter(a -> a.getDate() != null)
+                .sorted(Comparator.comparing(Activite::getDate))
+            .toList();
+
+        for (Activite activite : triees) {
+            LocalDate cle;
+            if ("semaine".equals(regroupement)) {
+                cle = activite.getDate().with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+            } else if ("mois".equals(regroupement)) {
+                cle = activite.getDate().withDayOfMonth(1);
+            } else {
+                cle = activite.getDate();
+            }
+
+            double[] valeurs = agregats.computeIfAbsent(cle, k -> new double[]{0.0, 0.0});
+            valeurs[0] += activite.getDistance();
+            valeurs[1] += activite.getCaloriesConsommees();
+        }
+
+        List<String> labels = new ArrayList<>();
+        List<Double> distances = new ArrayList<>();
+        List<Integer> calories = new ArrayList<>();
+
+        WeekFields weekFields = WeekFields.of(Locale.FRANCE);
+        for (Map.Entry<LocalDate, double[]> entry : agregats.entrySet()) {
+            LocalDate key = entry.getKey();
+            String label;
+            if ("semaine".equals(regroupement)) {
+                int numeroSemaine = key.get(weekFields.weekOfWeekBasedYear());
+                label = "S" + numeroSemaine + " (" + key.format(formatterJour) + ")";
+            } else if ("mois".equals(regroupement)) {
+                label = key.format(formatterMois);
+            } else {
+                label = key.format(formatterJour);
+            }
+            labels.add(label);
+            distances.add(Math.round(entry.getValue()[0] * 100.0) / 100.0);
+            calories.add((int) Math.round(entry.getValue()[1]));
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("labels", labels);
+        result.put("distances", distances);
+        result.put("calories", calories);
+        return result;
     }
 
     @GetMapping("/flux-amis")

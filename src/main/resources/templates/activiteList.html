@@ -3,7 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <title>Mes Activités</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background: #f3f5f7;
+            color: #1f2937;
+        }
+
+        .page-layout {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+
+        .left-column {
+            flex: 2;
+            min-width: 0;
+        }
+
+        .right-column {
+            flex: 1;
+            min-width: 320px;
+            position: sticky;
+            top: 12px;
+        }
+
+        .panel {
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            background: #ffffff;
+            padding: 16px;
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+            margin-bottom: 16px;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(140px, 1fr));
+            gap: 12px;
+            align-items: end;
+        }
+
+        .filters label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .filters select,
+        .filters button {
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.95em;
+        }
+
+        .filters button {
+            background: #0f766e;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .filters button:hover {
+            background: #115e59;
+        }
+
         .activite-card {
             border: 1px solid #ccc;
             border-radius: 8px;
@@ -64,6 +133,26 @@
             margin-top: 10px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.05);
         }
+
+        .chart-title {
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 1080px) {
+            .page-layout {
+                flex-direction: column;
+            }
+
+            .right-column {
+                position: static;
+                width: 100%;
+            }
+
+            .filters {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -76,6 +165,42 @@
 </a>
 <hr/>
 
+<div class="panel">
+    <form th:action="@{/activite/list}" method="get" class="filters">
+        <div>
+            <label for="periode">Période</label>
+            <select id="periode" name="periode">
+                <option value="7j" th:selected="${selectedPeriode == '7j'}">7 derniers jours</option>
+                <option value="30j" th:selected="${selectedPeriode == '30j'}">30 derniers jours</option>
+                <option value="12m" th:selected="${selectedPeriode == '12m'}">12 derniers mois</option>
+                <option value="tout" th:selected="${selectedPeriode == 'tout'}">Depuis le début</option>
+            </select>
+        </div>
+        <div>
+            <label for="regroupement">Progression</label>
+            <select id="regroupement" name="regroupement">
+                <option value="jour" th:selected="${selectedRegroupement == 'jour'}">Par jour</option>
+                <option value="semaine" th:selected="${selectedRegroupement == 'semaine'}">Par semaine</option>
+                <option value="mois" th:selected="${selectedRegroupement == 'mois'}">Par mois</option>
+            </select>
+        </div>
+        <div>
+            <label for="sportId">Sport</label>
+            <select id="sportId" name="sportId">
+                <option value="">Tous les sports</option>
+                <option th:each="sport : ${sports}"
+                        th:value="${sport.id}"
+                        th:text="${sport.nom}"
+                        th:selected="${selectedSportId != null and selectedSportId == sport.id}">
+                </option>
+            </select>
+        </div>
+        <div>
+            <button type="submit">Appliquer les filtres</button>
+        </div>
+    </form>
+</div>
+
 <div id="stats-summary" th:if="${stats != null}" style="margin-bottom: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 8px; max-width: 600px; background-color: #e9ecef;">
     <h3>📊 Résumé de votre parcours</h3>
     <p>🏃‍♂️ Nombre total d'activités : <strong th:text="${stats.count}">0</strong></p>
@@ -84,67 +209,138 @@
     <p>🔥 Calories totales : <strong th:text="${stats.totalCalories}">0</strong> kcal</p>
 </div>
 
-<div th:if="${#lists.isEmpty(activites)}">
-    <p>Aucune activité enregistrée. Allez faire du sport !</p>
-</div>
-
-<div th:each="act : ${activites}" class="activite-wrapper">
-    <!-- activite card-->
-    <div class="activite-info-card">
-        <div class="activite-header">
-            J'ai fait du <span th:text="${act.nom}"></span> !
-        </div>
-        <p style="font-size: 0.85em; color: gray;">
-            📅 Le <span th:text="${act.date}"></span>
-            <span th:if="${act.note != null}"> | ⭐ Note: <span th:text="${act.note}"></span>/10</span>
-        </p>
-
-        <div class="activite-stats">
-            <span>⏱️ Durée : <span th:text="${act.duree}"></span> min</span>
-            <span th:if="${act.sport != null and act.sport.estBaseSurVitesse}">📏 Distance : <span th:text="${act.distance}"></span> km</span>
-            <span th:if="${act.sport == null or !act.sport.estBaseSurVitesse}">💪 Intensité : <span th:text="${act.niveauIntensite}"></span>/5</span>
-            <span>🔥 Calories : <span th:text="${act.caloriesConsommees}"></span> kcal</span>
-            <span style="color: #ff9800; font-weight: bold;">👍 <span th:text="${act.nbKudos}"></span> Kudos</span>
+<div class="page-layout">
+    <div class="left-column">
+        <div th:if="${#lists.isEmpty(activites)}" class="panel">
+            <p>Aucune activité pour ces filtres. Essayez une autre période ou un autre sport.</p>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+        <div th:each="act : ${activites}" class="activite-wrapper">
+            <!-- activite card-->
+            <div class="activite-info-card">
+                <div class="activite-header">
+                    J'ai fait du <span th:text="${act.nom}"></span> !
+                </div>
+                <p style="font-size: 0.85em; color: gray;">
+                    📅 Le <span th:text="${act.date}"></span>
+                    <span th:if="${act.note != null}"> | ⭐ Note: <span th:text="${act.note}"></span>/10</span>
+                </p>
 
-            <form th:action="@{/activite/flux/kudos/{id}(id=${act.id})}" method="post" style="margin: 0;">
-                <button th:if="${!#lists.contains(act.likers.![id], session.loggedInUser.id)}"
-                        type="submit" style="background-color: #ff9800; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
-                    👏 S'auto-féliciter !
-                </button>
-                <button th:if="${#lists.contains(act.likers.![id], session.loggedInUser.id)}"
-                        type="submit" style="background-color: #ccc; color: #333; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
-                    ✖ Retirer
-                </button>
-            </form>
+                <div class="activite-stats">
+                    <span>⏱️ Durée : <span th:text="${act.duree}"></span> min</span>
+                    <span th:if="${act.sport != null and act.sport.estBaseSurVitesse}">📏 Distance : <span th:text="${act.distance}"></span> km</span>
+                    <span th:if="${act.sport == null or !act.sport.estBaseSurVitesse}">💪 Intensité : <span th:text="${act.niveauIntensite}"></span>/5</span>
+                    <span>🔥 Calories : <span th:text="${act.caloriesConsommees}"></span> kcal</span>
+                    <span style="color: #ff9800; font-weight: bold;">👍 <span th:text="${act.nbKudos}"></span> Kudos</span>
+                </div>
 
-            <div>
-                <a th:href="@{/activite/modifier/{idActivite}(idActivite=${act.id})}" class="btn-action btn-edit">✏️ Modifier</a>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
 
-                <a th:href="@{/activite/supprimer/{idActivite}(idActivite=${act.id})}" class="btn-action btn-delete"
-                   onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette activité ?');">🗑️ Supprimer</a>
+                    <form th:action="@{/activite/flux/kudos/{id}(id=${act.id})}" method="post" style="margin: 0;">
+                        <button th:if="${!#lists.contains(act.likers.![id], session.loggedInUser.id)}"
+                                type="submit" style="background-color: #b45309; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                            👏 S'auto-féliciter !
+                        </button>
+                        <button th:if="${#lists.contains(act.likers.![id], session.loggedInUser.id)}"
+                                type="submit" style="background-color: #ccc; color: #333; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                            ✖ Retirer
+                        </button>
+                    </form>
+
+                    <div>
+                        <a th:href="@{/activite/modifier/{idActivite}(idActivite=${act.id})}" class="btn-action btn-edit">✏️ Modifier</a>
+
+                        <form th:action="@{/activite/supprimer/{idActivite}(idActivite=${act.id})}" method="get" style="display:inline;"
+                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette activité ?');">
+                            <button type="submit" class="btn-action btn-delete" style="border: none; cursor: pointer;">🗑️ Supprimer</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- commentaires -->
+            <div class="comments-card">
+                <p><strong>💬 Commentaires :</strong></p>
+                <div th:if="${#lists.isEmpty(act.commentaires)}">
+                    <span style="color: gray; font-style: italic;">Aucun commentaire pour l'instant.</span>
+                </div>
+                <div th:each="com : ${act.commentaires}" style="margin-bottom: 5px; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
+                    <b th:text="${com.auteur.prenom}" th:style="${com.auteur.id == session.loggedInUser.id ? 'color: #007bff;' : 'color: #333;'}"></b> :
+                    <span th:text="${com.contenu}"></span>
+                </div>
+
+                <form th:action="@{/activite/flux/comment/{id}(id=${act.id})}" method="post" style="margin-top: 10px;">
+                    <input type="text" name="contenu" placeholder="Ajouter un commentaire..." required style="width: 70%; padding: 4px;">
+                    <button type="submit" style="padding: 5px 10px; cursor: pointer;">Envoyer</button>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- commentaires -->
-    <div class="comments-card">
-        <p><strong>💬 Commentaires :</strong></p>
-        <div th:if="${#lists.isEmpty(act.commentaires)}">
-            <span style="color: gray; font-style: italic;">Aucun commentaire pour l'instant.</span>
+    <aside class="right-column">
+        <div class="panel">
+            <h3 class="chart-title">Progression distance / calories</h3>
+            <canvas id="progressChart" height="240"></canvas>
         </div>
-        <div th:each="com : ${act.commentaires}" style="margin-bottom: 5px; border-bottom: 1px dashed #eee; padding-bottom: 5px;">
-            <b th:text="${com.auteur.prenom}" th:style="${com.auteur.id == session.loggedInUser.id ? 'color: #007bff;' : 'color: #333;'}"></b> :
-            <span th:text="${com.contenu}"></span>
-        </div>
-
-        <form th:action="@{/activite/flux/comment/{id}(id=${act.id})}" method="post" style="margin-top: 10px;">
-            <input type="text" name="contenu" placeholder="Ajouter un commentaire..." required style="width: 70%; padding: 4px;">
-            <button type="submit" style="padding: 5px 10px; cursor: pointer;">Envoyer</button>
-        </form>
-    </div>
+    </aside>
 </div>
+
+<script th:inline="javascript">
+    const labels = /*[[${chartLabels}]]*/ [];
+    const distances = /*[[${chartDistances}]]*/ [];
+    const calories = /*[[${chartCalories}]]*/ [];
+
+    const ctx = document.getElementById('progressChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Distance (km)',
+                        data: distances,
+                        borderColor: '#0284c7',
+                        backgroundColor: 'rgba(2, 132, 199, 0.15)',
+                        yAxisID: 'yDistance',
+                        tension: 0.35,
+                        fill: true
+                    },
+                    {
+                        label: 'Calories (kcal)',
+                        data: calories,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                        yAxisID: 'yCalories',
+                        tension: 0.35,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                scales: {
+                    yDistance: {
+                        type: 'linear',
+                        position: 'left',
+                        beginAtZero: true,
+                        title: { display: true, text: 'Distance (km)' }
+                    },
+                    yCalories: {
+                        type: 'linear',
+                        position: 'right',
+                        beginAtZero: true,
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: 'Calories (kcal)' }
+                    }
+                }
+            }
+        });
+    }
+</script>
 </body>
 </html>
