@@ -494,4 +494,87 @@ class ActiviteServiceTest {
 
         verify(commentaireRepository).save(any(Commentaire.class));
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // [Test] #30 – Statistiques globales
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Test
+    void testGetStatsActivites_listeVide_retourneZeros() {
+        Map<String, Object> stats = activiteService.getStatsActivites(java.util.Collections.emptyList());
+
+        assertEquals(0, stats.get("count"));
+        assertEquals(0.0, stats.get("totalDuree"));
+        assertEquals(0.0, stats.get("totalDistance"));
+        assertEquals(0, stats.get("totalCalories"));
+    }
+
+    @Test
+    void testGetStatsActivites_uneSeuleActivite_retourneSesValeurs() {
+        Activite a = new Activite();
+        a.setDuree(45);
+        a.setDistance(5.5);
+        a.setCaloriesConsommees(320);
+
+        Map<String, Object> stats = activiteService.getStatsActivites(Arrays.asList(a));
+
+        assertEquals(1, stats.get("count"));
+        assertEquals(45.0, stats.get("totalDuree"));
+        assertEquals(5.5, stats.get("totalDistance"));
+        assertEquals(320, stats.get("totalCalories"));
+    }
+
+    @Test
+    void testGetStatsActivites_plusieursActivites_sommeCaloriesEtDistance() {
+        Activite a1 = new Activite();
+        a1.setDuree(30);
+        a1.setDistance(4.2);
+        a1.setCaloriesConsommees(210);
+
+        Activite a2 = new Activite();
+        a2.setDuree(60);
+        a2.setDistance(10.0);
+        a2.setCaloriesConsommees(560);
+
+        Activite a3 = new Activite();
+        a3.setDuree(45);
+        a3.setDistance(6.8);
+        a3.setCaloriesConsommees(380);
+
+        Map<String, Object> stats = activiteService.getStatsActivites(Arrays.asList(a1, a2, a3));
+
+        assertEquals(3, stats.get("count"));
+        assertEquals(135.0, stats.get("totalDuree"));
+        assertEquals(21.0, stats.get("totalDistance"));
+        assertEquals(1150, stats.get("totalCalories"));
+    }
+
+    @Test
+    void testGetStatsActivites_totalCaloriesCorrespondAuCalculMet() {
+        Activite a = new Activite();
+        a.setDuree(90);
+        a.setDistance(12.0);
+        a.setCaloriesConsommees(840);
+
+        Map<String, Object> stats = activiteService.getStatsActivites(Arrays.asList(a));
+
+        assertEquals(840, stats.get("totalCalories"));
+    }
+
+    @Test
+    void testGetStatsActivites_distanceTotaleEstExacte() {
+        Activite a1 = new Activite();
+        a1.setDuree(30);
+        a1.setDistance(3.45);
+        a1.setCaloriesConsommees(200);
+
+        Activite a2 = new Activite();
+        a2.setDuree(60);
+        a2.setDistance(8.75);
+        a2.setCaloriesConsommees(500);
+
+        Map<String, Object> stats = activiteService.getStatsActivites(Arrays.asList(a1, a2));
+
+        assertEquals(12.2, (double) stats.get("totalDistance"), 0.01);
+    }
 }
