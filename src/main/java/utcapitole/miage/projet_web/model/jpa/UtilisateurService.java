@@ -33,7 +33,7 @@ public class UtilisateurService {
     }
 
     public Utilisateur modifierProfile(Long IdU, String mailU,String sexeU,int ageU,
-                                       float tailleU, float poidsU, String niveauPratique){
+                                       float tailleU, float poidsU){
         Optional<Utilisateur> userOpt= utilisateurRepository.findById(IdU);
 
         Utilisateur user = userOpt.get();
