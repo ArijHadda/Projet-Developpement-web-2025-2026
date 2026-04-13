@@ -11,7 +11,6 @@ import utcapitole.miage.projet_web.model.Objectif;
 import utcapitole.miage.projet_web.model.Sport;
 import utcapitole.miage.projet_web.model.Utilisateur;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -102,5 +101,53 @@ class ObjectifServiceTest {
         // Le pourcentage doit être plafonné à 100%
         assertEquals(100.0, result.get(0).getPourcentageDistance());
         assertEquals(100.0, result.get(0).getPourcentageDuree());
+    }
+
+    @Test
+    void testGetObjectifsByUtilisateur() {
+        when(objectifRepository.findByUtilisateur(mockUser)).thenReturn(List.of(mockObj));
+
+        List<Objectif> result = objectifService.getObjectifsByUtilisateur(mockUser);
+
+        assertEquals(1, result.size());
+        assertEquals(mockObj, result.get(0));
+    }
+
+    @Test
+    void testGetObjectifsAvecProgression_AvecZeroObjectif() {
+        // Préparation : Un objectif où la distance et la durée sont égales à 0
+        Objectif objZero = new Objectif("Rien faire", "Mensuel", 0, 0.0, mockUser, mockSport);
+        when(objectifRepository.findByUtilisateur(mockUser)).thenReturn(List.of(objZero));
+
+        List<ObjectifProgressDTO> result = objectifService.getObjectifsAvecProgression(mockUser);
+
+        // Vérification des résultats (tout doit rester à 0)
+        assertEquals(1, result.size());
+        assertEquals(0.0, result.get(0).getDistanceActuelle());
+        assertEquals(0.0, result.get(0).getPourcentageDistance());
+        assertEquals(0.0, result.get(0).getDureeActuelle());
+        assertEquals(0.0, result.get(0).getPourcentageDuree());
+
+        // Vérification CRUCIALE : On s'assure que la base de données n'a JAMAIS été appelée,
+        // (car les if(>0) ont empêché l'exécution des requêtes)
+        verify(activiteRepository, never()).calculerDistanceTotale(anyLong(), anyLong(), any(), any());
+        verify(activiteRepository, never()).calculerDureeTotale(anyLong(), anyLong(), any(), any());
+    }
+
+    @Test
+    void testGetObjectifsAvecProgression_RetourRepositoryNull() {
+        // Préparation : On utilise le mockObj normal (100km, 600min)
+        when(objectifRepository.findByUtilisateur(mockUser)).thenReturn(List.of(mockObj));
+
+        // On simule le cas où calculerDureeTotale retourne NULL (l'utilisateur n'a aucune activité)
+        when(activiteRepository.calculerDistanceTotale(eq(1L), eq(2L), any(), any())).thenReturn(0.0);
+        when(activiteRepository.calculerDureeTotale(eq(1L), eq(2L), any(), any())).thenReturn(null);
+
+        List<ObjectifProgressDTO> result = objectifService.getObjectifsAvecProgression(mockUser);
+
+        // Vérification : Le code doit remplacer null par 0.0 sans planter (NullPointerException)
+        assertEquals(1, result.size());
+        assertEquals(0.0, result.get(0).getDureeActuelle());
+        assertEquals(0.0, result.get(0).getPourcentageDuree());
     }
 }
