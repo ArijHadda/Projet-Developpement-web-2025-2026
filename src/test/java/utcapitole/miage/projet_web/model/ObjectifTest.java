@@ -2,10 +2,6 @@ package utcapitole.miage.projet_web.model;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import utcapitole.miage.projet_web.model.Objectif;
-import utcapitole.miage.projet_web.model.Sport;
-import utcapitole.miage.projet_web.model.Utilisateur;
-
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -31,13 +27,13 @@ class ObjectifTest {
         Sport sport = new Sport();
         sport.setId(2L);
 
-        Objectif obj = new Objectif("Courir 10km", "Mensuel", 120, 10.0, user, sport);
+        Objectif obj = new Objectif("Courir 10km", Frequence.MENSUEL, 120, 10.0, user, sport);
         obj.setId(10L);
 
         assertAll(
                 () -> assertEquals(10L, obj.getId()),
                 () -> assertEquals("Courir 10km", obj.getTitre()),
-                () -> assertEquals("Mensuel", obj.getFrequence()),
+                () -> assertEquals(Frequence.MENSUEL, obj.getFrequence()), // 修改点
                 () -> assertEquals(120, obj.getDuree()),
                 () -> assertEquals(10.0, obj.getDistance()),
                 () -> assertEquals(user, obj.getUtilisateur()),
@@ -47,7 +43,7 @@ class ObjectifTest {
 
     @Test
     void testValidationTitreObligatoire() {
-        Objectif obj = new Objectif("", "Mensuel", 60, 5.0, new Utilisateur(), new Sport());
+        Objectif obj = new Objectif("", Frequence.MENSUEL, 60, 5.0, new Utilisateur(), new Sport());
         Set<ConstraintViolation<Objectif>> violations = validator.validate(obj);
 
         assertFalse(violations.isEmpty(), "Le titre vide doit déclencher une erreur");
@@ -56,7 +52,7 @@ class ObjectifTest {
 
     @Test
     void testValidationValeursNegatives() {
-        Objectif obj = new Objectif("Test", "Mensuel", -10, -5.0, new Utilisateur(), new Sport());
+        Objectif obj = new Objectif("Test", Frequence.MENSUEL, -10, -5.0, new Utilisateur(), new Sport());
         Set<ConstraintViolation<Objectif>> violations = validator.validate(obj);
 
         assertEquals(2, violations.size(), "Duree et distance négatives doivent déclencher des erreurs");
@@ -64,7 +60,7 @@ class ObjectifTest {
 
     @Test
     void testObjectifValide() {
-        Objectif obj = new Objectif("Valide", "Mensuel", 60, 5.0, new Utilisateur(), new Sport());
+        Objectif obj = new Objectif("Valide", Frequence.MENSUEL, 60, 5.0, new Utilisateur(), new Sport());
         Set<ConstraintViolation<Objectif>> violations = validator.validate(obj);
 
         assertTrue(violations.isEmpty(), "Un objectif correctement rempli ne doit avoir aucune erreur");
