@@ -2,74 +2,97 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Formulaire</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modifier mon profil - SportTrack</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body>
-<h2>Profile</h2>
+<body class="page-profile">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="navbar-brand">
+                🏃 SportTrack
+            </a>
+            <ul class="navbar-nav">
+                <li><a th:href="@{/activite/list}">Mes Activités</a></li>
+                <li><a th:href="@{/objectif/list}">Objectifs</a></li>
+                <li><a th:href="@{/challenge/list}">Challenges</a></li>
+                <li><a th:href="@{/user/ami/chercher}">Amis</a></li>
+                <li><a th:href="@{/user/logout}">Déconnexion</a></li>
+            </ul>
+        </div>
+    </nav>
 
-<div th:if="${error}">
-    <p style="color: red; font-weight: bold;" th:text="${error}"></p>
-</div>
+    <div class="container">
+        <div class="card" style="max-width: 700px; margin: 2rem auto;">
+            <h1>✏️ Modifier mon profil</h1>
 
-<form th:action="@{/user/profile/update/{IdU}(IdU=${userUpdate.id})}" method="post">
+            <div th:if="${error}" class="alert alert-danger">
+                <span th:text="${error}"></span>
+            </div>
 
-    <input type="hidden" name="IdU" th:value="${userUpdate.id}" />
+            <form th:action="@{/user/profile/update/{IdU}(IdU=${userUpdate.id})}" method="post">
+                <input type="hidden" name="IdU" th:value="${userUpdate.id}" />
 
-    <div style="margin-bottom: 15px;">
-        <label for="email">Email :</label><br/>
-        <input type="email" id="email" name="mailU" th:value="${userUpdate.mail}" required />
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label for="email">📧 Email</label>
+                        <input type="email" id="email" name="mailU" th:value="${userUpdate.mail}" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sexe">⚧ Sexe</label>
+                        <input type="text" id="sexe" name="sexeU" th:value="${userUpdate.sexe}" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="age">🎂 Âge</label>
+                        <input type="number" id="age" name="ageU" th:value="${userUpdate.age}" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="taille">📏 Taille (cm)</label>
+                        <input type="text" id="taille" name="tailleU" th:value="${userUpdate.taille}" class="form-control" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="poids">⚖️ Poids (kg)</label>
+                        <input type="text" id="poids" name="poidsU" th:value="${userUpdate.poids}" class="form-control" required />
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <h3>🏃 Mes sports et niveaux</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Sport</th>
+                                <th>Niveau</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="sn : ${userUpdate.listSportNivPratique}">
+                                <td th:text="${sn.sport.nom}"></td>
+                                <td th:text="${sn.niveau}"></td>
+                                <td>
+                                    <a th:href="@{'/user/deleteSportNiveau/' + ${sn.id}}" class="btn btn-danger btn-sm">
+                                        🗑️ Supprimer
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="flex gap-sm" style="margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+                    <a th:href="@{/user/profile/{IdU}(IdU=${userUpdate.id})}" class="btn btn-outline">❌ Annuler</a>
+                </div>
+            </form>
+        </div>
     </div>
-
-    <div style="margin-bottom: 15px;">
-        <label for="sexe">Sexe :</label><br/>
-        <input type="text" id="sexe" name="sexeU" th:value="${userUpdate.sexe}" required />
-    </div>
-
-    <div style="margin-bottom: 15px;">
-        <label for="age">Age :</label><br/>
-        <input type="number" id="age" name="ageU" th:value="${userUpdate.age}" required />
-    </div>
-
-    <div style="margin-bottom: 15px;">
-        <label for="taille">Taille :</label><br/>
-        <input type="text" id="taille" name="tailleU" th:value="${userUpdate.taille}" required />
-    </div>
-
-    <div style="margin-bottom: 15px;">
-        <label for="poids">Poids :</label><br/>
-        <input type="text" id="poids" name="poidsU" th:value="${userUpdate.poids}" required />
-    </div>
-
-    <div style="margin-bottom: 15px;">
-        <table>
-            <tr>
-                <th>Sport</th>
-                <th>Niveau</th>
-                <th>Action</th>
-            </tr>
-
-            <tr th:each="sn : ${userUpdate.listSportNivPratique}">
-                <td th:text="${sn.sport.nom}"></td>
-                <td th:text="${sn.niveau}"></td>
-                <td>
-                    <a th:href="@{'/user/deleteSportNiveau/' + ${sn.id}}">
-                        Supprimer
-                    </a>
-                </td>
-            </tr>
-        </table>
-    </div>
-
-
-
-
-    <div>
-        <button type="submit">💾 Enregistrer </button>
-        <a th:href="@{/user/profile/{IdU}(IdU=${userUpdate.id})}">
-            Annuler
-        </a>
-    </div>
-
-</form>
 </body>
 </html>

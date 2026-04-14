@@ -151,6 +151,7 @@ class UtilisateurTest {
     void testToStringContainsMainFields() {
         Utilisateur utilisateur = new Utilisateur();
         utilisateur.setId(3L);
+        
         utilisateur.setNom("Bernard");
         utilisateur.setPrenom("Nina");
         utilisateur.setMail("nina@miage.fr");

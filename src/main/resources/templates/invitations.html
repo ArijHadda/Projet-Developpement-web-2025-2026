@@ -2,46 +2,64 @@
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Mes Invitations</title>
-    <style>
-        .request-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-accept { background-color: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
-        .btn-refuse { background-color: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-left: 10px; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Invitations - SportTrack</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body>
-<h2>Demandes d'ami en attente</h2>
-<div th:if="${accepter}" style="background-color: #d4edda; color: #155724; padding: 10px; margin-bottom: 15px; border: 1px solid #c3e6cb; border-radius: 4px;">
-    <span th:text="${accepter}"></span>
-</div>
-<div th:if="${refuser}" style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border: 1px solid #f5c6cb; border-radius: 4px;">
-    <span th:text="${refuser}"></span>
-</div>
-<div th:if="${error}" style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border: 1px solid #f5c6cb; border-radius: 4px;">
-    <span th:text="${error}"></span>
-</div>
-<a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}">← Retour au profil</a>
-<hr/>
+<body class="page-profile">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="navbar-brand">
+                🏃 SportTrack
+            </a>
+            <ul class="navbar-nav">
+                <li><a th:href="@{/activite/list}">Mes Activités</a></li>
+                <li><a th:href="@{/objectif/list}">Objectifs</a></li>
+                <li><a th:href="@{/challenge/list}">Challenges</a></li>
+                <li><a th:href="@{/user/ami/chercher}">Amis</a></li>
+                <li><a th:href="@{/user/logout}">Déconnexion</a></li>
+            </ul>
+        </div>
+    </nav>
 
-<div th:if="${#lists.isEmpty(invitations)}">
-    <p>Vous n'avez aucune invitation pour le moment.</p>
-</div>
+    <div class="container">
+        <div class="flex justify-between items-center" style="margin: 2rem 0;">
+            <h1>📩 Demandes d'ami en attente</h1>
+            <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="btn btn-outline">
+                🔙 Retour au profil
+            </a>
+        </div>
 
-<div th:each="invit : ${invitations}" class="request-card">
-    <div>
-        <strong th:text="${invit.expediteur.prenom + ' ' + invit.expediteur.nom}"></strong>
-        <span> vous a envoyé une demande d'ami.</span>
+        <div th:if="${accepter}" class="alert alert-success">
+            <span th:text="${accepter}"></span>
+        </div>
+        <div th:if="${refuser}" class="alert alert-warning">
+            <span th:text="${refuser}"></span>
+        </div>
+        <div th:if="${error}" class="alert alert-danger">
+            <span th:text="${error}"></span>
+        </div>
+
+        <div th:if="${#lists.isEmpty(invitations)}" class="alert alert-info">
+            <p>ℹ️ Vous n'avez aucune invitation pour le moment.</p>
+        </div>
+
+        <div th:each="invit : ${invitations}" class="card flex justify-between items-center" style="margin-bottom: 1rem;">
+            <div>
+                <strong>👤 <span th:text="${invit.expediteur.prenom + ' ' + invit.expediteur.nom}"></span></strong>
+                <span class="text-muted"> vous a envoyé une demande d'ami.</span>
+            </div>
+
+            <div class="flex gap-sm">
+                <form th:action="@{/user/ami/accepter/{demandeId}(demandeId=${invit.id})}" method="post">
+                    <button type="submit" class="btn btn-success">✔ Accepter</button>
+                </form>
+                <form th:action="@{/user/ami/refuser/{demandeId}(demandeId=${invit.id})}" method="post">
+                    <button type="submit" class="btn btn-danger">✖ Refuser</button>
+                </form>
+            </div>
+        </div>
     </div>
-
-    <div style="display: flex;">
-        <form th:action="@{/user/ami/accepter/{demandeId}(demandeId=${invit.id})}" method="post">
-            <button type="submit" class="btn-accept">✔ Accepter</button>
-        </form>
-        <form th:action="@{/user/ami/refuser/{demandeId}(demandeId=${invit.id})}" method="post">
-            <button type="submit" class="btn-refuse">✖ Refuser</button>
-        </form>
-
-    </div>
-</div>
 </body>
 </html>
