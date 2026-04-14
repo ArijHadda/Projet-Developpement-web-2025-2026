@@ -31,50 +31,36 @@
 
         <!-- Profile Header -->
         <div class="card mt-lg">
-            <div class="flex items-center gap-md">
-                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem;">
-                    👤
-                </div>
-                <div>
-                    <h1 th:text="${ami.prenom} + ' ' + ${ami.nom}">Nom Ami</h1>
-                    <p style="color: var(--color-gray-600); margin: 0;" th:text="${ami.mail}">email</p>
-                    <div style="margin-top: 0.5rem;">
-                        <span class="badge" th:text="${ami.sexe} == 'M' ? '♂️ Homme' : '♀️ Femme'">Sexe</span>
-                        <span class="badge badge-info"><span th:text="${ami.age}">25</span> ans</span>
-                    </div>
-                </div>
-            </div>
+            <h2 style="margin-bottom: 1rem;">👤 Profil de <span th:text="${ami.prenom}">Ami</span></h2>
             
-            <!-- Informations physiques -->
-            <div style="margin-top: 1.5rem;">
-                <h4 style="margin-bottom: 1rem; color: var(--color-gray-700);">📊 Informations physiques</h4>
-                <div class="grid grid-3" style="gap: 1rem;">
-                    <div style="background: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-pearl) 100%); padding: 1rem; border-radius: var(--radius-md); text-align: center; border: 2px solid var(--color-gray-200);">
-                        <div style="font-size: 2rem; margin-bottom: 0.25rem;">📏</div>
-                        <div style="font-size: 0.875rem; color: var(--color-gray-600);">Taille</div>
-                        <div style="font-weight: 700; font-size: 1.25rem; color: var(--color-primary);" th:text="${ami.taille} + ' cm'">175 cm</div>
+            <!-- Informations personnelles -->
+            <div>
+                <h4 style="margin-bottom: 1rem; color: var(--color-gray-700);">📋 Informations personnelles</h4>
+                <div class="grid grid-2" style="gap: 0.75rem;">
+                    <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
+                        <small style="color: var(--color-gray-600);">Nom complet</small>
+                        <p style="font-weight: 600; margin: 0;" th:text="${ami.prenom} + ' ' + ${ami.nom}">-</p>
                     </div>
-                    <div style="background: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-pearl) 100%); padding: 1rem; border-radius: var(--radius-md); text-align: center; border: 2px solid var(--color-gray-200);">
-                        <div style="font-size: 2rem; margin-bottom: 0.25rem;">⚖️</div>
-                        <div style="font-size: 0.875rem; color: var(--color-gray-600);">Poids</div>
-                        <div style="font-weight: 700; font-size: 1.25rem; color: var(--color-primary);" th:text="${ami.poids} + ' kg'">70 kg</div>
+                    <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
+                        <small style="color: var(--color-gray-600);">Email</small>
+                        <p style="font-weight: 600; margin: 0;" th:text="${ami.mail}">-</p>
                     </div>
-                    <div style="background: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-pearl) 100%); padding: 1rem; border-radius: var(--radius-md); text-align: center; border: 2px solid var(--color-gray-200);">
-                        <div style="font-size: 2rem; margin-bottom: 0.25rem;">📊</div>
-                        <div style="font-size: 0.875rem; color: var(--color-gray-600);">IMC</div>
-                        <div style="font-weight: 700; font-size: 1.25rem; color: var(--color-primary);" 
-                             th:with="tailleM=${ami.taille != null ? ami.taille / 100.0 : 1.75}, poids=${ami.poids != null ? ami.poids : 70}, imc=${poids / (tailleM * tailleM)}"
-                             th:text="${#numbers.formatDecimal(imc, 1, 1)}">22.9</div>
+                    <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
+                        <small style="color: var(--color-gray-600);">Sexe</small>
+                        <p style="font-weight: 600; margin: 0;" th:text="${ami.sexe} == 'M' ? 'Homme' : 'Femme'">-</p>
                     </div>
-                </div>
-                
-                <!-- Interprétation IMC -->
-                <div style="margin-top: 1rem; padding: 0.75rem; background: var(--color-gray-100); border-radius: var(--radius-md); font-size: 0.875rem; color: var(--color-gray-600); text-align: center;"
-                     th:with="tailleM=${ami.taille != null ? ami.taille / 100.0 : 1.75}, poids=${ami.poids != null ? ami.poids : 70}, imc=${poids / (tailleM * tailleM)}, 
-                              imcText=${imc < 18.5 ? 'Insuffisance pondérale' : (imc < 25 ? 'Poids normal' : (imc < 30 ? 'Surpoids' : 'Obésité'))}">
-                    <strong>IMC:</strong> <span th:text="${imcText}">Poids normal</span>
-                    <span style="margin-left: 0.5rem; color: var(--color-gray-400);">|</span>
-                    <span style="margin-left: 0.5rem;">18.5 - 24.9: Normal</span>
+                    <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
+                        <small style="color: var(--color-gray-600);">Âge</small>
+                        <p style="font-weight: 600; margin: 0;"><span th:text="${ami.age}">-</span> ans</p>
+                    </div>
+                    <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
+                        <small style="color: var(--color-gray-600);">Taille</small>
+                        <p style="font-weight: 600; margin: 0;"><span th:text="${ami.taille}">-</span> cm</p>
+                    </div>
+                    <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
+                        <small style="color: var(--color-gray-600);">Poids</small>
+                        <p style="font-weight: 600; margin: 0;"><span th:text="${ami.poids}">-</span> kg</p>
+                    </div>
                 </div>
             </div>
             
