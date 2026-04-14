@@ -14,11 +14,8 @@ import java.util.Optional;
 
 @Service
 public class UtilisateurService {
-    @Autowired
     private final UtilisateurRepository utilisateurRepository;
-    @Autowired
     private final BCryptPasswordEncoder passwordEncoder;
-    @Autowired
     private final DemandeAmiRepository demandeAmiRepository;
 
     public UtilisateurService(UtilisateurRepository utilisateurRepository, BCryptPasswordEncoder passwordEncoder, DemandeAmiRepository demandeAmiRepository) {
