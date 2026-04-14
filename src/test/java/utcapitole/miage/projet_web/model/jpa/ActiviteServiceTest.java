@@ -26,8 +26,6 @@ import org.springframework.web.client.RestTemplate;
 import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Sport;
 import utcapitole.miage.projet_web.model.Utilisateur;
-import utcapitole.miage.projet_web.model.jpa.CommentaireRepository;
-import utcapitole.miage.projet_web.model.jpa.UtilisateurRepository;
 import utcapitole.miage.projet_web.model.Commentaire;
 
 @ExtendWith(MockitoExtension.class)
@@ -351,6 +349,29 @@ class ActiviteServiceTest {
         Activite saved = activiteService.enregistrerActivite(activite);
         assertEquals(490, saved.getCaloriesConsommees());
         assertEquals("Météo indisponible", saved.getConditionsMeteo());
+    }
+
+    @Test
+    void testEnregistrerActivite_appelleApiMeteoEtStockeLesDonneesMeteo() {
+        Utilisateur user = buildUser(70.0f);
+        Activite activite = new Activite();
+        activite.setNom("Course");
+        activite.setDate(java.time.LocalDate.now());
+        activite.setDuree(60);
+        activite.setDistance(10.0);
+        activite.setUtilisateur(user);
+
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(43.6047, 1.4442));
+        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(26.0));
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Activite saved = activiteService.enregistrerActivite(activite);
+
+        verify(restTemplate).getForObject("http://ip-api.com/json/", Map.class);
+        verify(restTemplate).getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class));
+        verify(activiteRepository).save(activite);
+        assertEquals("Température: 26.0°C", saved.getConditionsMeteo());
+        assertEquals(700, saved.getCaloriesConsommees());
     }
 
     // ═══════════════════════════════════════════════════════════════════════
