@@ -34,9 +34,46 @@
             <strong>💡 Bon à savoir :</strong> Votre progression est calculée automatiquement et sera réinitialisée au début du mois suivant pour un nouveau départ motivant !
         </div>
 
-        <!-- Actions -->
-        <div style="margin-top: 1.5rem;">
-            <a th:href="@{/objectif/create}" class="btn btn-primary">➕ Créer un nouvel objectif</a>
+        <!-- Actions et Filtres -->
+        <div class="card" style="margin-top: 1.5rem;">
+            <div class="flex justify-between items-center" style="flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">🔍 Filtres</h3>
+                <a th:href="@{/objectif/create}" class="btn btn-primary btn-sm">➕ Nouvel objectif</a>
+            </div>
+            
+            <form th:action="@{/objectif/list}" method="get" class="grid grid-3" style="gap: 1rem; align-items: end;">
+                <!-- Filtre par Sport -->
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Sport</label>
+                    <select name="sportId" class="form-control">
+                        <option value="">Tous les sports</option>
+                        <option th:each="sport : ${sports}" 
+                                th:value="${sport.id}" 
+                                th:text="${sport.nom}"
+                                th:selected="${selectedSportId != null and selectedSportId == sport.id}">
+                            Sport
+                        </option>
+                    </select>
+                </div>
+                
+                <!-- Filtre par Fréquence -->
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Fréquence</label>
+                    <select name="frequence" class="form-control">
+                        <option value="">Toutes les fréquences</option>
+                        <option value="QUOTIDIEN" th:selected="${selectedFrequence == 'QUOTIDIEN'}">Quotidien</option>
+                        <option value="HEBDOMADAIRE" th:selected="${selectedFrequence == 'HEBDOMADAIRE'}">Hebdomadaire</option>
+                        <option value="MENSUEL" th:selected="${selectedFrequence == 'MENSUEL'}">Mensuel</option>
+                        <option value="ANNUEL" th:selected="${selectedFrequence == 'ANNUEL'}">Annuel</option>
+                    </select>
+                </div>
+                
+                <!-- Boutons d'action -->
+                <div class="flex gap-sm" style="flex-wrap: wrap;">
+                    <button type="submit" class="btn btn-secondary" style="flex: 1;">🔍 Filtrer</button>
+                    <a th:href="@{/objectif/list}" class="btn btn-outline" style="flex: 1;">↺ Réinitialiser</a>
+                </div>
+            </form>
         </div>
 
         <!-- Empty state -->
@@ -49,6 +86,16 @@
 
         <!-- Table -->
         <div th:unless="${#lists.isEmpty(objectifsProgress)}" class="table-container" style="margin-top: 1.5rem;">
+            <!-- Afficher le nombre de résultats -->
+            <div style="padding: 1rem; background: var(--color-gray-100); border-bottom: 1px solid var(--color-gray-200);">
+                <span style="font-weight: 600; color: var(--color-gray-700);">
+                    📊 <span th:text="${#lists.size(objectifsProgress)}">0</span> objectif(s) trouvé(s)
+                </span>
+                <span th:if="${selectedSportId != null or selectedFrequence != null}" style="color: var(--color-gray-600); font-size: 0.875rem;">
+                    (filtres actifs)
+                </span>
+            </div>
+            
             <table class="table">
                 <thead>
                     <tr>
@@ -68,7 +115,9 @@
                         <td>
                             <span class="badge badge-info" th:text="${dto.objectif.sport.nom}">Sport</span>
                         </td>
-                        <td th:text="${dto.objectif.frequence}">Fréquence</td>
+                        <td>
+                            <span class="badge" th:text="${dto.objectif.frequence}">Fréquence</span>
+                        </td>
                         <td>
                             <div th:if="${dto.objectif.distance > 0}" style="margin-bottom: 0.5rem; font-size: 0.9rem;">
                                 🏃 <strong>Distance:</strong><br>
