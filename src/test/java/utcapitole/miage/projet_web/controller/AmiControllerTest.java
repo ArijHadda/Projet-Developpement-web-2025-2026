@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import utcapitole.miage.projet_web.model.DemandeAmi;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.jpa.DemandeAmiRepository;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -181,5 +183,16 @@ class AmiControllerTest {
                 .andExpect(flash().attributeExists("refuser"));
 
         verify(utilisateurService).refuserDemande(10L);
+    }
+
+    @Test
+    void testRefuserDemandeShouldThrowExceptionError(){
+        doThrow(new RuntimeException("Erreur interne"))
+                .when(utilisateurService).refuserDemande(123L);
+        RedirectAttributes redirectAttributes = mock(RedirectAttributes.class);
+        String returnValue = amiController.refuser(100L,session,redirectAttributes);
+        assertEquals("redirect:/user/ami/invitations",returnValue);
+        verify(redirectAttributes).addFlashAttribute(eq("error"), any());
+        verify(redirectAttributes, never()).addFlashAttribute(eq("refuser"), any());
     }
 }

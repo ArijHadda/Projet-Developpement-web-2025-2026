@@ -6,6 +6,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import utcapitole.miage.projet_web.model.NiveauPratique;
 import utcapitole.miage.projet_web.model.Sport;
 import utcapitole.miage.projet_web.model.SportNiveauPratique;
@@ -17,7 +18,6 @@ import utcapitole.miage.projet_web.model.jpa.BadgeAttributionService;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 import java.time.LocalDate;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,6 +25,16 @@ import java.util.Optional;
 @Controller
 @RequestMapping("/user")
 public class UtilisateurController {
+    private static final String METEO_TEMPERATURE = "temperature";
+    private static final String METEO_ICONE = "icone";
+    private static final String METEO_VILLE = "ville";
+    private static final String METEO_ETAT_CIEL = "etatCiel";
+    private static final String METEO_VENT_VITESSE = "ventVitesse";
+    private static final String METEO_VENT_DIRECTION = "ventDirection";
+    private static final String METEO_MOMENT = "moment";
+
+    private final RestTemplate restTemplate = new RestTemplate();
+
     @Autowired
     private UtilisateurService utilisateurService;
     @Autowired
@@ -85,28 +95,153 @@ public class UtilisateurController {
         if (loggedInUser == null) {
             return "redirect:/user/login";
         }
-
         Utilisateur user = utilisateurService.getUtilisateurAvecSports(IdU);
-
         if (user == null) {
             return "redirect:/user/login";
         }
 
+        Map<String, Object> infosMeteo = recupererInfosMeteo();
+        model.addAttribute("meteoTemperature", infosMeteo.get(METEO_TEMPERATURE));
+        model.addAttribute("meteoIcone", infosMeteo.get(METEO_ICONE));
+        model.addAttribute("meteoVille", infosMeteo.get(METEO_VILLE));
+        model.addAttribute("meteoEtatCiel", infosMeteo.get(METEO_ETAT_CIEL));
+        model.addAttribute("meteoVentVitesse", infosMeteo.get(METEO_VENT_VITESSE));
+        model.addAttribute("meteoVentDirection", infosMeteo.get(METEO_VENT_DIRECTION));
+        model.addAttribute("meteoMoment", infosMeteo.get(METEO_MOMENT));
         model.addAttribute("userProfile", user);
         return "profile";
+    }
+
+    private Map<String, Object> recupererInfosMeteo() {
+        Map<String, Object> meteo = Map.of(
+            METEO_TEMPERATURE, "Meteo indisponible",
+            METEO_ICONE, "🌤️",
+            METEO_VILLE, "Ville inconnue",
+            METEO_ETAT_CIEL, "Indisponible",
+            METEO_VENT_VITESSE, "-",
+            METEO_VENT_DIRECTION, "-",
+            METEO_MOMENT, "-"
+        );
+
+        try {
+            Map<?, ?> localisation = restTemplate.getForObject("http://ip-api.com/json/", Map.class);
+            if (localisation == null || localisation.get("lat") == null || localisation.get("lon") == null) {
+                return meteo;
+            }
+
+            double latitude = ((Number) localisation.get("lat")).doubleValue();
+            double longitude = ((Number) localisation.get("lon")).doubleValue();
+                String ville = recupererVille(latitude, longitude, localisation.get("city"));
+
+            String url = "https://api.open-meteo.com/v1/forecast?latitude=" + latitude
+                    + "&longitude=" + longitude
+                    + "&current_weather=true";
+            Map<?, ?> response = restTemplate.getForObject(url, Map.class);
+
+            if (response == null || !(response.get("current_weather") instanceof Map<?, ?> currentWeather)) {
+                return meteo;
+            }
+
+            Object temperature = currentWeather.get(METEO_TEMPERATURE);
+            Object weatherCodeObj = currentWeather.get("weathercode");
+            Object windSpeedObj = currentWeather.get("windspeed");
+            Object windDirectionObj = currentWeather.get("winddirection");
+            Object isDayObj = currentWeather.get("is_day");
+            if (temperature == null || weatherCodeObj == null || windSpeedObj == null || windDirectionObj == null || isDayObj == null) {
+                return meteo;
+            }
+
+            int weatherCode = ((Number) weatherCodeObj).intValue();
+            double windSpeed = ((Number) windSpeedObj).doubleValue();
+            int windDirection = ((Number) windDirectionObj).intValue();
+            int isDay = ((Number) isDayObj).intValue();
+
+            return Map.of(
+                    METEO_TEMPERATURE, temperature + "°C",
+                    METEO_ICONE, getWeatherIcon(weatherCode, isDay == 1),
+                    METEO_VILLE, ville,
+                    METEO_ETAT_CIEL, getWeatherLabel(weatherCode),
+                    METEO_VENT_VITESSE, String.format("%.0f km/h", windSpeed),
+                    METEO_VENT_DIRECTION, getWindDirectionLabel(windDirection) + " (" + windDirection + "°)",
+                    METEO_MOMENT, isDay == 1 ? "Jour (1 = Oui)" : "Nuit (1 = Non)"
+            );
+        } catch (Exception e) {
+            return meteo;
+        }
+    }
+
+    private String recupererVille(double latitude, double longitude, Object fallbackCity) {
+        try {
+            String url = "https://geocoding-api.open-meteo.com/v1/reverse?latitude=" + latitude
+                    + "&longitude=" + longitude
+                    + "&count=1&language=fr&format=json";
+            Map<?, ?> response = restTemplate.getForObject(url, Map.class);
+            if (response != null && response.get("results") instanceof List<?> results && !results.isEmpty()) {
+                Object first = results.get(0);
+                if (first instanceof Map<?, ?> villeData && villeData.get("name") != null) {
+                    return villeData.get("name").toString();
+                }
+            }
+        } catch (Exception ignored) {
+            // L'API de reverse geocoding peut échouer; on garde alors la ville issue de l'IP.
+        }
+
+        return fallbackCity != null ? fallbackCity.toString() : "Ville inconnue";
+    }
+
+    private String getWeatherLabel(int weatherCode) {
+        return switch (weatherCode) {
+            case 0 -> "Ensoleille (Code 0)";
+            case 1 -> "Principalement degage";
+            case 2 -> "Partiellement nuageux";
+            case 3 -> "Couvert";
+            case 45, 48 -> "Brouillard";
+            case 51, 53, 55 -> "Bruine";
+            case 56, 57 -> "Bruine verglaçante";
+            case 61, 63, 65 -> "Pluie";
+            case 66, 67 -> "Pluie verglaçante";
+            case 71, 73, 75, 77 -> "Neige";
+            case 80, 81, 82 -> "Averses de pluie";
+            case 85, 86 -> "Averses de neige";
+            case 95 -> "Orage";
+            case 96, 99 -> "Orage avec grele";
+            default -> "Meteo inconnue (Code " + weatherCode + ")";
+        };
+    }
+
+    private String getWeatherIcon(int weatherCode, boolean isDay) {
+        if (weatherCode == 0) {
+            return isDay ? "☀️" : "🌙";
+        }
+        return switch (weatherCode) {
+            case 1, 2 -> "🌤️";
+            case 3 -> "☁️";
+            case 45, 48 -> "🌫️";
+            case 51, 53, 55, 56, 57 -> "🌦️";
+            case 61, 63, 65, 66, 67, 80, 81, 82 -> "🌧️";
+            case 71, 73, 75, 77, 85, 86 -> "❄️";
+            case 95, 96, 99 -> "⛈️";
+            default -> "🌤️";
+        };
+    }
+
+    private String getWindDirectionLabel(int degrees) {
+        String[] directions = {"Nord", "Nord-Est", "Est", "Sud-Est", "Sud", "Sud-Ouest", "Ouest", "Nord-Ouest"};
+        int index = (int) Math.round((degrees % 360) / 45.0) % 8;
+        return directions[index];
     }
 
     @PostMapping("/profile/update/{IdU}")
     public String modifierProfile(@PathVariable Long IdU,@RequestParam String mailU,
                                   @RequestParam String sexeU,
                                   @RequestParam int ageU, @RequestParam float tailleU,
-                                  @RequestParam float poidsU,@RequestParam String niveauPratique,HttpSession session){
+                                  @RequestParam float poidsU,HttpSession session){
 
         Utilisateur currentUser = (Utilisateur) session.getAttribute("loggedInUser");
         if (currentUser == null || !currentUser.getId().equals(IdU)) {
             return "redirect:/user/login";
         }
-        utilisateurService.modifierProfile(IdU,mailU,sexeU,ageU,tailleU,poidsU,niveauPratique);
+        utilisateurService.modifierProfile(IdU,mailU,sexeU,ageU,tailleU,poidsU);
         return "redirect:/user/profile/" + currentUser.getId();
     }
 
@@ -119,10 +254,10 @@ public class UtilisateurController {
 
         // Charger l'utilisateur AVEC ses sports
         Utilisateur user = utilisateurService.getUtilisateurAvecSports(IdU);
-
         if (user == null) {
             return "redirect:/user/login";
         }
+
 
         model.addAttribute("userUpdate", user);
         return "update";

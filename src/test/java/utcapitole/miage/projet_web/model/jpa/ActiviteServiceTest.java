@@ -26,8 +26,6 @@ import org.springframework.web.client.RestTemplate;
 import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Sport;
 import utcapitole.miage.projet_web.model.Utilisateur;
-import utcapitole.miage.projet_web.model.jpa.CommentaireRepository;
-import utcapitole.miage.projet_web.model.jpa.UtilisateurRepository;
 import utcapitole.miage.projet_web.model.Commentaire;
 
 @ExtendWith(MockitoExtension.class)
@@ -93,7 +91,7 @@ class ActiviteServiceTest {
     // ═══════════════════════════════════════════════════════════════════════
     @Test
     void testEnregistrerActivite_caloriesCalculeesEtStockeesDansDB() {
-        // Given
+        // Initialisation
         Utilisateur user = buildUser(70.0f);
         Activite activite = new Activite();
         activite.setNom("Course");
@@ -105,7 +103,7 @@ class ActiviteServiceTest {
         when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(20.5));
         when(activiteRepository.save(any(Activite.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // When
+        // Action
         Activite savedActivite = activiteService.enregistrerActivite(activite);
 
         // Then
@@ -122,7 +120,7 @@ class ActiviteServiceTest {
     // ═══════════════════════════════════════════════════════════════════════
     @Test
     void testEnregistrerActivite_poissDifferentsDonnentCaloriesDifferentes() {
-        // Given
+        // Initialisation
         Utilisateur userA = buildUser(60.0f);
         Utilisateur userB = buildUser(90.0f);
 
@@ -353,6 +351,29 @@ class ActiviteServiceTest {
         assertEquals("Météo indisponible", saved.getConditionsMeteo());
     }
 
+    @Test
+    void testEnregistrerActivite_appelleApiMeteoEtStockeLesDonneesMeteo() {
+        Utilisateur user = buildUser(70.0f);
+        Activite activite = new Activite();
+        activite.setNom("Course");
+        activite.setDate(java.time.LocalDate.now());
+        activite.setDuree(60);
+        activite.setDistance(10.0);
+        activite.setUtilisateur(user);
+
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(43.6047, 1.4442));
+        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(26.0));
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Activite saved = activiteService.enregistrerActivite(activite);
+
+        verify(restTemplate).getForObject("http://ip-api.com/json/", Map.class);
+        verify(restTemplate).getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class));
+        verify(activiteRepository).save(activite);
+        assertEquals("Température: 26.0°C", saved.getConditionsMeteo());
+        assertEquals(700, saved.getCaloriesConsommees());
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // Tests repository
     // ═══════════════════════════════════════════════════════════════════════
@@ -389,7 +410,7 @@ class ActiviteServiceTest {
 
     @Test
     void testGetStatsActivites_calculeCorrectementLesAggregats() {
-        // Given
+        // Initialisation
         Activite a1 = new Activite();
         a1.setDuree(30);
         a1.setDistance(5.0);
@@ -402,7 +423,7 @@ class ActiviteServiceTest {
 
         List<Activite> list = Arrays.asList(a1, a2);
 
-        // When
+        // Action
         Map<String, Object> stats = activiteService.getStatsActivites(list);
 
         // Then
@@ -493,5 +514,88 @@ class ActiviteServiceTest {
         activiteService.ajouterCommentaire(10L, 5L, "Super course !");
 
         verify(commentaireRepository).save(any(Commentaire.class));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // [Test] #30 – Statistiques globales
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Test
+    void testGetStatsActivites_listeVide_retourneZeros() {
+        Map<String, Object> stats = activiteService.getStatsActivites(java.util.Collections.emptyList());
+
+        assertEquals(0, stats.get("count"));
+        assertEquals(0.0, stats.get("totalDuree"));
+        assertEquals(0.0, stats.get("totalDistance"));
+        assertEquals(0, stats.get("totalCalories"));
+    }
+
+    @Test
+    void testGetStatsActivites_uneSeuleActivite_retourneSesValeurs() {
+        Activite a = new Activite();
+        a.setDuree(45);
+        a.setDistance(5.5);
+        a.setCaloriesConsommees(320);
+
+        Map<String, Object> stats = activiteService.getStatsActivites(Arrays.asList(a));
+
+        assertEquals(1, stats.get("count"));
+        assertEquals(45.0, stats.get("totalDuree"));
+        assertEquals(5.5, stats.get("totalDistance"));
+        assertEquals(320, stats.get("totalCalories"));
+    }
+
+    @Test
+    void testGetStatsActivites_plusieursActivites_sommeCaloriesEtDistance() {
+        Activite a1 = new Activite();
+        a1.setDuree(30);
+        a1.setDistance(4.2);
+        a1.setCaloriesConsommees(210);
+
+        Activite a2 = new Activite();
+        a2.setDuree(60);
+        a2.setDistance(10.0);
+        a2.setCaloriesConsommees(560);
+
+        Activite a3 = new Activite();
+        a3.setDuree(45);
+        a3.setDistance(6.8);
+        a3.setCaloriesConsommees(380);
+
+        Map<String, Object> stats = activiteService.getStatsActivites(Arrays.asList(a1, a2, a3));
+
+        assertEquals(3, stats.get("count"));
+        assertEquals(135.0, stats.get("totalDuree"));
+        assertEquals(21.0, stats.get("totalDistance"));
+        assertEquals(1150, stats.get("totalCalories"));
+    }
+
+    @Test
+    void testGetStatsActivites_totalCaloriesCorrespondAuCalculMet() {
+        Activite a = new Activite();
+        a.setDuree(90);
+        a.setDistance(12.0);
+        a.setCaloriesConsommees(840);
+
+        Map<String, Object> stats = activiteService.getStatsActivites(Arrays.asList(a));
+
+        assertEquals(840, stats.get("totalCalories"));
+    }
+
+    @Test
+    void testGetStatsActivites_distanceTotaleEstExacte() {
+        Activite a1 = new Activite();
+        a1.setDuree(30);
+        a1.setDistance(3.45);
+        a1.setCaloriesConsommees(200);
+
+        Activite a2 = new Activite();
+        a2.setDuree(60);
+        a2.setDistance(8.75);
+        a2.setCaloriesConsommees(500);
+
+        Map<String, Object> stats = activiteService.getStatsActivites(Arrays.asList(a1, a2));
+
+        assertEquals(12.2, (double) stats.get("totalDistance"), 0.01);
     }
 }

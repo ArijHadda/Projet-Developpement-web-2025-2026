@@ -29,7 +29,7 @@ class SportTest {
 
     @Test
     void testSportConstructors() {
-        // No-args constructor
+        // Constructeur sans arguments
         Sport sport1 = new Sport();
         assertAll(
                 () -> assertNull(sport1.getId()),
@@ -40,7 +40,7 @@ class SportTest {
                 () -> assertNull(sport1.getEstBaseSurVitesse())
         );
 
-        // Parameters constructor
+        // Constructeur avec paramètres
         Sport sport2 = new Sport("Course", "Endurance", 0.0, 1.0, true);
         assertAll(
                 () -> assertEquals("Course", sport2.getNom()),
@@ -76,11 +76,11 @@ class SportTest {
 
     @Test
     void testSportValidationOnNom() {
-        // This test will only pass if we add @NotBlank to Sport.java
+        // Ce test ne passera que si on ajoute @NotBlank à Sport.java
         Sport sport = new Sport("", "Endurance", 0.0, 1.0, true);
         Set<ConstraintViolation<Sport>> violations = validator.validate(sport);
-        // Note: Currently Sport.java doesn't have validation annotations.
-        // We will add them in the next step.
+        // Remarque : Actuellement Sport.java n'a pas d'annotations de validation.
+        // Nous les ajouterons à l'étape suivante.
         assertFalse(violations.isEmpty(), "Le nom vide devrait déclencher une violation");
     }
 }

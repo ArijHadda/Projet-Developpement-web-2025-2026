@@ -109,7 +109,6 @@ public class AmiController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erreur lors du refus de la demande.");
         }
-
         return "redirect:/user/ami/invitations";
     }
 }

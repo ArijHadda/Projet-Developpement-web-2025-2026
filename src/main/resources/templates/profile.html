@@ -19,6 +19,19 @@
 <a th:href="@{/user/profile/ajouterNivPratique}">
     <button type="button">Ajouter niv pratique</button>
 </a>
+<details style="display: inline-block; margin-left: 10px; vertical-align: middle; position: relative;">
+    <summary style="cursor: pointer; font-weight: bold; list-style: none;">
+        Meteo: <span th:text="${meteoIcone}">🌤️</span>
+        <span th:text="${meteoTemperature}">Meteo indisponible</span>
+    </summary>
+    <div style="position: absolute; top: calc(100% + 8px); left: 0; min-width: 260px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background-color: #f8f9fa; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); z-index: 20;">
+        <div><strong>Ville :</strong> <span th:text="${meteoVille}">Ville inconnue</span></div>
+        <div><strong>Etat du ciel :</strong> <span th:text="${meteoEtatCiel}">Indisponible</span></div>
+        <div><strong>Vitesse du vent :</strong> <span th:text="${meteoVentVitesse}">-</span></div>
+        <div><strong>Direction :</strong> <span th:text="${meteoVentDirection}">-</span></div>
+        <div><strong>Moment :</strong> <span th:text="${meteoMoment}">-</span></div>
+    </div>
+</details>
 <hr/> <p>Bienvenue sur votre espace personnel ! Voici vos informations :</p>
 
 <div style="margin-bottom: 20px;">
@@ -37,7 +50,6 @@
             <span th:text="${sn.sport.nom}"></span> :
             <span th:text="${sn.niveau}"></span>
         </li>
-
     </ul>
 </div>
 
@@ -82,6 +94,14 @@
 <div>
     <a th:href="@{/activite/list}">
         <button type="button">Voir mes activités</button>
+    </a>
+</div>
+<br>
+<div>
+    <a th:href="@{/objectif/list}">
+        <button type="button" style="background-color: #17a2b8; color: white; border: none; padding: 10px; cursor: pointer;">
+            🎯 Mes Objectifs Mensuels
+        </button>
     </a>
 </div>
 <br>

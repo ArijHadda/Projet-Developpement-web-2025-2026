@@ -6,7 +6,7 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>4.0.5</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath/> <!-- recherche du parent depuis le dépôt -->
 	</parent>
 	<groupId>utcapitole.miage</groupId>
 	<artifactId>projet-web</artifactId>
