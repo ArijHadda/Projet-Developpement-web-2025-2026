@@ -87,20 +87,66 @@
         </div>
         
         <!-- Activites recentes -->
-        <div class="card mt-lg" th:if="${!#lists.isEmpty(activitesRecentes)}">
-            <h3>Activites recentes</h3>
-            <div class="flex flex-col gap-md">
-                <div th:each="act : ${activitesRecentes}" class="activity-card" style="margin-bottom: 0;">
-                    <div class="flex justify-between">
-                        <strong class="activity-header" th:text="${act.nom}">Activite</strong>
-                        <span class="text-muted" th:text="${act.date}">Date</span>
+        <div th:if="${!#lists.isEmpty(activitesRecentes)}">
+            <h3 class="mt-lg">Activites recentes</h3>
+            <div th:each="act : ${activitesRecentes}" class="card" style="margin-bottom: 1.5rem;">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 style="color: var(--color-accent-blue); margin-bottom: 0.5rem;">
+                            <span th:text="${act.nom}"></span>
+                        </h3>
+                        <p class="text-muted">
+                            📅 Le <span th:text="${act.date}"></span>
+                        </p>
                     </div>
-                    <div class="activity-stats" style="margin-top: 0.5rem;">
-                        <span>Duree: <span th:text="${act.duree}">-</span> min</span>
-                        <span th:if="${act.distance > 0}">Distance: <span th:text="${act.distance}">-</span> km</span>
-                        <span>Calories: <span th:text="${act.caloriesConsommees}">-</span> kcal</span>
-                        <span style="color: var(--color-warning);">Kudos: <span th:text="${act.nbKudos}">-</span></span>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="grid grid-4" style="text-align: center;">
+                    <div class="badge badge-info">
+                        ⏱️ <span th:text="${act.duree}"></span> min
                     </div>
+                    <div th:if="${act.sport != null and act.sport.estBaseSurVitesse}" class="badge badge-primary">
+                        📏 <span th:text="${act.distance}"></span> km
+                    </div>
+                    <div th:if="${act.sport == null or !act.sport.estBaseSurVitesse}" class="badge badge-warning">
+                        💪 Intensité: <span th:text="${act.niveauIntensite}"></span>/5
+                    </div>
+                    <div class="badge badge-danger">
+                        🔥 <span th:text="${act.caloriesConsommees}"></span> kcal
+                    </div>
+                    <div class="badge badge-success">
+                        👍 <span th:text="${act.nbKudos}"></span> Kudos
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="flex justify-between items-center">
+                    <form th:action="@{/activite/flux/kudos/{id}(id=${act.id})}" method="post">
+                        <button th:if="${!#lists.contains(act.likers.![id], session.loggedInUser.id)}"
+                                type="submit" class="btn btn-warning">
+                            👏 Bravo !
+                        </button>
+                        <button th:if="${#lists.contains(act.likers.![id], session.loggedInUser.id)}"
+                                type="submit" class="btn btn-outline">
+                            ✖ Retirer le Bravo
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card" style="background: var(--color-gray-100); margin-top: 1rem;">
+                    <h4>💬 Commentaires</h4>
+                    <div th:each="com : ${act.commentaires}" class="card" style="padding: 0.75rem; margin-bottom: 0.5rem;">
+                        <strong th:text="${com.auteur.prenom}"></strong> :
+                        <span th:text="${com.contenu}"></span>
+                    </div>
+
+                    <form th:action="@{/activite/flux/comment/{id}(id=${act.id})}" method="post" class="flex gap-sm" style="margin-top: 1rem;">
+                        <input type="text" name="contenu" class="form-control" placeholder="Écrire un message..." required>
+                        <button type="submit" class="btn btn-primary">📤 Envoyer</button>
+                    </form>
                 </div>
             </div>
         </div>
