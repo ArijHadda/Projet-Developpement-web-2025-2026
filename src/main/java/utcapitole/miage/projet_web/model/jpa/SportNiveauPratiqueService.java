@@ -1,6 +1,5 @@
 package utcapitole.miage.projet_web.model.jpa;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import utcapitole.miage.projet_web.model.SportNiveauPratique;
 
@@ -9,8 +8,11 @@ import java.util.Optional;
 @Service
 public class SportNiveauPratiqueService {
 
-    @Autowired
-    private SportNiveauPratiqueRepository sportNiveauPratiqueRepository;
+    private final SportNiveauPratiqueRepository sportNiveauPratiqueRepository;
+
+    public SportNiveauPratiqueService(SportNiveauPratiqueRepository sportNiveauPratiqueRepository) {
+        this.sportNiveauPratiqueRepository = sportNiveauPratiqueRepository;
+    }
 
     public void deleteById(Long id) {
         sportNiveauPratiqueRepository.deleteById(id);
