@@ -247,6 +247,41 @@ class UtilisateurControllerTest {
     }
 
     @Test
+    void testProcessUpdatePasswordWhenNotLogginRturnedValueShouldBeRedirectToLoggin(){
+        MockHttpSession session = new MockHttpSession();
+        Model model = new ExtendedModelMap();
+
+        String returnValue = controller.processUpdatePassword(1L, "old", "new", "new", session, model);
+
+        assertEquals("redirect:/user/login",returnValue);
+    }
+
+    @Test
+    void testEnregistrerActiviteEtAttribuerBadgesWhenNotLogginReturnedValueShouldBeRedirectToLoggin(){
+        MockHttpSession session = new MockHttpSession();
+        Model model = new ExtendedModelMap();
+
+        LocalDate date = LocalDate.of(2026, 4, 12);
+        String returnValue = controller.enregistrerActiviteEtAttribuerBadges(1L, "old", date, 20,1.5,session);
+
+        assertEquals("redirect:/user/login",returnValue);
+    }
+
+
+
+    @Test
+    void testUpdateProfileWhenNotFindUserReturnedValueShouldBeRedirectToLoggin(){
+        MockHttpSession session = new MockHttpSession();
+        Model model = new ExtendedModelMap();
+        Utilisateur loggedInUser = new Utilisateur();
+        loggedInUser.setId(1L);
+        session.setAttribute("loggedInUser", loggedInUser);
+        when(utilisateurService.getUtilisateurAvecSports(1L)).thenReturn(null);
+        String result = controller.updateProfile(1L, session, model);
+        assertEquals("redirect:/user/login", result);
+    }
+
+    @Test
     void badgeEndpointsCoverSessionAndAwardBranches() {
         Utilisateur logged = user(8L, "b@test.fr", "pwd");
         MockHttpSession session = new MockHttpSession();
