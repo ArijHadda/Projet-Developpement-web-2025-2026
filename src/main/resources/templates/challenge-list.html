@@ -47,7 +47,7 @@
             <div th:each="challenge : ${challenges}" class="card" style="transition: all 0.3s ease;">
                 <div class="flex justify-between items-start" style="margin-bottom: 1rem;">
                     <h3 th:text="${challenge.titre}" style="margin-bottom: 0; color: var(--color-primary);">Titre</h3>
-                    <span class="badge badge-info" th:text="${challenge.sportCible}">Sport</span>
+                    <span class="challenge-sport-label" th:text="${challenge.sportCible}">Sport</span>
                 </div>
 
                 <div style="margin-bottom: 1rem; color: var(--color-gray-600); font-size: 0.9rem;">

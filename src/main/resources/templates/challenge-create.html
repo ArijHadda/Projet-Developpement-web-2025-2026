@@ -35,7 +35,7 @@
 
                 <div class="form-group">
                     <label for="sportCible">🏃 Sport ciblé (Type d'activité)</label>
-                    <select id="sportCible" th:field="*{sportCible}" class="form-control" required>
+                    <select id="sportCible" th:field="*{sportCible}" class="form-control challenge-sport-select" required>
                         <option value="" disabled selected>-- Choisir un sport --</option>
                         <option th:each="sport : ${sports}"
                                 th:value="${sport.nom}"

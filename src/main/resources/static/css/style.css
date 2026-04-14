@@ -5,13 +5,13 @@
 
 :root {
     /* 主色调 */
-    --color-primary: #FF7F50;
-    --color-primary-dark: #FF6347;
-    --color-primary-light: #FFA07A;
-    --color-secondary: #90EE90;
-    --color-secondary-dark: #32CD32;
-    --color-accent-blue: #87CEFA;
-    --color-accent-yellow: #FFD700;
+    --color-primary: #E57A2D;
+    --color-primary-dark: #C9651F;
+    --color-primary-light: #F0A15A;
+    --color-secondary: #5F9F5F;
+    --color-secondary-dark: #3F7B41;
+    --color-accent-blue: #D4BF63;
+    --color-accent-yellow: #E7B93C;
     
     /* 中性色 */
     --color-white: #FFFFFF;
@@ -28,20 +28,20 @@
     
     /* 功能色 */
     --color-success: #28A745;
-    --color-info: #17A2B8;
-    --color-warning: #FFC107;
+    --color-info: #B88727;
+    --color-warning: #D9AA2A;
     --color-danger: #DC3545;
     
     /* 印象派渐变 */
-    --gradient-sunset: linear-gradient(135deg, #FFE4E1 0%, #FFDAB9 25%, #FFA07A 50%, #FF7F50 75%, #FF6347 100%);
-    --gradient-ocean: linear-gradient(135deg, #E0F6FF 0%, #B8E6F0 25%, #87CEEB 50%, #5F9EA0 75%, #4682B4 100%);
-    --gradient-nature: linear-gradient(135deg, #F0FFF0 0%, #E8F5E9 25%, #90EE90 50%, #3CB371 75%, #2E8B57 100%);
-    --gradient-dream: linear-gradient(135deg, #FFF0F5 0%, #FFE4E1 25%, #DDA0DD 50%, #DA70D6 75%, #BA55D3 100%);
-    --gradient-warm: linear-gradient(135deg, #FFFAF0 0%, #FFEFD5 25%, #FFDAB9 50%, #FFC0CB 75%, #FFB6C1 100%);
+    --gradient-sunset: linear-gradient(135deg, #FAF2DD 0%, #F8DDA7 30%, #F0A15A 65%, #C9651F 100%);
+    --gradient-ocean: linear-gradient(135deg, #F6EFD8 0%, #E6D58F 35%, #B6B354 65%, #6B9957 100%);
+    --gradient-nature: linear-gradient(135deg, #F4F0D9 0%, #E7D488 35%, #9AB56B 65%, #5B8B4D 100%);
+    --gradient-dream: linear-gradient(135deg, #FBF4DE 0%, #F2DE9B 35%, #E8B662 65%, #7EA35D 100%);
+    --gradient-warm: linear-gradient(135deg, #FCF5E3 0%, #F4DEAE 35%, #E8BE73 65%, #D38335 100%);
     
     /* 玻璃态效果 */
-    --glass-bg: rgba(255, 255, 255, 0.75);
-    --glass-border: rgba(255, 255, 255, 0.5);
+    --glass-bg: rgba(255, 252, 244, 0.84);
+    --glass-border: rgba(222, 189, 110, 0.38);
     --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     
     /* 间距 */
@@ -92,7 +92,7 @@ body.page-login { background: var(--gradient-sunset); }
 body.page-register { background: var(--gradient-dream); }
 body.page-activities { background: var(--gradient-ocean); }
 body.page-challenges { background: var(--gradient-nature); }
-body.page-profile { background: linear-gradient(135deg, #E6F3FF 0%, #F0FFF0 50%, #FFF8DC 100%); }
+body.page-profile { background: linear-gradient(135deg, #FCF5E3 0%, #DCE8B9 50%, #F2CC77 100%); }
 
 /* 标题样式 */
 h1, h2, h3, h4, h5, h6 {
@@ -206,12 +206,12 @@ a:hover {
 }
 
 .btn-info {
-    background: linear-gradient(135deg, var(--color-accent-blue) 0%, var(--color-info) 100%);
-    color: var(--color-white);
+    background: linear-gradient(135deg, var(--color-accent-yellow) 0%, var(--color-info) 100%);
+    color: var(--color-gray-900);
 }
 
 .btn-warning {
-    background: linear-gradient(135deg, #FFD93D 0%, var(--color-warning) 100%);
+    background: linear-gradient(135deg, #EFD476 0%, var(--color-warning) 100%);
     color: var(--color-gray-800);
 }
 
@@ -266,7 +266,7 @@ a:hover {
 .form-control:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 4px rgba(255, 127, 80, 0.1);
+    box-shadow: 0 0 0 4px rgba(229, 122, 45, 0.15);
 }
 
 .form-control::placeholder {
@@ -619,8 +619,30 @@ select.form-control {
 }
 
 .badge-info {
-    background: linear-gradient(135deg, var(--color-accent-blue) 0%, var(--color-info) 100%);
-    color: var(--color-white);
+    background: linear-gradient(135deg, #EBDFA9 0%, #DDB964 100%);
+    color: var(--color-gray-800);
+}
+
+/* Etiquette texte pour le sport d'un challenge (non cliquable) */
+.challenge-sport-label {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: rgba(231, 185, 60, 0.18);
+    border: 1px solid rgba(201, 101, 31, 0.32);
+    color: var(--color-gray-700);
+}
+
+.challenge-sport-select {
+    appearance: auto;
+    -webkit-appearance: menulist;
+    border-radius: var(--radius-md);
+    box-shadow: none;
+    font-weight: 400;
+    background: var(--color-white);
 }
 
 /* 分隔线 */
