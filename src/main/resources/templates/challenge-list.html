@@ -2,52 +2,81 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Liste des Challenges</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenges - SportTrack</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body>
-<h2>🏆 Tous les Challenges</h2>
-
-<div>
-    <a th:href="@{/challenge/create}">
-        <button type="button" style="background-color: #0275d8; color: white; padding: 8px;">➕ Créer un nouveau Challenge</button>
-    </a>
-    <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}"> <button type="button">🏠 Retour au profil</button>
-    </a>
-</div>
-
-<hr/>
-
-<div th:if="${#lists.isEmpty(challenges)}">
-    <p>Aucun challenge pour le moment. Soyez le premier à en créer un !</p>
-</div>
-
-<ul>
-    <li th:each="challenge : ${challenges}" style="margin-bottom: 20px; border: 1px solid #ccc; padding: 10px; max-width: 500px;">
-        <h3 th:text="${challenge.titre}">Titre du challenge</h3>
-        <p><strong>Sport Ciblé :</strong> <span th:text="${challenge.sportCible}" style="color: #0275d8; font-weight: bold;">Sport</span></p>
-        <p><strong>Créé par :</strong> <span th:text="${challenge.createur.prenom} + ' ' + ${challenge.createur.nom}">Créateur</span></p>
-        <p><strong>Période :</strong> du <span th:text="${challenge.dateDebut}"></span> au <span th:text="${challenge.dateFin}"></span></p>
-
-        <div style="display: flex; gap: 10px;">
-            <form th:action="@{/challenge/{id}/join(id=${challenge.id})}" method="post">
-                <button type="submit" style="background-color: #5cb85c; color: white;">🎯 Rejoindre</button>
-            </form>
-
-            <a th:href="@{/challenge/{id}/classement(id=${challenge.id})}">
-                <button type="button" style="background-color: #f0ad4e; color: white;">📊 Voir le classement</button>
+<body class="page-challenges">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="navbar-brand">
+                🏃 SportTrack
             </a>
+            <ul class="navbar-nav">
+                <li><a th:href="@{/activite/list}">Activités</a></li>
+                <li><a th:href="@{/objectif/list}">Objectifs</a></li>
+                <li><a th:href="@{/challenge/list}">Challenges</a></li>
+                <li><a th:href="@{/user/logout}" style="color: var(--color-danger);">Déconnexion</a></li>
+            </ul>
+        </div>
+    </nav>
 
-            <div th:if="${challenge.createur.id == session.loggedInUser.id}" style="display: flex; gap: 10px; margin-left: 20px; border-left: 2px solid #ccc; padding-left: 20px;">
-                <a th:href="@{/challenge/{id}/edit(id=${challenge.id})}">
-                    <button type="button" style="background-color: #17a2b8; color: white;">✏️ Modifier</button>
-                </a>
-                <form th:action="@{/challenge/{id}/delete(id=${challenge.id})}" method="post" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce challenge ? Cette action est irréversible.');">
-                    <button type="submit" style="background-color: #d9534f; color: white;">🗑️ Supprimer</button>
-                </form>
+    <div class="container">
+        <!-- Header -->
+        <div class="flex justify-between items-center" style="margin-top: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <h1>🏆 Tous les Challenges</h1>
+            <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="btn btn-outline btn-sm">← Retour au profil</a>
+        </div>
+
+        <!-- Actions -->
+        <div style="margin-top: 1.5rem;">
+            <a th:href="@{/challenge/create}" class="btn btn-primary">➕ Créer un nouveau Challenge</a>
+        </div>
+
+        <!-- Empty state -->
+        <div th:if="${#lists.isEmpty(challenges)}" class="card" style="margin-top: 1.5rem; text-align: center; padding: 3rem;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🏆</div>
+            <h3>Aucun challenge pour le moment</h3>
+            <p style="color: var(--color-gray-600);">Soyez le premier à en créer un et motivez vos amis !</p>
+            <a th:href="@{/challenge/create}" class="btn btn-primary" style="margin-top: 1rem;">Créer un challenge</a>
+        </div>
+
+        <!-- Challenges grid -->
+        <div th:unless="${#lists.isEmpty(challenges)}" class="grid grid-2" style="margin-top: 1.5rem;">
+            <div th:each="challenge : ${challenges}" class="card" style="transition: all 0.3s ease;">
+                <div class="flex justify-between items-start" style="margin-bottom: 1rem;">
+                    <h3 th:text="${challenge.titre}" style="margin-bottom: 0; color: var(--color-primary);">Titre</h3>
+                    <span class="challenge-sport-label" th:text="${challenge.sportCible}">Sport</span>
+                </div>
+
+                <div style="margin-bottom: 1rem; color: var(--color-gray-600); font-size: 0.9rem;">
+                    <div style="margin-bottom: 0.5rem;">
+                        👤 <strong>Créé par :</strong> <span th:text="${challenge.createur.prenom} + ' ' + ${challenge.createur.nom}">Créateur</span>
+                    </div>
+                    <div>
+                        📅 <strong>Période :</strong><br>
+                        du <span th:text="${challenge.dateDebut}">-</span> au <span th:text="${challenge.dateFin}">-</span>
+                    </div>
+                </div>
+
+                <div class="divider" style="margin: 1rem 0;"></div>
+
+                <div class="flex gap-sm" style="flex-wrap: wrap;">
+                    <form th:action="@{/challenge/{id}/join(id=${challenge.id})}" method="post" style="margin: 0;">
+                        <button type="submit" class="btn btn-secondary btn-sm">🎯 Rejoindre</button>
+                    </form>
+                    <a th:href="@{/challenge/{id}/classement(id=${challenge.id})}" class="btn btn-warning btn-sm">📊 Classement</a>
+                    
+                    <div th:if="${challenge.createur.id == session.loggedInUser.id}" class="flex gap-sm" style="margin-left: auto; padding-left: 1rem; border-left: 2px solid var(--color-gray-300);">
+                        <a th:href="@{/challenge/{id}/edit(id=${challenge.id})}" class="btn btn-info btn-sm">✏️ Modifier</a>
+                        <form th:action="@{/challenge/{id}/delete(id=${challenge.id})}" method="post" style="margin: 0;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce challenge ?');">
+                            <button type="submit" class="btn btn-danger btn-sm">🗑️</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
-    </li>
-</ul>
-
+    </div>
 </body>
 </html>
