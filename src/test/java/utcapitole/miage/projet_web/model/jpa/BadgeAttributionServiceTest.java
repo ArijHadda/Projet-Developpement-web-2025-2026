@@ -113,9 +113,9 @@ class BadgeAttributionServiceTest {
     @Test
     void testEnregistrerActiviteEtAttribuerBadgesUtilisateurIntrouvable() {
         when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.empty());
-
+        Activite activite = new Activite();
         assertThrows(IllegalArgumentException.class, () ->
-                badgeAttributionService.enregistrerActiviteEtAttribuerBadges(USER_ID, new Activite())
+                badgeAttributionService.enregistrerActiviteEtAttribuerBadges(USER_ID, activite)
         );
     }
 

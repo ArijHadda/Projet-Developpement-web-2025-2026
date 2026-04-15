@@ -29,7 +29,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
-import static org.mockito.ArgumentMatchers.*;
 
 class UtilisateurControllerTest {
 
@@ -259,7 +258,6 @@ class UtilisateurControllerTest {
     @Test
     void testEnregistrerActiviteEtAttribuerBadgesWhenNotLogginReturnedValueShouldBeRedirectToLoggin(){
         MockHttpSession session = new MockHttpSession();
-        Model model = new ExtendedModelMap();
 
         LocalDate date = LocalDate.of(2026, 4, 12);
         String returnValue = controller.enregistrerActiviteEtAttribuerBadges(1L, "old", date, 20,1.5,session);
@@ -319,7 +317,7 @@ class UtilisateurControllerTest {
         ipApiResponse.put("lat", 43.6);
         ipApiResponse.put("lon", 1.4);
         ipApiResponse.put("city", "Toulouse");
-        when(restTemplate.getForObject(eq("http://ip-api.com/json/"), eq(Map.class))).thenReturn(ipApiResponse);
+        when(restTemplate.getForObject("http://ip-api.com/json/", eq(Map.class))).thenReturn(ipApiResponse);
 
         // 2. Mock Reverse Geocoding (Ville précise)
         Map<String, Object> geoResponse = new HashMap<>();
@@ -384,7 +382,7 @@ class UtilisateurControllerTest {
         ipApiResponse.put("lat", 43.6);
         ipApiResponse.put("lon", 1.4);
         ipApiResponse.put("city", "Toulouse-IP");
-        when(restTemplate.getForObject(eq("http://ip-api.com/json/"), eq(Map.class))).thenReturn(ipApiResponse);
+        when(restTemplate.getForObject("http://ip-api.com/json/", eq(Map.class))).thenReturn(ipApiResponse);
 
         // 2. Mock Reverse Geocoding (Échec - On lance une exception)
         when(restTemplate.getForObject(contains("geocoding-api.open-meteo.com"), eq(Map.class)))
@@ -465,9 +463,9 @@ class UtilisateurControllerTest {
         }
 
         @Override
-        public Utilisateur modifierProfile(Long IdU, String mailU, String sexeU, int ageU, float tailleU, float poidsU) {
+        public Utilisateur modifierProfile(Long idU, String mailU, String sexeU, int ageU, float tailleU, float poidsU) {
             this.lastModifiedMail = mailU;
-            return byId.getOrDefault(IdU, new Utilisateur());
+            return byId.getOrDefault(idU, new Utilisateur());
         }
 
         @Override

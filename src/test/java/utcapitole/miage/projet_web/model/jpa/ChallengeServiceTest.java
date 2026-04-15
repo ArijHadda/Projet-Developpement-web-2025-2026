@@ -92,6 +92,8 @@ class ChallengeServiceTest {
         Challenge nouveauChallenge = new Challenge();
         Challenge result = challengeService.creerChallenge(nouveauChallenge, mockUser);
 
+        assertEquals(mockChallenge, result);
+
         assertEquals(mockUser, nouveauChallenge.getCreateur());
         verify(challengeRepository).save(nouveauChallenge);
     }
