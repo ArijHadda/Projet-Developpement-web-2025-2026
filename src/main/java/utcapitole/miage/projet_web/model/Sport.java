@@ -86,10 +86,6 @@ public class Sport {
         this.coeffIntensite = coeffIntensite;
     }
 
-   /* public Boolean isEstBaseSurVitesse() {
-        return estBaseSurVitesse;
-    }*/
-
     public void setEstBaseSurVitesse(Boolean estBaseSurVitesse) {
         this.estBaseSurVitesse = estBaseSurVitesse;
     }

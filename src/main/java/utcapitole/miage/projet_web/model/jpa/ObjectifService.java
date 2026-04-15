@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service;
 import utcapitole.miage.projet_web.dto.ObjectifProgressDTO;
 import utcapitole.miage.projet_web.model.Objectif;
 import utcapitole.miage.projet_web.model.Utilisateur;
-import utcapitole.miage.projet_web.model.Frequence;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
