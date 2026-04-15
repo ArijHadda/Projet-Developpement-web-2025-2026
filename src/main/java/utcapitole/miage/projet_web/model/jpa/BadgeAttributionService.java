@@ -26,8 +26,8 @@ public class BadgeAttributionService {
     public static final String BADGE_100H_MUSCULATION = "100h musculation";
 
     // Badges d'accomplissement
-    public static final String BADGE_OBJECTIF_COMPLETE = "Objectif complété";
-    public static final String BADGE_CHALLENGE_GAGNE = "Challenge gagné";
+    public static final String BADGE_OBJECTIF_COMPLETE = "Premier Objectif Complété";
+    public static final String BADGE_CHALLENGE_GAGNE = "Première Victoire de Challenge";
 
     private static final double[] PALIERS_DISTANCE = {10.0, 25.0, 50.0, 100.0};
     private static final String[] BADGES_DISTANCE = {BADGE_10KM, BADGE_25KM, BADGE_50KM, BADGE_100KM};
@@ -146,5 +146,9 @@ public class BadgeAttributionService {
     private boolean possedeBadge(Utilisateur utilisateur, String entituleBadge) {
         return utilisateur.getBadges() != null && utilisateur.getBadges().stream()
                 .anyMatch(badge -> entituleBadge.equalsIgnoreCase(badge.getEntitule()));
+    }
+
+    public List<Badge> getAllBadges() {
+        return badgeRepository.findAll();
     }
 }

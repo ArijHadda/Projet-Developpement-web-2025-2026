@@ -117,6 +117,9 @@ public class UtilisateurController {
             return REDIRECT_LOGIN;
         }
 
+        List<utcapitole.miage.projet_web.model.Badge> allBadges = badgeAttributionService.getAllBadges();
+        model.addAttribute("allBadges", allBadges);
+
         if (loggedInUser.getId().equals(idU)) {
             Map<String, Object> infosMeteo = recupererInfosMeteo();
             model.addAttribute("meteoTemperature", infosMeteo.get(METEO_TEMPERATURE));

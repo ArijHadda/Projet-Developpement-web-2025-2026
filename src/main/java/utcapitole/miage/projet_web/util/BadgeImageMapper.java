@@ -42,9 +42,9 @@ public class BadgeImageMapper {
             return "100H";
         }
         // Badges d'accomplissement
-        else if (normalized.contains("objectif") || normalized.contains("objectif complété")) {
+        else if (normalized.contains("objectif") || normalized.contains("Premier Objectif Complété")) {
             return "OBJECTIF";
-        } else if (normalized.contains("challenge") || normalized.contains("challenge gagné")) {
+        } else if (normalized.contains("challenge") || normalized.contains("Première Victoire de Challenge")) {
             return "CHALLENGE";
         }
 
