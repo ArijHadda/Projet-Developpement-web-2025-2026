@@ -1,7 +1,6 @@
 package utcapitole.miage.projet_web.model;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.webmvc.autoconfigure.WebMvcProperties;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -164,15 +163,6 @@ class UtilisateurTest {
         );
     }
 
-    /*public void addAmi(Utilisateur nouveauAmi) {
-        if (this.amis == null) {
-            this.amis = new ArrayList<>();
-        }
-        if (!this.amis.contains(nouveauAmi)) {
-            this.amis.add(nouveauAmi);
-            nouveauAmi.getAmis().add(this);
-        }
-    }*/
     @Test
     void testAddAmi_CreationListeSiNull() {
         Utilisateur u1 = new Utilisateur();
