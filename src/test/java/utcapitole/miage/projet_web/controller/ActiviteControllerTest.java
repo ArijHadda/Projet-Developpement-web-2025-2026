@@ -281,7 +281,7 @@ public class ActiviteControllerTest {
     void showModifierActivite_notLoggedIn_redirectsToLogin() {
         when(session.getAttribute("loggedInUser")).thenReturn(null);
 
-        String viewName = activiteController.ShowModifierActivite(1L, session, model);
+        String viewName = activiteController.showModifierActivite(1L, session, model);
 
         assertEquals("redirect:/user/login", viewName);
     }
@@ -291,7 +291,7 @@ public class ActiviteControllerTest {
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
         when(activiteService.getById(1L)).thenReturn(Optional.of(mockActivite));
 
-        String viewName = activiteController.ShowModifierActivite(1L, session, model);
+        String viewName = activiteController.showModifierActivite(1L, session, model);
 
         assertEquals("modifier-activite", viewName);
         verify(model).addAttribute("activite", mockActivite);
@@ -304,7 +304,7 @@ public class ActiviteControllerTest {
         when(activiteService.getById(999L)).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> {
-            activiteController.ShowModifierActivite(999L, session, model);
+            activiteController.showModifierActivite(999L, session, model);
         });
     }
 
