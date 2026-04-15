@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Ami - SportTrack</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="page-profile">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="navbar-brand">
+                SportTrack
+            </a>
+            <ul class="navbar-nav">
+                <li><a th:href="@{/activite/list}">Mes Activites</a></li>
+                <li><a th:href="@{/objectif/list}">Objectifs</a></li>
+                <li><a th:href="@{/challenge/list}">Challenges</a></li>
+                <li><a th:href="@{/user/logout}" class="text-danger">Deconnexion</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="mt-lg">
+            <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="btn btn-outline btn-sm">
+                Retour a mon profil
+            </a>
+        </div>
+
+        <!-- Profile Header -->
+        <div class="card mt-lg">
+            <h2 style="margin-bottom: 1rem;">👤 Profil de <span th:text="${ami.prenom}">Ami</span></h2>
+            
+            <!-- Informations personnelles -->
+            <div>
+                <h4 style="margin-bottom: 1rem; color: var(--color-gray-700);">📋 Informations personnelles</h4>
+                <div class="grid grid-2" style="gap: 0.75rem;">
+                    <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
+                        <small style="color: var(--color-gray-600);">Nom complet</small>
+                        <p style="font-weight: 600; margin: 0;" th:text="${ami.prenom} + ' ' + ${ami.nom}">-</p>
+                    </div>
+                    <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
+                        <small style="color: var(--color-gray-600);">Email</small>
+                        <p style="font-weight: 600; margin: 0;" th:text="${ami.mail}">-</p>
+                    </div>
+                    <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
+                        <small style="color: var(--color-gray-600);">Sexe</small>
+                        <p style="font-weight: 600; margin: 0;" th:text="${ami.sexe} == 'M' ? 'Homme' : 'Femme'">-</p>
+                    </div>
+                    <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
+                        <small style="color: var(--color-gray-600);">Âge</small>
+                        <p style="font-weight: 600; margin: 0;"><span th:text="${ami.age}">-</span> ans</p>
+                    </div>
+                    <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
+                        <small style="color: var(--color-gray-600);">Taille</small>
+                        <p style="font-weight: 600; margin: 0;"><span th:text="${ami.taille}">-</span> cm</p>
+                    </div>
+                    <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
+                        <small style="color: var(--color-gray-600);">Poids</small>
+                        <p style="font-weight: 600; margin: 0;"><span th:text="${ami.poids}">-</span> kg</p>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="divider">
+            
+            <!-- Sports -->
+            <h3>Sports pratiques</h3>
+            <div th:if="${#lists.isEmpty(ami.listSportNivPratique)}" class="text-muted">
+                Aucun sport renseigne
+            </div>
+            <div th:unless="${#lists.isEmpty(ami.listSportNivPratique)}" class="flex flex-wrap gap-sm">
+                <span th:each="sn : ${ami.listSportNivPratique}" class="badge badge-success" 
+                      th:text="${sn.sport.nom} + ' - ' + ${sn.niveau}">Sport</span>
+            </div>
+            
+            <!-- Badges -->
+            <h3 class="mt-md">Badges obtenus</h3>
+            <div th:if="${#lists.isEmpty(ami.badges)}" class="text-muted">
+                Aucun badge pour le moment
+            </div>
+            <div th:unless="${#lists.isEmpty(ami.badges)}" class="flex flex-wrap gap-sm">
+                <span th:each="badge : ${ami.badges}" class="badge" th:text="${badge.entitule}">Badge</span>
+            </div>
+        </div>
+        
+        <!-- Activites recentes -->
+        <div th:if="${!#lists.isEmpty(activitesRecentes)}">
+            <h3 class="mt-lg">Activites recentes</h3>
+            <div th:each="act : ${activitesRecentes}" class="activity-card">
+                <div class="activity-header">
+                    🏃‍♂️ <span th:text="${act.nom}">Activité</span>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; color: var(--color-gray-600); font-size: 0.875rem;">
+                    <span>📅 <span th:text="${act.date}">Date</span></span>
+                    <span th:if="${act.note != null}">⭐ <span th:text="${act.note}">-</span>/10</span>
+                </div>
+
+                <div class="activity-stats">
+                    <span>⏱️ <strong th:text="${act.duree}">-</strong> min</span>
+                    <span th:if="${act.sport != null and act.sport.estBaseSurVitesse}">📏 <strong th:text="${act.distance}">-</strong> km</span>
+                    <span th:if="${act.sport == null or !act.sport.estBaseSurVitesse}">💪 Intensité: <strong th:text="${act.niveauIntensite}">-</strong>/5</span>
+                    <span>🔥 <strong th:text="${act.caloriesConsommees}">-</strong> kcal</span>
+                    <span style="color: var(--color-warning);">👍 <strong th:text="${act.nbKudos}">-</strong> Kudos</span>
+                </div>
+
+                <div class="activity-actions">
+                    <form th:action="@{/activite/flux/kudos/{id}(id=${act.id})}" method="post" style="margin: 0;">
+                        <button th:if="${!#lists.contains(act.likers.![id], session.loggedInUser.id)}"
+                                type="submit" class="btn btn-sm" style="background: linear-gradient(135deg, #CD853F 0%, #8B4513 100%); color: white;">
+                            👏 Bravo !
+                        </button>
+                        <button th:if="${#lists.contains(act.likers.![id], session.loggedInUser.id)}"
+                                type="submit" class="btn btn-outline btn-sm">
+                            ✖ Retirer
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Commentaires -->
+                <div class="comments-card">
+                    <h4 style="margin-bottom: 0.75rem; font-size: 1rem;">💬 Commentaires</h4>
+                    <div th:if="${#lists.isEmpty(act.commentaires)}" style="color: var(--color-gray-500); font-style: italic; font-size: 0.875rem;">
+                        Aucun commentaire pour l'instant
+                    </div>
+                    <div th:each="com : ${act.commentaires}" class="comment-item">
+                        <span th:text="${com.auteur.prenom}" style="font-weight: 600;">Auteur</span> :
+                        <span th:text="${com.contenu}">Commentaire</span>
+                    </div>
+                    <form th:action="@{/activite/flux/comment/{id}(id=${act.id})}" method="post" style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                        <input type="text" name="contenu" class="form-control" placeholder="Ajouter un commentaire..." required style="flex: 1;">
+                        <button type="submit" class="btn btn-primary btn-sm">Envoyer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Objectifs en cours -->
+        <div class="card mt-lg" th:if="${!#lists.isEmpty(objectifsEnCours)}">
+            <h3>Objectifs en cours</h3>
+            <div class="flex flex-col gap-md">
+                <div th:each="obj : ${objectifsEnCours}" class="p-md" style="background: var(--color-gray-100); border-radius: var(--radius-md);">
+                    <div class="flex justify-between mb-sm">
+                        <strong th:text="${obj.objectif.titre}">Objectif</strong>
+                        <span class="badge badge-info" th:text="${obj.objectif.sport.nom}">Sport</span>
+                    </div>
+                    <div class="text-muted mb-sm" style="font-size: 0.875rem;" th:text="${obj.objectif.frequence}">Frequence</div>
+                    
+                    <div th:if="${obj.objectif.distance > 0}" class="mb-sm">
+                        <div class="progress" style="height: 1rem;">
+                            <div class="progress-bar" th:style="'width: ' + ${obj.pourcentageDistance > 100 ? 100 : obj.pourcentageDistance} + '%'" 
+                                 th:text="${#numbers.formatDecimal(obj.pourcentageDistance, 1, 1)} + '%'">0%</div>
+                        </div>
+                        <small class="text-muted">Distance: <span th:text="${obj.distanceActuelle}">0</span> / <span th:text="${obj.objectif.distance}">100</span> km</small>
+                    </div>
+                    
+                    <div th:if="${obj.objectif.duree > 0}">
+                        <div class="progress" style="height: 1rem;">
+                            <div class="progress-bar progress-bar-success" th:style="'width: ' + ${obj.pourcentageDuree > 100 ? 100 : obj.pourcentageDuree} + '%'" 
+                                 th:text="${#numbers.formatDecimal(obj.pourcentageDuree, 1, 1)} + '%'">0%</div>
+                        </div>
+                        <small class="text-muted">Duree: <span th:text="${obj.dureeActuelle}">0</span> / <span th:text="${obj.objectif.duree}">60</span> min</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Message si aucune activite -->
+        <div th:if="${#lists.isEmpty(activitesRecentes) and #lists.isEmpty(objectifsEnCours)}" class="card mt-lg text-center p-xl">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🤝</div>
+            <h3>Envie de faire equipe?</h3>
+            <p class="text-muted">
+                <span th:text="${ami.prenom}">Votre ami</span> n'a pas encore d'activite visible. 
+                Invitez-le a relever des defis ensemble!
+            </p>
+            <a th:href="@{/challenge/list}" class="btn btn-primary mt-md">Voir les challenges</a>
+        </div>
+    </div>
+</body>
+</html>

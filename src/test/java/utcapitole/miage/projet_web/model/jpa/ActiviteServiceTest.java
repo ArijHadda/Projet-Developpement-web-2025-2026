@@ -9,10 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.lenient;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,6 +44,30 @@ class ActiviteServiceTest {
     private RestTemplate restTemplate;
 
     private ActiviteService activiteService;
+
+    private static Long idActivite = 10L;
+    private static Long idUser1 = 1L;
+    private static Long idUser2 = 2L;
+    private Activite act;
+
+    @BeforeEach
+    void setUp2(){
+        act = new Activite();
+        act.setId(10L);
+
+    }
+
+    private Utilisateur user(long id) {
+        Utilisateur u = new Utilisateur();
+        u.setId(id);
+        return u;
+    }
+
+    private Activite activite(long id) {
+        Activite a = new Activite();
+        a.setId(id);
+        return a;
+    }
 
     // ─────────────────── Helpers communs aux mocks météo ───────────────────
 
@@ -597,5 +618,45 @@ class ActiviteServiceTest {
         Map<String, Object> stats = activiteService.getStatsActivites(Arrays.asList(a1, a2));
 
         assertEquals(12.2, (double) stats.get("totalDistance"), 0.01);
+    }
+
+    @Test
+    void testSupprimerShouldWork(){
+        activiteService.supprimer(idActivite);
+        verify(activiteRepository).deleteById(idActivite);
+    }
+
+    @Test
+    void testGetById_Fond(){
+        when(activiteRepository.findById(idActivite)).thenReturn(Optional.of(act));
+        Optional<Activite> resultat = activiteService.getById(idActivite);
+        assertTrue(resultat.isPresent());
+        assertEquals(act,resultat.get());
+        verify(activiteRepository).findById(idActivite);
+    }
+    @Test
+    void testGetById_NotFound() {
+        when(activiteRepository.findById(idActivite)).thenReturn(Optional.empty());
+
+        Optional<Activite> result = activiteService.getById(idActivite);
+
+        assertFalse(result.isPresent());
+        verify(activiteRepository).findById(idActivite);
+    }
+    @Test
+    void testGetFluxActivitesAmis_ReturnsRepositoryResult() {
+        Utilisateur ami = user(idUser1);
+        Utilisateur u = user(idUser2);
+        u.setAmis(List.of(ami));
+
+        Activite activite = activite(idActivite);
+
+        when(activiteRepository.findByUtilisateurInOrderByDateDesc(List.of(ami)))
+                .thenReturn(List.of(activite));
+
+        List<Activite> result = activiteService.getFluxActivitesAmis(u);
+
+        assertEquals(List.of(activite), result);
+        verify(activiteRepository).findByUtilisateurInOrderByDateDesc(List.of(ami));
     }
 }

@@ -2,48 +2,66 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Créer un Challenge</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer un Challenge - SportTrack</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body>
-<h2>➕ Créer un Challenge</h2>
+<body class="page-challenges">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="navbar-brand">
+                🏃 SportTrack
+            </a>
+            <ul class="navbar-nav">
+                <li><a th:href="@{/activite/list}">Mes Activités</a></li>
+                <li><a th:href="@{/objectif/list}">Objectifs</a></li>
+                <li><a th:href="@{/challenge/list}">Challenges</a></li>
+                <li><a th:href="@{/user/ami/chercher}">Amis</a></li>
+                <li><a th:href="@{/user/logout}">Déconnexion</a></li>
+            </ul>
+        </div>
+    </nav>
 
-<form th:action="@{/challenge/create}" th:object="${challenge}" method="post" style="max-width: 400px; display: flex; flex-direction: column; gap: 15px;">
+    <div class="container">
+        <div class="card" style="max-width: 600px; margin: 2rem auto;">
+            <h1>➕ Créer un Challenge</h1>
 
-    <div>
-        <label for="titre">Titre du Challenge :</label>
-        <input type="text" id="titre" th:field="*{titre}" required placeholder="ex: Courir 50km ce mois" style="width: 100%;"/>
+            <form th:action="@{/challenge/create}" th:object="${challenge}" method="post">
+                <div class="form-group">
+                    <label for="titre">🏆 Titre du Challenge</label>
+                    <input type="text" id="titre" th:field="*{titre}" class="form-control" required placeholder="ex: Courir 50km ce mois"/>
+                </div>
+
+                <div class="form-group">
+                    <label for="sportCible">🏃 Sport ciblé (Type d'activité)</label>
+                    <select id="sportCible" th:field="*{sportCible}" class="form-control challenge-sport-select" required>
+                        <option value="" disabled selected>-- Choisir un sport --</option>
+                        <option th:each="sport : ${sports}"
+                                th:value="${sport.nom}"
+                                th:text="${sport.nom}">
+                        </option>
+                    </select>
+                </div>
+
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label for="dateDebut">📅 Date de début</label>
+                        <input type="date" id="dateDebut" th:field="*{dateDebut}" class="form-control" required/>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dateFin">📅 Date de fin</label>
+                        <input type="date" id="dateFin" th:field="*{dateFin}" class="form-control" required/>
+                    </div>
+                </div>
+
+                <div class="flex gap-sm" style="margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary">💾 Enregistrer le Challenge</button>
+                    <a th:href="@{/challenge/list}" class="btn btn-outline">🔙 Annuler et Retour</a>
+                </div>
+            </form>
+        </div>
     </div>
-
-    <div>
-        <label for="sportCible">Sport ciblé (Type d'activité) :</label>
-        <select id="sportCible" th:field="*{sportCible}" required style="width: 100%; padding: 5px;">
-            <option value="" disabled selected>-- Choisir un sport --</option>
-            <option th:each="sport : ${sports}"
-                    th:value="${sport.nom}"
-                    th:text="${sport.nom}">
-            </option>
-        </select>
-    </div>
-
-    <div>
-        <label for="dateDebut">Date de début :</label>
-        <input type="date" id="dateDebut" th:field="*{dateDebut}" required style="width: 100%;"/>
-    </div>
-
-    <div>
-        <label for="dateFin">Date de fin :</label>
-        <input type="date" id="dateFin" th:field="*{dateFin}" required style="width: 100%;"/>
-    </div>
-
-    <div>
-        <button type="submit" style="background-color: #0275d8; color: white; padding: 10px; width: 100%;">Enregistrer le Challenge</button>
-    </div>
-</form>
-
-<br>
-<a th:href="@{/challenge/list}">
-    <button type="button">🔙 Annuler et Retour</button>
-</a>
-
 </body>
 </html>
