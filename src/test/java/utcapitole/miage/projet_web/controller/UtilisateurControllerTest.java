@@ -18,7 +18,6 @@ import utcapitole.miage.projet_web.model.jpa.SportService;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 import utcapitole.miage.projet_web.model.jpa.ActiviteService;
 import utcapitole.miage.projet_web.model.jpa.ObjectifService;
-import utcapitole.miage.projet_web.model.jpa.ChallengeService;
 import org.springframework.web.client.RestTemplate;
 
 import java.lang.reflect.Field;
