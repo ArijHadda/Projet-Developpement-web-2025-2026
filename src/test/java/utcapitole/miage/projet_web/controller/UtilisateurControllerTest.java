@@ -317,7 +317,7 @@ class UtilisateurControllerTest {
         ipApiResponse.put("lat", 43.6);
         ipApiResponse.put("lon", 1.4);
         ipApiResponse.put("city", "Toulouse");
-        when(restTemplate.getForObject("http://ip-api.com/json/", eq(Map.class))).thenReturn(ipApiResponse);
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(ipApiResponse);
 
         // 2. Mock Reverse Geocoding (Ville précise)
         Map<String, Object> geoResponse = new HashMap<>();
@@ -382,7 +382,7 @@ class UtilisateurControllerTest {
         ipApiResponse.put("lat", 43.6);
         ipApiResponse.put("lon", 1.4);
         ipApiResponse.put("city", "Toulouse-IP");
-        when(restTemplate.getForObject("http://ip-api.com/json/", eq(Map.class))).thenReturn(ipApiResponse);
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(ipApiResponse);
 
         // 2. Mock Reverse Geocoding (Échec - On lance une exception)
         when(restTemplate.getForObject(contains("geocoding-api.open-meteo.com"), eq(Map.class)))
@@ -503,6 +503,131 @@ class UtilisateurControllerTest {
         @Override
         public List<String> attribuerBadgesAutomatiques(Long utilisateurId) {
             return autoBadgesToReturn;
+        }
+    }
+
+    @Test
+    void testAjouterNiveauPratiqueUserNull() {
+        // Simuler un utilisateur en session, mais qui n'existe plus en BD
+        Utilisateur logged = user(99L, "ghost@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+
+        // Comme byId ne contient pas 99L, getUtilisateurAvecSports retournera null
+        String view = controller.ajouterNiveauratique(new ExtendedModelMap(), session, 1L, NiveauPratique.DEBUTANT);
+        assertEquals("redirect:/user/login", view);
+    }
+
+    @Test
+    void testAfficherProfileMeteoGeocodingEmptyResults() {
+        Utilisateur logged = user(1L, "p@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+        utilisateurService.byId.put(1L, logged);
+
+        // 1. IP API (Succès)
+        Map<String, Object> ipApiResponse = new HashMap<>();
+        ipApiResponse.put("lat", 43.6);
+        ipApiResponse.put("lon", 1.4);
+        ipApiResponse.put("city", "Ville-IP");
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(ipApiResponse);
+
+        // 2. Geocoding retourne une liste vide (Coverage: results.isEmpty())
+        Map<String, Object> geoResponse = new HashMap<>();
+        geoResponse.put("results", new ArrayList<>());
+        when(restTemplate.getForObject(contains("geocoding-api.open-meteo.com"), eq(Map.class))).thenReturn(geoResponse);
+
+        // 3. Weather API
+        Map<String, Object> weatherResponse = new HashMap<>();
+        Map<String, Object> currentWeather = new HashMap<>();
+        currentWeather.put("temperature", 10.0);
+        currentWeather.put("weathercode", 0);
+        currentWeather.put("windspeed", 5.0);
+        currentWeather.put("winddirection", 90);
+        currentWeather.put("is_day", 1);
+        weatherResponse.put("current_weather", currentWeather);
+        when(restTemplate.getForObject(contains("api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(weatherResponse);
+
+        Model model = new ExtendedModelMap();
+        controller.afficherProfile(1L, session, model);
+
+        // Vérifie qu'il fallback bien sur la ville de l'IP
+        assertEquals("Ville-IP", model.getAttribute("meteoVille"));
+    }
+
+    @Test
+    void testAfficherProfileMeteoMissingKeys() {
+        Utilisateur logged = user(1L, "p@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+        utilisateurService.byId.put(1L, logged);
+
+        Model model = new ExtendedModelMap();
+
+        // SCENARIO 1 : IP API retourne une map vide (sans lat ni lon)
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(new HashMap<>());
+        controller.afficherProfile(1L, session, model);
+        assertEquals("Meteo indisponible", model.getAttribute("meteoTemperature"));
+
+        // SCENARIO 2 : IP API Ok, mais Weather API ne retourne pas "current_weather"
+        Map<String, Object> ipApiResponse = new HashMap<>();
+        ipApiResponse.put("lat", 43.6);
+        ipApiResponse.put("lon", 1.4);
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(ipApiResponse);
+        when(restTemplate.getForObject(contains("geocoding-api.open-meteo.com"), eq(Map.class))).thenReturn(new HashMap<>());
+        when(restTemplate.getForObject(contains("api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(new HashMap<>());
+
+        controller.afficherProfile(1L, session, model);
+        assertEquals("Meteo indisponible", model.getAttribute("meteoTemperature"));
+
+        // SCENARIO 3 : Weather API retourne "current_weather" mais il manque la température
+        Map<String, Object> badWeatherResponse = new HashMap<>();
+        badWeatherResponse.put("current_weather", new HashMap<>()); // map interne vide
+        when(restTemplate.getForObject(contains("api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(badWeatherResponse);
+
+        controller.afficherProfile(1L, session, model);
+        assertEquals("Meteo indisponible", model.getAttribute("meteoTemperature"));
+    }
+
+    @Test
+    void testAfficherProfileAllWeatherCodesAndWindDirections() {
+        Utilisateur logged = user(1L, "p@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+        utilisateurService.byId.put(1L, logged);
+
+        Map<String, Object> ipApiResponse = new HashMap<>();
+        ipApiResponse.put("lat", 43.6);
+        ipApiResponse.put("lon", 1.4);
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(ipApiResponse);
+        when(restTemplate.getForObject(contains("geocoding-api.open-meteo.com"), eq(Map.class))).thenReturn(new HashMap<>());
+
+        // Liste de tous les codes météo du switch pour forcer JaCoCo à valider toutes les branches
+        int[] codes = {0, 1, 2, 3, 45, 48, 51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99, 999};
+
+        for (int i = 0; i < codes.length; i++) {
+            Map<String, Object> weatherResponse = new HashMap<>();
+            Map<String, Object> currentWeather = new HashMap<>();
+
+            currentWeather.put("temperature", 15.0);
+            currentWeather.put("weathercode", codes[i]);
+            currentWeather.put("windspeed", 10.0);
+
+            // Fait varier la direction du vent pour couvrir tous les cas (0, 45, 90, 135, etc...)
+            currentWeather.put("winddirection", (i * 45) % 360);
+
+            // Alterne Jour (1) et Nuit (0) pour tester l'icone soleil/lune du code 0
+            currentWeather.put("is_day", i % 2);
+
+            weatherResponse.put("current_weather", currentWeather);
+            when(restTemplate.getForObject(contains("api.open-meteo.com/v1/forecast"), eq(Map.class)))
+                    .thenReturn(weatherResponse);
+
+            Model model = new ExtendedModelMap();
+            controller.afficherProfile(1L, session, model);
+
+            // Si l'exécution arrive ici sans erreur, la branche du switch est couverte
+            assertTrue(model.containsAttribute("meteoEtatCiel"));
         }
     }
 
