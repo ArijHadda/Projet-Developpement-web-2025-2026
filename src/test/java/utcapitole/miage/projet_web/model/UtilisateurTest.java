@@ -1,15 +1,13 @@
 package utcapitole.miage.projet_web.model;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.webmvc.autoconfigure.WebMvcProperties;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class UtilisateurTest {
 
@@ -165,4 +163,124 @@ class UtilisateurTest {
                 () -> assertTrue(representation.contains("mail=nina@miage.fr"))
         );
     }
+
+    /*public void addAmi(Utilisateur nouveauAmi) {
+        if (this.amis == null) {
+            this.amis = new ArrayList<>();
+        }
+        if (!this.amis.contains(nouveauAmi)) {
+            this.amis.add(nouveauAmi);
+            nouveauAmi.getAmis().add(this);
+        }
+    }*/
+    @Test
+    void testAddAmi_CreationListeSiNull() {
+        Utilisateur u1 = new Utilisateur();
+        Utilisateur u2 = new Utilisateur();
+
+        u1.setAmis(null); // simulate null list
+
+        u1.addAmi(u2);
+
+        assertNotNull(u1.getAmis());
+        assertTrue(u1.getAmis().contains(u2));
+    }
+
+    @Test
+    void testAddAmi_AjoutAmi() {
+        Utilisateur u1 = new Utilisateur();
+        Utilisateur u2 = new Utilisateur();
+
+        u1.setAmis(new ArrayList<>());
+        u2.setAmis(new ArrayList<>());
+
+        u1.addAmi(u2);
+
+        assertEquals(1, u1.getAmis().size());
+        assertTrue(u1.getAmis().contains(u2));
+    }
+
+    @Test
+    void testAddAmi_PasDeDoublon() {
+        Utilisateur u1 = new Utilisateur();
+        Utilisateur u2 = new Utilisateur();
+
+        u1.setAmis(new ArrayList<>());
+        u2.setAmis(new ArrayList<>());
+
+        u1.addAmi(u2);
+        u1.addAmi(u2); // ne doit pas le reenregistre
+
+        assertEquals(1, u1.getAmis().size());
+    }
+    @Test
+    void testAddAmi_AjoutReciproque() {
+        Utilisateur u1 = new Utilisateur();
+        Utilisateur u2 = new Utilisateur();
+
+        u1.setAmis(new ArrayList<>());
+        u2.setAmis(new ArrayList<>());
+
+        u1.addAmi(u2);
+
+        assertTrue(u1.getAmis().contains(u2));
+        assertTrue(u2.getAmis().contains(u1)); // reciprocal
+    }
+    @Test
+    void testGetListActiviteWhenNotNull(){
+        Utilisateur user = new Utilisateur();
+
+        Activite act1 = new Activite();
+        Activite act2 = new Activite();
+
+        List<Activite> listA = new ArrayList<>();
+        listA.add(act1);
+        listA.add(act2);
+
+        user.setActivites(listA);
+
+        List<Activite> result = user.getActivites();
+
+        assertEquals(2, result.size());
+        assertTrue(result.contains(act1));
+        assertTrue(result.contains(act2));
+        assertSame(listA, result);
+    }
+    @Test
+    void testGetActivitesWhenNull() {
+        Utilisateur user = new Utilisateur();
+        user.setActivites(null);
+
+        assertNull(user.getActivites());
+    }
+
+    @Test
+    void testGetBadgesWhenNull() {
+        Utilisateur user = new Utilisateur();
+        user.setBadges(null);
+
+        assertNull(user.getBadges());
+    }
+
+    @Test
+    void testGetBadgesWhenNotNull() {
+        Utilisateur user = new Utilisateur();
+
+        Badge b1 = new Badge();
+        Badge b2 = new Badge();
+
+        List<Badge> listB = new ArrayList<>();
+        listB.add(b1);
+        listB.add(b2);
+
+        user.setBadges(listB);
+
+        List<Badge> result = user.getBadges();
+
+        assertEquals(2, result.size());
+        assertTrue(result.contains(b1));
+        assertTrue(result.contains(b2));
+        assertSame(listB, result);
+    }
+
 }

@@ -164,10 +164,7 @@ public class Utilisateur {
         this.listSportNivPratique = listSportNivPratique;
     }
 
-    public void addSportNiveau(Sport s, NiveauPratique niveau) {
-        SportNiveauPratique sn = new SportNiveauPratique(s,niveau);
-        this.listSportNivPratique.add(sn);
-    }
+
     public List<Activite> getActivites() {
         return activites;
     }
@@ -192,7 +189,6 @@ public class Utilisateur {
             nouveauAmi.getAmis().add(this);
         }
     }
-
     public List<Objectif> getObjectifs() {
         return objectifs;
     }
