@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -122,8 +122,11 @@
                         <p>Aucun badge pour le moment</p>
                         <p style="font-size: 0.875rem;">Continuez vos activités pour débloquer des badges !</p>
                     </div>
-                    <div th:unless="${#lists.isEmpty(userProfile.badges)}" style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
-                        <span th:each="badge : ${userProfile.badges}" class="badge badge-success" style="font-size: 1rem;" th:text="${badge.entitule}">Badge</span>
+                    <div th:unless="${#lists.isEmpty(userProfile.badges)}" class="badge-container">
+                        <div th:each="badge : ${userProfile.badges}" class="badge-image" 
+                             th:style="'background-image: url(/images/' + ${badge.imageName} + '.png)'"
+                             th:title="${badge.entitule}">
+                        </div>
                     </div>
                 </div>
             </div>

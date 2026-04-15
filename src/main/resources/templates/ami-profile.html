@@ -81,8 +81,11 @@
             <div th:if="${#lists.isEmpty(ami.badges)}" class="text-muted">
                 Aucun badge pour le moment
             </div>
-            <div th:unless="${#lists.isEmpty(ami.badges)}" class="flex flex-wrap gap-sm">
-                <span th:each="badge : ${ami.badges}" class="badge" th:text="${badge.entitule}">Badge</span>
+            <div th:unless="${#lists.isEmpty(ami.badges)}" class="badge-container">
+                <div th:each="badge : ${ami.badges}" class="badge-image" 
+                     th:style="'background-image: url(/images/' + ${badge.imageName} + '.png)'"
+                     th:title="${badge.entitule}">
+                </div>
             </div>
         </div>
         

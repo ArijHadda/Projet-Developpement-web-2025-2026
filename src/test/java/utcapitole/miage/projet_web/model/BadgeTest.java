@@ -14,17 +14,30 @@ class BadgeTest {
 
         assertAll(
                 () -> assertNull(badge.getId()),
-                () -> assertNull(badge.getEntitule())
+                () -> assertNull(badge.getEntitule()),
+                () -> assertNull(badge.getImageName())
         );
     }
 
     @Test
     void testConstructorWithArgs() {
-        Badge badge = new Badge(1L, "1er 10km");
+        Badge badge = new Badge(1L, "1er 10km", "10KM");
 
         assertAll(
                 () -> assertEquals(1L, badge.getId()),
-                () -> assertEquals("1er 10km", badge.getEntitule())
+                () -> assertEquals("1er 10km", badge.getEntitule()),
+                () -> assertEquals("10KM", badge.getImageName())
+        );
+    }
+
+    @Test
+    void testConstructorWithEntituleAndImageName() {
+        Badge badge = new Badge("Marathonien", "MARATHON");
+
+        assertAll(
+                () -> assertNull(badge.getId()),
+                () -> assertEquals("Marathonien", badge.getEntitule()),
+                () -> assertEquals("MARATHON", badge.getImageName())
         );
     }
 
@@ -33,17 +46,19 @@ class BadgeTest {
         Badge badge = new Badge();
         badge.setId(7L);
         badge.setEntitule("Marathonien");
+        badge.setImageName("MARATHON");
 
         assertAll(
                 () -> assertEquals(7L, badge.getId()),
-                () -> assertEquals("Marathonien", badge.getEntitule())
+                () -> assertEquals("Marathonien", badge.getEntitule()),
+                () -> assertEquals("MARATHON", badge.getImageName())
         );
     }
 
     @Test
     void testToStringShouldMatchExpectedFormat() {
-        Badge badge = new Badge(3L, "Finisher");
+        Badge badge = new Badge(3L, "Finisher", "FINISHER");
 
-        assertEquals("Badge [id=3, entitule=Finisher]", badge.toString());
+        assertEquals("Badge [id=3, entitule=Finisher, imageName=FINISHER]", badge.toString());
     }
 }

@@ -50,7 +50,10 @@ class BadgeAttributionServiceTest {
     @Test
     void attribuerBadgesAutomatiquesAttribuePremier10Km() {
         when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.of(utilisateur));
-        when(activiteRepository.existsByUtilisateurIdAndDistanceGreaterThanEqual(USER_ID, 10.0)).thenReturn(true);
+        Activite activite = new Activite();
+        activite.setDistance(10.0);
+        when(activiteRepository.findByUtilisateurId(USER_ID)).thenReturn(List.of(activite));
+        when(activiteRepository.calculerDureeMusculation(USER_ID)).thenReturn(0L);
         when(badgeRepository.findByEntitule(BadgeAttributionService.BADGE_PREMIER_10KM)).thenReturn(Optional.empty());
         when(badgeRepository.save(any(Badge.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -66,7 +69,10 @@ class BadgeAttributionServiceTest {
     @Test
     void attribuerBadgesAutomatiquesNAttribuePasSiPalierNonAtteint() {
         when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.of(utilisateur));
-        when(activiteRepository.existsByUtilisateurIdAndDistanceGreaterThanEqual(USER_ID, 10.0)).thenReturn(false);
+        Activite activite = new Activite();
+        activite.setDistance(9.9);
+        when(activiteRepository.findByUtilisateurId(USER_ID)).thenReturn(List.of(activite));
+        when(activiteRepository.calculerDureeMusculation(USER_ID)).thenReturn(0L);
 
         List<String> badgesAttribues = badgeAttributionService.attribuerBadgesAutomatiques(USER_ID);
 
@@ -77,11 +83,14 @@ class BadgeAttributionServiceTest {
 
     @Test
     void attribuerBadgesAutomatiquesNAttribuePasDeuxFoisLeMemeBadge() {
-        Badge dejaAttribue = new Badge(1L, BadgeAttributionService.BADGE_PREMIER_10KM);
+        Badge dejaAttribue = new Badge(1L, BadgeAttributionService.BADGE_PREMIER_10KM, "10KM");
         utilisateur.setBadges(new ArrayList<>(List.of(dejaAttribue)));
 
         when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.of(utilisateur));
-        when(activiteRepository.existsByUtilisateurIdAndDistanceGreaterThanEqual(USER_ID, 10.0)).thenReturn(true);
+        Activite activite = new Activite();
+        activite.setDistance(10.0);
+        when(activiteRepository.findByUtilisateurId(USER_ID)).thenReturn(List.of(activite));
+        when(activiteRepository.calculerDureeMusculation(USER_ID)).thenReturn(0L);
 
         List<String> badgesAttribues = badgeAttributionService.attribuerBadgesAutomatiques(USER_ID);
 
@@ -96,11 +105,12 @@ class BadgeAttributionServiceTest {
         activite.setNom("Course");
         activite.setDistance(10.2);
 
-        Badge badge = new Badge(2L, BadgeAttributionService.BADGE_PREMIER_10KM);
+        Badge badge = new Badge(2L, BadgeAttributionService.BADGE_PREMIER_10KM, "10KM");
 
         when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.of(utilisateur));
         when(activiteRepository.save(activite)).thenReturn(activite);
-        when(activiteRepository.existsByUtilisateurIdAndDistanceGreaterThanEqual(USER_ID, 10.0)).thenReturn(true);
+        when(activiteRepository.findByUtilisateurId(USER_ID)).thenReturn(List.of(activite));
+        when(activiteRepository.calculerDureeMusculation(USER_ID)).thenReturn(0L);
         when(badgeRepository.findByEntitule(BadgeAttributionService.BADGE_PREMIER_10KM)).thenReturn(Optional.of(badge));
 
         List<String> badgesAttribues = badgeAttributionService.enregistrerActiviteEtAttribuerBadges(USER_ID, activite);

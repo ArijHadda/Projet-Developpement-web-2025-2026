@@ -23,6 +23,9 @@ public class ChallengeService {
     @Autowired
     private ParticipationRepository participationRepository;
 
+    @Autowired
+    private BadgeAttributionService badgeAttributionService;
+
     public List<ClassementDTO> getClassement(Long challengeId) {
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new RuntimeException("Challenge introuvable"));
@@ -45,6 +48,9 @@ public class ChallengeService {
 
         classement.sort((c1, c2) -> c2.getTotalCalories().compareTo(c1.getTotalCalories()));
 
+        // Attribuer le badge au top 1 si le challenge est termin�
+        verifierEtAttribuerBadgeChallengeGagne(challenge, classement);
+
         return classement;
     }
 
@@ -62,7 +68,7 @@ public class ChallengeService {
                 .orElseThrow(() -> new RuntimeException("Challenge introuvable"));
 
         if (participationRepository.existsByUtilisateurAndChallenge(utilisateur, challenge)) {
-            throw new RuntimeException("Vous participez déjà à ce challenge !");
+            throw new RuntimeException("Vous participez d\u00e9j\u00e0 \u00e0 ce challenge !");
         }
 
         Participation participation = new Participation();
@@ -80,7 +86,7 @@ public class ChallengeService {
         if (challenge.getCreateur().getId().equals(utilisateurActuel.getId())) {
             challengeRepository.delete(challenge);
         } else {
-            throw new RuntimeException("Non autorisé à supprimer ce challenge.");
+            throw new RuntimeException("Non autoris\u00e9 \u00e0 supprimer ce challenge.");
         }
     }
 
@@ -92,7 +98,23 @@ public class ChallengeService {
             challenge.setTitre(nouveauTitre);
             challengeRepository.save(challenge);
         } else {
-            throw new RuntimeException("Non autorisé à modifier ce challenge.");
+            throw new RuntimeException("Non autoris\u00e9 \u00e0 modifier ce challenge.");
+        }
+    }
+
+    private void verifierEtAttribuerBadgeChallengeGagne(Challenge challenge, List<ClassementDTO> classement) {
+        LocalDate today = LocalDate.now();
+
+        if (challenge.getDateFin() != null && today.isAfter(challenge.getDateFin()) && !classement.isEmpty()) {
+            ClassementDTO gagnant = classement.get(0);
+
+            for (Participation p : challenge.getParticipations()) {
+                String nomComplet = p.getUtilisateur().getPrenom() + " " + p.getUtilisateur().getNom();
+                if (badgeAttributionService != null && nomComplet.equals(gagnant.getNomComplet())) {
+                    badgeAttributionService.attribuerBadgeChallengeGagne(p.getUtilisateur());
+                    break;
+                }
+            }
         }
     }
 }

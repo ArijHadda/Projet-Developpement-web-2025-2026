@@ -1,6 +1,7 @@
 package utcapitole.miage.projet_web.model.jpa;
 
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import utcapitole.miage.projet_web.dto.ObjectifProgressDTO;
 import utcapitole.miage.projet_web.model.Objectif;
 import utcapitole.miage.projet_web.model.Utilisateur;
@@ -18,20 +19,26 @@ public class ObjectifService {
 
     private final ObjectifRepository objectifRepository;
     private final ActiviteRepository activiteRepository;
+    private final BadgeAttributionService badgeAttributionService;
 
     public ObjectifService(ObjectifRepository objectifRepository, ActiviteRepository activiteRepository) {
+        this(objectifRepository, activiteRepository, null);
+    }
+
+    @Autowired
+    public ObjectifService(ObjectifRepository objectifRepository, ActiviteRepository activiteRepository, BadgeAttributionService badgeAttributionService) {
         this.objectifRepository = objectifRepository;
         this.activiteRepository = activiteRepository;
+        this.badgeAttributionService = badgeAttributionService;
     }
 
     public List<ObjectifProgressDTO> getObjectifsAvecProgression(Utilisateur user) {
-        List<Objectif> objectifs = objectifRepository.findByUtilisateur(user); // [cite: 3, 4]
+        List<Objectif> objectifs = objectifRepository.findByUtilisateur(user);
         List<ObjectifProgressDTO> resultList = new ArrayList<>();
 
         LocalDate today = LocalDate.now();
 
         for (Objectif obj : objectifs) {
-            // --- Logique centrale : calculer les dates de début et de fin du cycle actuel selon la fréquence ---
             LocalDate dateDebut;
             LocalDate dateFin;
 
@@ -73,7 +80,12 @@ public class ObjectifService {
                 pctDur = Math.min((durActuelle / obj.getDuree()) * 100, 100);
             }
 
-            resultList.add(new ObjectifProgressDTO(obj, distActuelle, pctDist, durActuelle, pctDur));
+            ObjectifProgressDTO dto = new ObjectifProgressDTO(obj, distActuelle, pctDist, durActuelle, pctDur);
+            resultList.add(dto);
+
+            if (badgeAttributionService != null && estObjectifComplet(obj, pctDist, pctDur)) {
+                badgeAttributionService.attribuerBadgeObjectifComplet(user);
+            }
         }
 
         return resultList;
@@ -93,5 +105,16 @@ public class ObjectifService {
 
     public void supprimerObjectif(Long id) {
         objectifRepository.deleteById(id);
+    }
+
+    private boolean estObjectifComplet(Objectif obj, double pctDist, double pctDur) {
+        if (obj.getDistance() > 0 && obj.getDuree() > 0) {
+            return pctDist >= 100 && pctDur >= 100;
+        } else if (obj.getDistance() > 0) {
+            return pctDist >= 100;
+        } else if (obj.getDuree() > 0) {
+            return pctDur >= 100;
+        }
+        return false;
     }
 }
