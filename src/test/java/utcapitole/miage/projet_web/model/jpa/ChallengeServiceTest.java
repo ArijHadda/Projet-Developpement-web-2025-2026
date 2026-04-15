@@ -11,7 +11,6 @@ import utcapitole.miage.projet_web.model.Challenge;
 import utcapitole.miage.projet_web.model.Participation;
 import utcapitole.miage.projet_web.model.Utilisateur;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -45,12 +44,13 @@ class ChallengeServiceTest {
 
         mockChallenge = new Challenge();
         mockChallenge.setId(10L);
+        mockChallenge.setTitre("Ancien Titre");
         mockChallenge.setCreateur(mockUser);
         mockChallenge.setParticipations(new ArrayList<>());
     }
 
     @Test
-    void testGetClassement() {
+    void testGetClassementSuccess() {
         Participation p = new Participation();
         p.setUtilisateur(mockUser);
         mockChallenge.getParticipations().add(p);
@@ -63,6 +63,39 @@ class ChallengeServiceTest {
         assertEquals(1, result.size());
         assertEquals("Jean Dupont", result.get(0).getNomComplet());
         assertEquals(500, result.get(0).getTotalCalories());
+    }
+
+    @Test
+    void testGetClassementChallengeIntrouvable() {
+        when(challengeRepository.findById(99L)).thenReturn(Optional.empty());
+
+        Exception ex = assertThrows(RuntimeException.class, () -> challengeService.getClassement(99L));
+        assertEquals("Challenge introuvable", ex.getMessage());
+    }
+
+    @Test
+    void testGetAllChallenges() {
+        List<Challenge> challenges = new ArrayList<>();
+        challenges.add(mockChallenge);
+        when(challengeRepository.findAll()).thenReturn(challenges);
+
+        List<Challenge> result = challengeService.getAllChallenges();
+
+        assertEquals(1, result.size());
+        verify(challengeRepository).findAll();
+    }
+
+    @Test
+    void testCreerChallenge() {
+        when(challengeRepository.save(any(Challenge.class))).thenReturn(mockChallenge);
+
+        Challenge nouveauChallenge = new Challenge();
+        Challenge result = challengeService.creerChallenge(nouveauChallenge, mockUser);
+
+        assertEquals(mockChallenge, result);
+
+        assertEquals(mockUser, nouveauChallenge.getCreateur());
+        verify(challengeRepository).save(nouveauChallenge);
     }
 
     @Test
@@ -84,12 +117,43 @@ class ChallengeServiceTest {
     }
 
     @Test
+    void testSupprimerChallengeSuccess() {
+        when(challengeRepository.findById(10L)).thenReturn(Optional.of(mockChallenge));
+
+        assertDoesNotThrow(() -> challengeService.supprimerChallenge(10L, mockUser));
+        verify(challengeRepository).delete(mockChallenge);
+    }
+
+    @Test
     void testSupprimerChallengeNonAuthorise() {
         Utilisateur otherUser = new Utilisateur();
         otherUser.setId(2L);
         when(challengeRepository.findById(10L)).thenReturn(Optional.of(mockChallenge));
 
         Exception ex = assertThrows(RuntimeException.class, () -> challengeService.supprimerChallenge(10L, otherUser));
-        assertTrue(ex.getMessage().contains("Non autorisé"));
+        assertTrue(ex.getMessage().contains("Non autorisé à supprimer ce challenge."));
+        verify(challengeRepository, never()).delete(any(Challenge.class));
+    }
+
+    @Test
+    void testModifierTitreChallengeSuccess() {
+        when(challengeRepository.findById(10L)).thenReturn(Optional.of(mockChallenge));
+
+        assertDoesNotThrow(() -> challengeService.modifierTitreChallenge(10L, "Nouveau Titre", mockUser));
+
+        assertEquals("Nouveau Titre", mockChallenge.getTitre());
+        verify(challengeRepository).save(mockChallenge);
+    }
+
+    @Test
+    void testModifierTitreChallengeNonAuthorise() {
+        Utilisateur otherUser = new Utilisateur();
+        otherUser.setId(2L);
+        when(challengeRepository.findById(10L)).thenReturn(Optional.of(mockChallenge));
+
+        Exception ex = assertThrows(RuntimeException.class, () -> challengeService.modifierTitreChallenge(10L, "Nouveau Titre", otherUser));
+        assertTrue(ex.getMessage().contains("Non autorisé à modifier ce challenge."));
+        // Vérifier que le save n'a jamais été appelé
+        verify(challengeRepository, never()).save(any(Challenge.class));
     }
 }

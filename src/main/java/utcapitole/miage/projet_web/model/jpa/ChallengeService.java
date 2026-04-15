@@ -1,6 +1,5 @@
 package utcapitole.miage.projet_web.model.jpa;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import utcapitole.miage.projet_web.dto.ClassementDTO;
 import utcapitole.miage.projet_web.model.Challenge;
@@ -14,18 +13,25 @@ import java.util.List;
 @Service
 public class ChallengeService {
 
-    @Autowired
-    private ChallengeRepository challengeRepository;
 
-    @Autowired
-    private ActiviteRepository activiteRepository;
+    private final ChallengeRepository challengeRepository;
+    private final ActiviteRepository activiteRepository;
+    private final ParticipationRepository participationRepository;
 
-    @Autowired
-    private ParticipationRepository participationRepository;
+    private static final String MESSAGE_DE_INTROUVABLE = "Challenge introuvable";
+    private static final String MESSAGE_NON_AUTORISATION_MODIFIIER = "Non autorisé à modifier ce challenge.";
+    private static final String MESSAGE_NON_AUTORISATION_SUPPRIMER = "Non autorisé à supprimer ce challenge.";
+    private static final String MESSAGE_REPETITION = "Vous participez déjà à ce challenge !";
+
+    public ChallengeService(ChallengeRepository challengeRepository, ActiviteRepository activiteRepository, ParticipationRepository participationRepository) {
+        this.challengeRepository = challengeRepository;
+        this.activiteRepository = activiteRepository;
+        this.participationRepository = participationRepository;
+    }
 
     public List<ClassementDTO> getClassement(Long challengeId) {
         Challenge challenge = challengeRepository.findById(challengeId)
-                .orElseThrow(() -> new RuntimeException("Challenge introuvable"));
+                .orElseThrow(() -> new RuntimeException(MESSAGE_DE_INTROUVABLE));
 
         List<ClassementDTO> classement = new ArrayList<>();
 
@@ -59,10 +65,10 @@ public class ChallengeService {
 
     public void rejoindreChallenge(Long challengeId, Utilisateur utilisateur) {
         Challenge challenge = challengeRepository.findById(challengeId)
-                .orElseThrow(() -> new RuntimeException("Challenge introuvable"));
+                .orElseThrow(() -> new RuntimeException(MESSAGE_DE_INTROUVABLE));
 
         if (participationRepository.existsByUtilisateurAndChallenge(utilisateur, challenge)) {
-            throw new RuntimeException("Vous participez déjà à ce challenge !");
+            throw new RuntimeException(MESSAGE_REPETITION);
         }
 
         Participation participation = new Participation();
@@ -75,24 +81,24 @@ public class ChallengeService {
 
     public void supprimerChallenge(Long challengeId, Utilisateur utilisateurActuel) {
         Challenge challenge = challengeRepository.findById(challengeId)
-                .orElseThrow(() -> new RuntimeException("Challenge introuvable"));
+                .orElseThrow(() -> new RuntimeException(MESSAGE_DE_INTROUVABLE));
 
         if (challenge.getCreateur().getId().equals(utilisateurActuel.getId())) {
             challengeRepository.delete(challenge);
         } else {
-            throw new RuntimeException("Non autorisé à supprimer ce challenge.");
+            throw new RuntimeException(MESSAGE_NON_AUTORISATION_SUPPRIMER);
         }
     }
 
     public void modifierTitreChallenge(Long challengeId, String nouveauTitre, Utilisateur utilisateurActuel) {
         Challenge challenge = challengeRepository.findById(challengeId)
-                .orElseThrow(() -> new RuntimeException("Challenge introuvable"));
+                .orElseThrow(() -> new RuntimeException(MESSAGE_DE_INTROUVABLE));
 
         if (challenge.getCreateur().getId().equals(utilisateurActuel.getId())) {
             challenge.setTitre(nouveauTitre);
             challengeRepository.save(challenge);
         } else {
-            throw new RuntimeException("Non autorisé à modifier ce challenge.");
+            throw new RuntimeException(MESSAGE_NON_AUTORISATION_MODIFIIER);
         }
     }
 }
