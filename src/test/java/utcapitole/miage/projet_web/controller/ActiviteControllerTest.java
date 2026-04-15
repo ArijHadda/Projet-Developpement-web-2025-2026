@@ -12,6 +12,7 @@ import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Sport;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.jpa.ActiviteService;
+import utcapitole.miage.projet_web.model.jpa.BadgeAttributionService;
 import utcapitole.miage.projet_web.model.jpa.SportRepository;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 
@@ -41,6 +42,9 @@ public class ActiviteControllerTest {
 
     @Mock
     private UtilisateurService utilisateurService;
+
+    @Mock
+    private BadgeAttributionService badgeAttributionService;
 
     @Mock
     private jakarta.servlet.http.HttpServletRequest request;
@@ -123,6 +127,7 @@ public class ActiviteControllerTest {
     @Test
     void addActivite_loggedIn_associeUtilisateurEtEnregistre() {
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(badgeAttributionService.attribuerBadgesAutomatiques(mockUser.getId())).thenReturn(Collections.emptyList());
 
         String viewName = activiteController.addActivite(mockActivite, model, session);
 
@@ -130,12 +135,14 @@ public class ActiviteControllerTest {
         assertEquals(mockUser, mockActivite.getUtilisateur(),
                 "L'activité doit être associée à l'utilisateur connecté");
         verify(activiteService).enregistrerActivite(mockActivite);
+        verify(badgeAttributionService).attribuerBadgesAutomatiques(mockUser.getId());
         assertEquals("redirect:/user/profile/1", viewName);
     }
 
     @Test
     void addActivite_loggedIn_redirectsToUserProfile() {
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(badgeAttributionService.attribuerBadgesAutomatiques(mockUser.getId())).thenReturn(Collections.emptyList());
 
         String viewName = activiteController.addActivite(mockActivite, model, session);
 
@@ -157,6 +164,7 @@ public class ActiviteControllerTest {
 
         assertEquals("add-activite", viewName);
         verify(activiteService, never()).enregistrerActivite(any());
+        verify(badgeAttributionService, never()).attribuerBadgesAutomatiques(any());
         verify(model).addAttribute(eq("error"), any());
     }
 
@@ -232,6 +240,7 @@ public class ActiviteControllerTest {
 
         assertEquals("add-activite", viewName);
         verify(activiteService, never()).enregistrerActivite(any());
+        verify(badgeAttributionService, never()).attribuerBadgesAutomatiques(any());
         verify(model).addAttribute(eq("error"), any());
     }
 
@@ -250,6 +259,7 @@ public class ActiviteControllerTest {
 
         assertEquals("add-activite", viewName);
         verify(activiteService, never()).enregistrerActivite(any());
+        verify(badgeAttributionService, never()).attribuerBadgesAutomatiques(any());
         verify(model).addAttribute(eq("error"), any());
     }
 
@@ -721,11 +731,38 @@ public class ActiviteControllerTest {
         assertEquals("redirect:/activite/flux-amis", viewName);
     }
 
+    // --- addActivite : attribution des badges ---
+
+    @Test
+    void addActivite_avecBadgeAttribue_redirigeAvecParametreBadge() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(badgeAttributionService.attribuerBadgesAutomatiques(mockUser.getId())).thenReturn(Arrays.asList("1er 10km"));
+
+        String viewName = activiteController.addActivite(mockActivite, model, session);
+
+        verify(activiteService).enregistrerActivite(mockActivite);
+        verify(badgeAttributionService).attribuerBadgesAutomatiques(mockUser.getId());
+        assertEquals("redirect:/user/profile/1?badge=attribue", viewName);
+    }
+
+    @Test
+    void addActivite_sansBadgeAttribue_redirigeSansParametre() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(badgeAttributionService.attribuerBadgesAutomatiques(mockUser.getId())).thenReturn(Collections.emptyList());
+
+        String viewName = activiteController.addActivite(mockActivite, model, session);
+
+        verify(activiteService).enregistrerActivite(mockActivite);
+        verify(badgeAttributionService).attribuerBadgesAutomatiques(mockUser.getId());
+        assertEquals("redirect:/user/profile/1", viewName);
+    }
+
     // --- addActivite : date null ---
 
     @Test
     void addActivite_dateNull_passeLaValidationNoteEtEnregistre() {
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(badgeAttributionService.attribuerBadgesAutomatiques(mockUser.getId())).thenReturn(Collections.emptyList());
 
         Activite nullDateActivite = new Activite();
         nullDateActivite.setNom("Running");
@@ -735,6 +772,7 @@ public class ActiviteControllerTest {
         String viewName = activiteController.addActivite(nullDateActivite, model, session);
 
         verify(activiteService).enregistrerActivite(nullDateActivite);
+        verify(badgeAttributionService).attribuerBadgesAutomatiques(mockUser.getId());
         assertEquals("redirect:/user/profile/1", viewName);
     }
 

@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.jpa.ActiviteService;
+import utcapitole.miage.projet_web.model.jpa.BadgeAttributionService;
 import utcapitole.miage.projet_web.model.jpa.SportRepository;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 
@@ -57,6 +58,9 @@ public class ActiviteController {
         this.sportRepository = sportRepository;
         this.utilisateurService = utilisateurService;
     }
+
+    @Autowired
+    private BadgeAttributionService badgeAttributionService;
 
     @GetMapping("/add-activite")
     public String showAddActiviteForm(Model model, HttpSession session) {
@@ -100,7 +104,11 @@ public class ActiviteController {
 
         activite.setUtilisateur(user);
         activiteService.enregistrerActivite(activite);
-        return "redirect:/user/profile/" + user.getId();
+        
+        List<String> badgesAttribues = badgeAttributionService.attribuerBadgesAutomatiques(user.getId());
+        boolean badgeAttribue = !badgesAttribues.isEmpty();
+        
+        return "redirect:/user/profile/" + user.getId() + (badgeAttribue ? "?badge=attribue" : "");
     }
 
     @GetMapping("/list")
