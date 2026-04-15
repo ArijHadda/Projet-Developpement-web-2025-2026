@@ -14,8 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -108,6 +107,40 @@ class BadgeAttributionServiceTest {
         assertEquals(1, badgesAttribues.size());
         assertEquals(BadgeAttributionService.BADGE_PREMIER_10KM, badgesAttribues.get(0));
         verify(activiteRepository).save(activite);
+        verify(utilisateurRepository).save(utilisateur);
+    }
+
+    @Test
+    void testEnregistrerActiviteEtAttribuerBadgesUtilisateurIntrouvable() {
+        when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.empty());
+        Activite activite = new Activite();
+        assertThrows(IllegalArgumentException.class, () ->
+                badgeAttributionService.enregistrerActiviteEtAttribuerBadges(USER_ID, activite)
+        );
+    }
+
+    @Test
+    void testAttribuerBadgesAutomatiquesUtilisateurIntrouvable() {
+        when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () ->
+                badgeAttributionService.attribuerBadgesAutomatiques(USER_ID)
+        );
+    }
+
+    @Test
+    void attribuerBadgesAutomatiquesUtiliseBadgeExistantEnBdd() {
+        Badge badgeExistant = new Badge(100L, BadgeAttributionService.BADGE_PREMIER_10KM);
+
+        when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.of(utilisateur));
+        when(activiteRepository.existsByUtilisateurIdAndDistanceGreaterThanEqual(USER_ID, 10.0)).thenReturn(true);
+        when(badgeRepository.findByEntitule(BadgeAttributionService.BADGE_PREMIER_10KM)).thenReturn(Optional.of(badgeExistant));
+
+        List<String> badgesAttribues = badgeAttributionService.attribuerBadgesAutomatiques(USER_ID);
+
+        assertEquals(1, badgesAttribues.size());
+        assertTrue(utilisateur.getBadges().contains(badgeExistant));
+        verify(badgeRepository, never()).save(any(Badge.class));
         verify(utilisateurRepository).save(utilisateur);
     }
 }
