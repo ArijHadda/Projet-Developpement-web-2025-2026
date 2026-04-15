@@ -1,9 +1,6 @@
 package utcapitole.miage.projet_web.model;
 
 import org.junit.jupiter.api.Test;
-import utcapitole.miage.projet_web.model.Activite;
-import utcapitole.miage.projet_web.model.Commentaire;
-import utcapitole.miage.projet_web.model.Utilisateur;
 
 import java.time.LocalDateTime;
 

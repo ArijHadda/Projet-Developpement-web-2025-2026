@@ -69,7 +69,7 @@ class ChallengeServiceTest {
     void testGetClassementChallengeIntrouvable() {
         when(challengeRepository.findById(99L)).thenReturn(Optional.empty());
 
-        Exception ex = assertThrows(RuntimeException.class, () -> challengeService.getClassement(99L));
+        Exception ex = assertThrows(IllegalArgumentException.class, () -> challengeService.getClassement(99L));
         assertEquals("Challenge introuvable", ex.getMessage());
     }
 
@@ -112,7 +112,7 @@ class ChallengeServiceTest {
         when(challengeRepository.findById(10L)).thenReturn(Optional.of(mockChallenge));
         when(participationRepository.existsByUtilisateurAndChallenge(mockUser, mockChallenge)).thenReturn(true);
 
-        Exception ex = assertThrows(RuntimeException.class, () -> challengeService.rejoindreChallenge(10L, mockUser));
+        Exception ex = assertThrows(IllegalStateException.class, () -> challengeService.rejoindreChallenge(10L, mockUser));
         assertEquals("Vous participez déjà à ce challenge !", ex.getMessage());
     }
 
@@ -130,7 +130,7 @@ class ChallengeServiceTest {
         otherUser.setId(2L);
         when(challengeRepository.findById(10L)).thenReturn(Optional.of(mockChallenge));
 
-        Exception ex = assertThrows(RuntimeException.class, () -> challengeService.supprimerChallenge(10L, otherUser));
+        Exception ex = assertThrows(IllegalStateException.class, () -> challengeService.supprimerChallenge(10L, otherUser));
         assertTrue(ex.getMessage().contains("Non autorisé à supprimer ce challenge."));
         verify(challengeRepository, never()).delete(any(Challenge.class));
     }
@@ -151,9 +151,8 @@ class ChallengeServiceTest {
         otherUser.setId(2L);
         when(challengeRepository.findById(10L)).thenReturn(Optional.of(mockChallenge));
 
-        Exception ex = assertThrows(RuntimeException.class, () -> challengeService.modifierTitreChallenge(10L, "Nouveau Titre", otherUser));
+        Exception ex = assertThrows(IllegalStateException.class, () -> challengeService.modifierTitreChallenge(10L, "Nouveau Titre", otherUser));
         assertTrue(ex.getMessage().contains("Non autorisé à modifier ce challenge."));
-        // Vérifier que le save n'a jamais été appelé
         verify(challengeRepository, never()).save(any(Challenge.class));
     }
 }

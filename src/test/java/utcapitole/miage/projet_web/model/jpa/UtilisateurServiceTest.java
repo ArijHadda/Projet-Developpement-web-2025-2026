@@ -101,6 +101,17 @@ class UtilisateurServiceTest {
         verify(utilisateurRepository).save(mockUser);
     }
 
+    // --- NOUVEAU TEST : Couvrir l'exception si l'utilisateur n'est pas trouvé (pour maintenir 100% coverage) ---
+    @Test
+    void testModifierProfileUserNotFoundShouldThrow() {
+        when(utilisateurRepository.findById(CORRECT_ID)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                utilisateurService.modifierProfile(CORRECT_ID, "new@miage.fr", "M", 25, 1.80f, 75.0f)
+        );
+        assertEquals("Utilisateur non trouvé.", exception.getMessage());
+    }
+
     @Test
     void testChangerMotDePasseSuccess() {
         String newPassword = "newPassword123";

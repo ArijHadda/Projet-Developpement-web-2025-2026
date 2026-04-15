@@ -13,7 +13,6 @@ import java.util.List;
 @Service
 public class ChallengeService {
 
-
     private final ChallengeRepository challengeRepository;
     private final ActiviteRepository activiteRepository;
     private final ParticipationRepository participationRepository;
@@ -31,7 +30,7 @@ public class ChallengeService {
 
     public List<ClassementDTO> getClassement(Long challengeId) {
         Challenge challenge = challengeRepository.findById(challengeId)
-                .orElseThrow(() -> new RuntimeException(MESSAGE_DE_INTROUVABLE));
+                .orElseThrow(() -> new IllegalArgumentException(MESSAGE_DE_INTROUVABLE));
 
         List<ClassementDTO> classement = new ArrayList<>();
 
@@ -65,10 +64,10 @@ public class ChallengeService {
 
     public void rejoindreChallenge(Long challengeId, Utilisateur utilisateur) {
         Challenge challenge = challengeRepository.findById(challengeId)
-                .orElseThrow(() -> new RuntimeException(MESSAGE_DE_INTROUVABLE));
+                .orElseThrow(() -> new IllegalArgumentException(MESSAGE_DE_INTROUVABLE));
 
         if (participationRepository.existsByUtilisateurAndChallenge(utilisateur, challenge)) {
-            throw new RuntimeException(MESSAGE_REPETITION);
+            throw new IllegalStateException(MESSAGE_REPETITION);
         }
 
         Participation participation = new Participation();
@@ -81,24 +80,24 @@ public class ChallengeService {
 
     public void supprimerChallenge(Long challengeId, Utilisateur utilisateurActuel) {
         Challenge challenge = challengeRepository.findById(challengeId)
-                .orElseThrow(() -> new RuntimeException(MESSAGE_DE_INTROUVABLE));
+                .orElseThrow(() -> new IllegalArgumentException(MESSAGE_DE_INTROUVABLE));
 
         if (challenge.getCreateur().getId().equals(utilisateurActuel.getId())) {
             challengeRepository.delete(challenge);
         } else {
-            throw new RuntimeException(MESSAGE_NON_AUTORISATION_SUPPRIMER);
+            throw new IllegalStateException(MESSAGE_NON_AUTORISATION_SUPPRIMER);
         }
     }
 
     public void modifierTitreChallenge(Long challengeId, String nouveauTitre, Utilisateur utilisateurActuel) {
         Challenge challenge = challengeRepository.findById(challengeId)
-                .orElseThrow(() -> new RuntimeException(MESSAGE_DE_INTROUVABLE));
+                .orElseThrow(() -> new IllegalArgumentException(MESSAGE_DE_INTROUVABLE));
 
         if (challenge.getCreateur().getId().equals(utilisateurActuel.getId())) {
             challenge.setTitre(nouveauTitre);
             challengeRepository.save(challenge);
         } else {
-            throw new RuntimeException(MESSAGE_NON_AUTORISATION_MODIFIIER);
+            throw new IllegalStateException(MESSAGE_NON_AUTORISATION_MODIFIIER);
         }
     }
 }

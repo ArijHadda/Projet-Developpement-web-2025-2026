@@ -147,7 +147,7 @@ class ObjectifControllerTest {
     }
 
     @Test
-    void testShowEditForm_ObjectifIntrouvable_RedirectsToList() throws Exception {
+    void testShowEditForm_ObjectifIntrouvable_RedirectsToList() {
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
 
         when(objectifService.getObjectifById(10L)).thenReturn(Optional.empty());
@@ -156,5 +156,72 @@ class ObjectifControllerTest {
         assertEquals("redirect:/objectif/list",returnValue);
         verify(model, never()).addAttribute(eq("objectif"), any());
         verify(model, never()).addAttribute(eq("sports"), any());
+    }
+
+    @Test
+    void testListerObjectifs_AvecFiltres() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        // Création d'un faux DTO pour tester le passage dans les filtres (sportId et frequence)
+        utcapitole.miage.projet_web.dto.ObjectifProgressDTO mockDto = mock(utcapitole.miage.projet_web.dto.ObjectifProgressDTO.class);
+        Objectif mockObjectifFiltre = mock(Objectif.class);
+        utcapitole.miage.projet_web.model.Sport mockSport = new utcapitole.miage.projet_web.model.Sport();
+        mockSport.setId(99L);
+
+        when(mockDto.getObjectif()).thenReturn(mockObjectifFiltre);
+        when(mockObjectifFiltre.getSport()).thenReturn(mockSport);
+
+        // FIX: Return the actual Enum value, not a String
+        doReturn(utcapitole.miage.projet_web.model.Frequence.HEBDOMADAIRE).when(mockObjectifFiltre).getFrequence();
+
+        when(objectifService.getObjectifsAvecProgression(mockUser)).thenReturn(java.util.List.of(mockDto));
+
+        // Appel avec les paramètres de filtre renseignés
+        String view = objectifController.listerObjectifs(99L, "HEBDOMADAIRE", model, session);
+
+        assertEquals("objectif-list", view);
+        verify(model).addAttribute(eq("objectifsProgress"), anyList());
+    }
+
+    @Test
+    void testShowCreateForm_RedirectIfNoSession() {
+        when(session.getAttribute("loggedInUser")).thenReturn(null);
+        String view = objectifController.showCreateForm(model, session);
+        assertEquals("redirect:/user/login", view);
+    }
+
+    @Test
+    void testSaveObjectif_RedirectIfNoSession() {
+        when(session.getAttribute("loggedInUser")).thenReturn(null);
+        String view = objectifController.saveObjectif(mockObj, session);
+        assertEquals("redirect:/user/login", view);
+    }
+
+    @Test
+    void testShowEditForm_RedirectIfNoSession() {
+        when(session.getAttribute("loggedInUser")).thenReturn(null);
+        String view = objectifController.showEditForm(10L, model, session);
+        assertEquals("redirect:/user/login", view);
+    }
+
+    @Test
+    void testDeleteObjectif_RedirectIfNoSession() {
+        when(session.getAttribute("loggedInUser")).thenReturn(null);
+        String view = objectifController.deleteObjectif(10L, session);
+        assertEquals("redirect:/user/login", view);
+    }
+
+    @Test
+    void testDeleteObjectif_ObjectifIntrouvable() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        // Simuler le cas où l'objectif n'existe pas en base
+        when(objectifService.getObjectifById(10L)).thenReturn(Optional.empty());
+
+        String view = objectifController.deleteObjectif(10L, session);
+
+        // Il doit juste rediriger gentiment sans rien supprimer
+        assertEquals("redirect:/objectif/list", view);
+        verify(objectifService, never()).supprimerObjectif(any());
     }
 }

@@ -132,9 +132,8 @@ class ObjectifServiceTest {
         assertEquals(0.0, result.get(0).getPourcentageDistance());
         assertEquals(0.0, result.get(0).getDureeActuelle());
         assertEquals(0.0, result.get(0).getPourcentageDuree());
-
         // Vérification CRUCIALE : On s'assure que la base de données n'a JAMAIS été appelée,
-        // (car les if(>0) ont empêché l'exécution des requêtes)
+        // car la condition ">0" a empêché l'exécution des requêtes.
         verify(activiteRepository, never()).calculerDistanceTotale(anyLong(), anyLong(), any(), any());
         verify(activiteRepository, never()).calculerDureeTotale(anyLong(), anyLong(), any(), any());
     }
