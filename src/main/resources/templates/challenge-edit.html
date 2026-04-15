@@ -2,64 +2,34 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modifier le Challenge - SportTrack</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <title>Modifier le Challenge</title>
 </head>
-<body class="page-challenges">
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="navbar-brand">
-                🏃 SportTrack
-            </a>
-            <ul class="navbar-nav">
-                <li><a th:href="@{/activite/list}">Mes Activités</a></li>
-                <li><a th:href="@{/objectif/list}">Objectifs</a></li>
-                <li><a th:href="@{/challenge/list}">Challenges</a></li>
-                <li><a th:href="@{/user/ami/chercher}">Amis</a></li>
-                <li><a th:href="@{/user/logout}">Déconnexion</a></li>
-            </ul>
-        </div>
-    </nav>
+<body>
+<h2>✏️ Modifier le Challenge</h2>
 
-    <div class="container">
-        <div class="card" style="max-width: 600px; margin: 2rem auto;">
-            <h1>✏️ Modifier le Challenge</h1>
+<form th:action="@{/challenge/{id}/edit(id=${challenge.id})}" method="post" style="max-width: 400px; display: flex; flex-direction: column; gap: 15px;">
 
-            <form th:action="@{/challenge/{id}/edit(id=${challenge.id})}" method="post">
-                <div class="form-group">
-                    <label for="titre">🏆 Nouveau Titre</label>
-                    <input type="text" id="titre" name="titre" th:value="${challenge.titre}" class="form-control" required/>
-                </div>
-
-                <div class="alert alert-warning">
-                    <p class="mb-0">⚠️ Les paramètres suivants ne peuvent pas être modifiés une fois le challenge créé, afin de garantir l'équité pour tous les participants.</p>
-                </div>
-
-                <div class="card" style="background: var(--color-gray-100);">
-                    <div class="grid grid-3" style="text-align: center;">
-                        <div>
-                            <small class="text-muted">Sport ciblé</small>
-                            <p class="mb-0"><strong th:text="${challenge.sportCible}"></strong></p>
-                        </div>
-                        <div>
-                            <small class="text-muted">Date de début</small>
-                            <p class="mb-0"><strong th:text="${challenge.dateDebut}"></strong></p>
-                        </div>
-                        <div>
-                            <small class="text-muted">Date de fin</small>
-                            <p class="mb-0"><strong th:text="${challenge.dateFin}"></strong></p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex gap-sm" style="margin-top: 1.5rem;">
-                    <button type="submit" class="btn btn-primary">💾 Sauvegarder les modifications</button>
-                    <a th:href="@{/challenge/list}" class="btn btn-outline">🔙 Annuler et Retour</a>
-                </div>
-            </form>
-        </div>
+    <div>
+        <label for="titre">Nouveau Titre :</label>
+        <input type="text" id="titre" name="titre" th:value="${challenge.titre}" required style="width: 100%; padding: 5px;"/>
     </div>
+
+    <div style="background-color: #f9f9f9; padding: 10px; border: 1px dashed #ccc;">
+        <p style="margin: 0; color: #666; font-size: 0.9em;">⚠️ Les paramètres suivants ne peuvent pas être modifiés une fois le challenge créé, afin de garantir l'équité pour tous les participants.</p>
+        <p><strong>Sport ciblé :</strong> <span th:text="${challenge.sportCible}"></span></p>
+        <p><strong>Date de début :</strong> <span th:text="${challenge.dateDebut}"></span></p>
+        <p><strong>Date de fin :</strong> <span th:text="${challenge.dateFin}"></span></p>
+    </div>
+
+    <div>
+        <button type="submit" style="background-color: #0275d8; color: white; padding: 10px; width: 100%;">💾 Sauvegarder les modifications</button>
+    </div>
+</form>
+
+<br>
+<a th:href="@{/challenge/list}">
+    <button type="button">🔙 Annuler et Retour</button>
+</a>
+
 </body>
 </html>

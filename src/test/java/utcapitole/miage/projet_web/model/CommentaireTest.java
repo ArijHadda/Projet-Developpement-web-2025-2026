@@ -88,8 +88,10 @@ class CommentaireTest {
         Commentaire com1 = new Commentaire(1L, "Test", null, auteur, null);
         Commentaire com2 = new Commentaire(1L, "Test", null, auteur, null);
 
+        // Vérifie que l'égalité se fait bien sur le contenu (grâce à @Data de Lombok)
         assertEquals(com1, com2);
 
+        // Vérifie que le toString contient le nom de la classe
         assertTrue(com1.toString().contains("Commentaire"));
         assertTrue(com1.toString().contains("Test"));
     }

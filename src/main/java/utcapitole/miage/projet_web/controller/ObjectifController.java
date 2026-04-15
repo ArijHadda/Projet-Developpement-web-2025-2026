@@ -9,11 +9,8 @@ import utcapitole.miage.projet_web.model.Objectif;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.jpa.ObjectifService;
 import utcapitole.miage.projet_web.model.jpa.SportService;
-import utcapitole.miage.projet_web.dto.ObjectifProgressDTO;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/objectif")
@@ -26,37 +23,11 @@ public class ObjectifController {
     private SportService sportService;
 
     @GetMapping("/list")
-    public String listerObjectifs(
-            @RequestParam(required = false) Long sportId,
-            @RequestParam(required = false) String frequence,
-            Model model, 
-            HttpSession session) {
-        
+    public String listerObjectifs(Model model, HttpSession session) {
         Utilisateur currentUser = (Utilisateur) session.getAttribute("loggedInUser");
         if (currentUser == null) return "redirect:/user/login";
 
-        // Récupérer tous les objectifs avec progression
-        List<ObjectifProgressDTO> objectifsProgress = objectifService.getObjectifsAvecProgression(currentUser);
-        
-        // Appliquer les filtres
-        if (sportId != null) {
-            objectifsProgress = objectifsProgress.stream()
-                    .filter(dto -> dto.getObjectif().getSport().getId().equals(sportId))
-                    .collect(Collectors.toList());
-        }
-        
-        if (frequence != null && !frequence.isEmpty()) {
-            objectifsProgress = objectifsProgress.stream()
-                    .filter(dto -> dto.getObjectif().getFrequence().toString().equals(frequence))
-                    .collect(Collectors.toList());
-        }
-        
-        // Ajouter les attributs au modèle
-        model.addAttribute("objectifsProgress", objectifsProgress);
-        model.addAttribute("sports", sportService.getAll());
-        model.addAttribute("selectedSportId", sportId);
-        model.addAttribute("selectedFrequence", frequence);
-        
+        model.addAttribute("objectifsProgress", objectifService.getObjectifsAvecProgression(currentUser));
         return "objectif-list";
     }
 

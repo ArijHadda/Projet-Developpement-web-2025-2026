@@ -1,183 +1,131 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Profil - SportTrack</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <title>Profil Utilisateur</title>
 </head>
-<body class="page-profile">
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a th:href="@{/user/profile/{id}(id=${userProfile.id})}" class="navbar-brand">
-                🏃 SportTrack
-            </a>
-            <ul class="navbar-nav">
-                <li><a th:href="@{/activite/list}">Mes Activités</a></li>
-                <li><a th:href="@{/objectif/list}">Objectifs</a></li>
-                <li><a th:href="@{/challenge/list}">Challenges</a></li>
-                <li><a th:href="@{/user/ami/chercher}">Amis</a></li>
-                <li><a th:href="@{/user/logout}" style="color: var(--color-danger);">Déconnexion</a></li>
-            </ul>
-        </div>
-    </nav>
-
-    <div class="container">
-        <!-- Alertes -->
-        <div th:if="${param.badge != null}" class="alert alert-success">
-            <p class="mb-0">🎉 Un nouveau badge a été attribué automatiquement !</p>
-        </div>
-
-        <!-- Header avec actions -->
-        <div class="card" style="margin-top: 2rem;">
-            <div class="flex justify-between items-center" style="flex-wrap: wrap; gap: 1rem;">
-                <div>
-                    <h1 style="margin-bottom: 0.5rem;">
-                        Bonjour, <span th:text="${userProfile.prenom}">Utilisateur</span> ! 👋
-                    </h1>
-                    <p style="color: var(--color-gray-600); margin: 0;">
-                        Bienvenue sur votre espace personnel
-                    </p>
-                </div>
-                <details class="pulse" style="position: relative;">
-                    <summary style="cursor: pointer; list-style: none; background: linear-gradient(135deg, var(--color-accent-blue) 0%, var(--color-info) 100%); color: white; padding: 0.75rem 1.5rem; border-radius: var(--radius-full); font-weight: 500;">
-                        🌤️ Météo: <span th:text="${meteoIcone}">🌤️</span>
-                        <span th:text="${meteoTemperature}">--°C</span>
-                    </summary>
-                    <div style="position: absolute; top: calc(100% + 8px); right: 0; min-width: 280px; background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); padding: 1rem; box-shadow: var(--shadow-xl); z-index: 100;">
-                        <div style="margin-bottom: 0.5rem;"><strong>📍 Ville :</strong> <span th:text="${meteoVille}">-</span></div>
-                        <div style="margin-bottom: 0.5rem;"><strong>☁️ Ciel :</strong> <span th:text="${meteoEtatCiel}">-</span></div>
-                        <div style="margin-bottom: 0.5rem;"><strong>💨 Vent :</strong> <span th:text="${meteoVentVitesse}">-</span> km/h</div>
-                        <div style="margin-bottom: 0.5rem;"><strong>🧭 Direction :</strong> <span th:text="${meteoVentDirection}">-</span></div>
-                        <div><strong>🕐 Moment :</strong> <span th:text="${meteoMoment}">-</span></div>
-                    </div>
-                </details>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="flex gap-md" style="flex-wrap: wrap;">
-                <a th:href="@{/user/profile/update/{IdU}(IdU=${userProfile.id})}" class="btn btn-primary btn-sm">✏️ Modifier profil</a>
-                <a th:href="@{/user/profile/update-password/{IdU}(IdU=${userProfile.id})}" class="btn btn-outline btn-sm">🔒 Mot de passe</a>
-                <a th:href="@{/user/ami/chercher}" class="btn btn-secondary btn-sm">🔍 Chercher amis</a>
-                <a th:href="@{/user/profile/ajouterNivPratique}" class="btn btn-info btn-sm">➕ Sport/niveau</a>
-            </div>
-        </div>
-
-        <!-- Grille principale -->
-        <div class="grid grid-2" style="margin-top: 2rem;">
-            <!-- Colonne gauche: Informations -->
-            <div>
-                <!-- Carte infos personnelles -->
-                <div class="card">
-                    <h3>📋 Informations personnelles</h3>
-                    <div class="grid grid-2" style="gap: 0.75rem;">
-                        <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
-                            <small style="color: var(--color-gray-600);">Nom complet</small>
-                            <p style="font-weight: 600; margin: 0;" th:text="${userProfile.prenom} + ' ' + ${userProfile.nom}">-</p>
-                        </div>
-                        <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
-                            <small style="color: var(--color-gray-600);">Email</small>
-                            <p style="font-weight: 600; margin: 0;" th:text="${userProfile.mail}">-</p>
-                        </div>
-                        <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
-                            <small style="color: var(--color-gray-600);">Sexe</small>
-                            <p style="font-weight: 600; margin: 0;" th:text="${userProfile.sexe} == 'M' ? 'Homme' : 'Femme'">-</p>
-                        </div>
-                        <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
-                            <small style="color: var(--color-gray-600);">Âge</small>
-                            <p style="font-weight: 600; margin: 0;"><span th:text="${userProfile.age}">-</span> ans</p>
-                        </div>
-                        <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
-                            <small style="color: var(--color-gray-600);">Taille</small>
-                            <p style="font-weight: 600; margin: 0;"><span th:text="${userProfile.taille}">-</span> cm</p>
-                        </div>
-                        <div style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md);">
-                            <small style="color: var(--color-gray-600);">Poids</small>
-                            <p style="font-weight: 600; margin: 0;"><span th:text="${userProfile.poids}">-</span> kg</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sports et niveaux -->
-                <div class="card" style="margin-top: 1.5rem;">
-                    <h3>⚽ Mes sports & niveaux</h3>
-                    <div th:if="${#lists.isEmpty(userProfile.listSportNivPratique)}" style="text-align: center; padding: 2rem; color: var(--color-gray-600);">
-                        <p>Aucun sport enregistré</p>
-                        <a th:href="@{/user/profile/ajouterNivPratique}" class="btn btn-primary btn-sm">Ajouter un sport</a>
-                    </div>
-                    <div th:unless="${#lists.isEmpty(userProfile.listSportNivPratique)}" style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
-                        <div th:each="sn : ${userProfile.listSportNivPratique}" class="badge" style="font-size: 1rem; padding: 0.5rem 1rem;">
-                            <span th:text="${sn.sport.nom}">Sport</span> - 
-                            <span th:text="${sn.niveau}">Niveau</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Badges -->
-                <div class="card" style="margin-top: 1.5rem;">
-                    <h3>🏆 Mes badges</h3>
-                    <div th:if="${#lists.isEmpty(userProfile.badges)}" style="text-align: center; padding: 2rem; color: var(--color-gray-600);">
-                        <p>Aucun badge pour le moment</p>
-                        <p style="font-size: 0.875rem;">Continuez vos activités pour débloquer des badges !</p>
-                    </div>
-                    <div th:unless="${#lists.isEmpty(userProfile.badges)}" style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
-                        <span th:each="badge : ${userProfile.badges}" class="badge badge-success" style="font-size: 1rem;" th:text="${badge.entitule}">Badge</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Colonne droite: Actions rapides et Amis -->
-            <div>
-                <!-- Actions rapides -->
-                <div class="card">
-                    <h3>🚀 Actions rapides</h3>
-                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                        <a th:href="@{/activite/add-activite}" class="btn btn-primary" style="justify-content: flex-start;">
-                            ➕ Ajouter une activité
-                        </a>
-                        <a th:href="@{/activite/list}" class="btn btn-secondary" style="justify-content: flex-start;">
-                            📊 Voir mes activités
-                        </a>
-                        <a th:href="@{/objectif/list}" class="btn btn-info" style="justify-content: flex-start;">
-                            🎯 Mes objectifs
-                        </a>
-                        <a th:href="@{/activite/flux-amis}" class="btn" style="justify-content: flex-start; background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%); color: white;">
-                            🌍 Flux d'amis
-                        </a>
-                        <a th:href="@{/challenge/list}" class="btn" style="justify-content: flex-start; background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%); color: white;">
-                            🏆 Espace Challenges
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Invitations -->
-                <div class="card" style="margin-top: 1.5rem;">
-                    <a th:href="@{/user/ami/invitations}" class="btn btn-warning" style="width: 100%;">
-                        📩 Voir mes invitations
-                    </a>
-                </div>
-
-                <!-- Liste d'amis -->
-                <div class="card" style="margin-top: 1.5rem;">
-                    <h3>👥 Mes Amis (<span th:text="${#lists.size(userProfile.amis)}">0</span>)</h3>
-                    <div th:if="${#lists.isEmpty(userProfile.amis)}" style="text-align: center; padding: 2rem; color: var(--color-gray-600);">
-                        <p>Vous n'avez pas encore d'amis</p>
-                        <a th:href="@{/user/ami/chercher}" class="btn btn-primary btn-sm">Chercher des amis</a>
-                    </div>
-                    <div th:unless="${#lists.isEmpty(userProfile.amis)}" style="display: flex; flex-direction: column; gap: 0.75rem;">
-                        <div th:each="ami : ${userProfile.amis}" style="background: var(--color-gray-100); padding: 1rem; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <strong th:text="${ami.prenom} + ' ' + ${ami.nom}">Nom</strong>
-                                <p style="margin: 0; font-size: 0.875rem; color: var(--color-gray-600);" th:text="${ami.mail}">email</p>
-                            </div>
-                            <a th:href="@{/user/profile/{id}(id=${ami.id})}" class="btn btn-sm btn-outline">Voir son profil</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<body>
+<h2>Mon Profil</h2>
+<p th:if="${param.badge != null}" style="color: green; font-weight: bold;">Un nouveau badge a ete attribue automatiquement.</p>
+<a th:href="@{/user/profile/update/{IdU}(IdU=${userProfile.id})}">
+    <button type="button">✏️ Modifier mes infos</button>
+</a>
+<a th:href="@{/user/profile/update-password/{IdU}(IdU=${userProfile.id})}">
+    <button type="button">Modifier le mot de passe</button>
+</a>
+<a th:href="@{/user/ami/chercher}">
+    <button type="button">🔍 Chercher des amis</button>
+</a>
+<a th:href="@{/user/profile/ajouterNivPratique}">
+    <button type="button">Ajouter niv pratique</button>
+</a>
+<details style="display: inline-block; margin-left: 10px; vertical-align: middle; position: relative;">
+    <summary style="cursor: pointer; font-weight: bold; list-style: none;">
+        Meteo: <span th:text="${meteoIcone}">🌤️</span>
+        <span th:text="${meteoTemperature}">Meteo indisponible</span>
+    </summary>
+    <div style="position: absolute; top: calc(100% + 8px); left: 0; min-width: 260px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background-color: #f8f9fa; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); z-index: 20;">
+        <div><strong>Ville :</strong> <span th:text="${meteoVille}">Ville inconnue</span></div>
+        <div><strong>Etat du ciel :</strong> <span th:text="${meteoEtatCiel}">Indisponible</span></div>
+        <div><strong>Vitesse du vent :</strong> <span th:text="${meteoVentVitesse}">-</span></div>
+        <div><strong>Direction :</strong> <span th:text="${meteoVentDirection}">-</span></div>
+        <div><strong>Moment :</strong> <span th:text="${meteoMoment}">-</span></div>
     </div>
+</details>
+<hr/> <p>Bienvenue sur votre espace personnel ! Voici vos informations :</p>
+
+<div style="margin-bottom: 20px;">
+    <p><strong>ID :</strong> <span th:text="${userProfile.id}"></span></p>
+    <p><strong>Nom :</strong> <span th:text="${userProfile.nom}"></span></p>
+    <p><strong>Prénom :</strong> <span th:text="${userProfile.prenom}"></span></p>
+    <p><strong>Email :</strong> <span th:text="${userProfile.mail}"></span></p>
+    <p><strong>Sexe :</strong> <span th:text="${userProfile.sexe}"></span></p>
+    <p><strong>Age :</strong> <span th:text="${userProfile.age}"></span></p>
+    <p><strong>Taille :</strong> <span th:text="${userProfile.taille}"></span></p>
+    <p><strong>Poids :</strong> <span th:text="${userProfile.poids}"></span></p>
+    <p><strong>Sports & niveaux de pratique :</strong></p>
+
+    <ul>
+        <li th:each="sn : ${userProfile.listSportNivPratique}">
+            <span th:text="${sn.sport.nom}"></span> :
+            <span th:text="${sn.niveau}"></span>
+        </li>
+    </ul>
+</div>
+
+<hr/>
+<h3>Mes badges</h3>
+<p th:if="${#lists.isEmpty(userProfile.badges)}">Aucun badge pour le moment.</p>
+<ul th:unless="${#lists.isEmpty(userProfile.badges)}">
+    <li th:each="badge : ${userProfile.badges}" th:text="${badge.entitule}"></li>
+</ul>
+
+<br>
+<hr/>
+
+<div style="margin-top: 10px;">
+    <a th:href="@{/user/ami/invitations}">
+        <button type="button" style="background-color: #f0ad4e; color: white; border: none; padding: 10px;">
+            📩 Voir mes invitations (Demandes d'amis)
+        </button>
+    </a>
+</div>
+<h3>👥 Mes Amis (<span th:text="${#lists.size(userProfile.amis)}">0</span>)</h3>
+
+<br>
+<hr/>
+<div th:if="${#lists.isEmpty(userProfile.amis)}">
+    <p>Vous n'avez pas encore d'amis. <a th:href="@{/user/ami/chercher}">Chercher des amis</a></p>
+</div>
+<ul>
+    <li th:each="ami : ${userProfile.amis}">
+        <strong th:text="${ami.prenom} + ' ' + ${ami.nom}"></strong>
+        (<span th:text="${ami.mail}"></span>)
+        <a th:href="@{/user/profile/{id}(id=${ami.id})}">Voir le profil</a>
+    </li>
+</ul>
+<br>
+<div>
+    <a th:href="@{/activite/add-activite}">
+        <button type="button">Ajouter une activité</button>
+    </a>
+</div>
+<br>
+<div>
+    <a th:href="@{/activite/list}">
+        <button type="button">Voir mes activités</button>
+    </a>
+</div>
+<br>
+<div>
+    <a th:href="@{/objectif/list}">
+        <button type="button" style="background-color: #17a2b8; color: white; border: none; padding: 10px; cursor: pointer;">
+            🎯 Mes Objectifs Mensuels
+        </button>
+    </a>
+</div>
+<br>
+<div>
+    <a th:href="@{/activite/flux-amis}">
+        <button type="button" style="background-color: #e83e8c; color: white; border: none; padding: 10px; cursor: pointer; margin-top: 10px;">
+            🌍 Voir le flux d'activités de mes amis
+        </button>
+    </a>
+</div>
+<br>
+<div>
+    <a th:href="@{/challenge/list}">
+        <button type="button" style="background-color: #5cb85c; color: white; border: none; padding: 10px; cursor: pointer;">
+            🏆 Espace Challenges (Découvrir et Rejoindre)
+        </button>
+    </a>
+</div>
+<br>
+<div>
+    <a th:href="@{/user/logout}">
+        <button type="button">Se déconnecter</button>
+    </a>
+</div>
+
 </body>
 </html>

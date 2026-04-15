@@ -1,61 +1,32 @@
 <!DOCTYPE html>
-<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Set niveau pratique d'un sport - SportTrack</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <title>Set niveau pratique d'un sport</title>
 </head>
-<body class="page-profile">
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="navbar-brand">
-                🏃 SportTrack
-            </a>
-            <ul class="navbar-nav">
-                <li><a th:href="@{/activite/list}">Mes Activités</a></li>
-                <li><a th:href="@{/objectif/list}">Objectifs</a></li>
-                <li><a th:href="@{/challenge/list}">Challenges</a></li>
-                <li><a th:href="@{/user/ami/chercher}">Amis</a></li>
-                <li><a th:href="@{/user/logout}">Déconnexion</a></li>
-            </ul>
-        </div>
-    </nav>
+<body>
+<h2>Ajouter un niveau pratique a un sport</h2>
+<form th:action="@{/user/nivPratique}"  method="post">
+    <label for="sport">Sport:</label>
+    <select name="sport" id="sport">
+        <option value="" disabled selected>-- Choisir un sport --</option>
+        <option th:each="s : ${sports}"
+                th:value="${s.id}"
+                th:text="${s.nom}">
+        </option>
+    </select>
+    <br><br>
+    <label for="niveau">Niveau Pratique:</label>
+    <select id="niveau" name="niveau">
+        <option value="" disabled selected>-- Choisir un niveau --</option>
+        <option th:each="n : ${niveaux}"
+                th:value="${n}"
+                th:text="${n}">
+        </option>
+    </select>
+    <br><br>
+    <input type="submit" value="valider">
 
-    <div class="container">
-        <div class="card" style="max-width: 500px; margin: 2rem auto;">
-            <h1>➕ Ajouter un niveau pratique à un sport</h1>
-            
-            <form th:action="@{/user/nivPratique}" method="post">
-                <div class="form-group">
-                    <label for="sport">🏃 Sport</label>
-                    <select name="sport" id="sport" class="form-control" required>
-                        <option value="" disabled selected>-- Choisir un sport --</option>
-                        <option th:each="s : ${sports}"
-                                th:value="${s.id}"
-                                th:text="${s.nom}">
-                        </option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="niveau">📊 Niveau de Pratique</label>
-                    <select id="niveau" name="niveau" class="form-control" required>
-                        <option value="" disabled selected>-- Choisir un niveau --</option>
-                        <option th:each="n : ${niveaux}"
-                                th:value="${n}"
-                                th:text="${n}">
-                        </option>
-                    </select>
-                </div>
-
-                <div class="flex gap-sm" style="margin-top: 1.5rem;">
-                    <button type="submit" class="btn btn-primary">💾 Valider</button>
-                    <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="btn btn-outline">🔙 Retour au profil</a>
-                </div>
-            </form>
-        </div>
-    </div>
+</form>
 </body>
 </html>

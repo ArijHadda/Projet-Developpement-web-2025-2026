@@ -1,93 +1,61 @@
 <!DOCTYPE html>
-<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liste des utilisateurs - SportTrack</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <title>Liste des utilisateurs</title>
 </head>
-<body class="page-profile">
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="navbar-brand">
-                🏃 SportTrack
-            </a>
-            <ul class="navbar-nav">
-                <li><a th:href="@{/activite/list}">Mes Activités</a></li>
-                <li><a th:href="@{/objectif/list}">Objectifs</a></li>
-                <li><a th:href="@{/challenge/list}">Challenges</a></li>
-                <li><a th:href="@{/user/ami/chercher}">Amis</a></li>
-                <li><a th:href="@{/user/logout}">Déconnexion</a></li>
+<body>
+<h2>Chercher des amis</h2>
+<div th:if="${success}" style="background-color: #d4edda; color: #155724; padding: 10px; margin-bottom: 15px; border: 1px solid #c3e6cb; border-radius: 4px;">
+    <span th:text="${success}"></span>
+</div>
+
+<div th:if="${error}" style="background-color: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border: 1px solid #f5c6cb; border-radius: 4px;">
+    <span th:text="${error}"></span>
+</div>
+<a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}">← Retour au profil</a>
+<hr/>
+<form th:action="@{/user/ami/chercher}" method="get" style="margin-bottom: 20px;">
+    <input type="text" name="motCle" th:value="${motCle}" placeholder="Rechercher par nom ou prénom..." style="padding: 5px; width: 250px;"/>
+    <button type="submit" style="padding: 5px 10px;">🔍 Chercher</button>
+    <a th:if="${motCle != null and !motCle.isEmpty()}" th:href="@{/user/ami/chercher}" style="margin-left: 10px; color: red; text-decoration: none;">✖ Annuler</a>
+</form>
+<table>
+    <tr>
+        <td>Nom</td>
+        <td>Prenom</td>
+        <td>Mail</td>
+        <td>Sexe</td>
+        <td>Age</td>
+        <td>Niveau de pratique</td>
+    </tr>
+    <tr th:each="u : ${utiliste}" th:if="${u.id != session.loggedInUser.id}">
+        <td th:text="${u.nom}"></td>
+        <td th:text="${u.prenom}"></td>
+        <td th:text="${u.mail}"></td>
+        <td th:text="${u.sexe}"></td>
+        <td th:text="${u.age}"></td>
+        <td th:switch="${#lists.isEmpty(u.listSportNivPratique)}">
+            <span th:case="true" style="color: gray;">Aucune information</span>
+
+            <ul th:case="*">
+                <li th:each="sn : ${u.listSportNivPratique}">
+                    <span th:text="${sn.sport.nom}"></span> : <span th:text="${sn.niveau}"></span>
+                </li>
             </ul>
-        </div>
-    </nav>
+        </td>
+        <td>
+            <span th:if="${#lists.contains(mesAmis, u)}" style="color: green;">✅ Déjà ami</span>
 
-    <div class="container">
-        <div class="flex justify-between items-center" style="margin: 2rem 0;">
-            <h1>🔍 Chercher des amis</h1>
-            <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="btn btn-outline">
-                🔙 Retour au profil
-            </a>
-        </div>
+            <span th:if="${!#lists.contains(mesAmis, u) && #lists.contains(waitingIds, u.id)}" style="color: orange;">⏳ En attente...</span>
 
-        <div th:if="${success}" class="alert alert-success">
-            <span th:text="${success}"></span>
-        </div>
-        <div th:if="${error}" class="alert alert-danger">
-            <span th:text="${error}"></span>
-        </div>
-
-        <div class="card">
-            <form th:action="@{/user/ami/chercher}" method="get" class="flex gap-sm" style="margin-bottom: 1.5rem;">
-                <input type="text" name="motCle" th:value="${motCle}" class="form-control" placeholder="Rechercher par nom ou prénom..."/>
-                <button type="submit" class="btn btn-primary">🔍 Chercher</button>
-                <a th:if="${motCle != null and !motCle.isEmpty()}" th:href="@{/user/ami/chercher}" class="btn btn-outline">
-                    ✖ Annuler
-                </a>
+            <form th:if="${!#lists.contains(mesAmis, u) && !#lists.contains(waitingIds, u.id)}"
+                  th:action="@{/user/ami/demander/{id}(id=${u.id})}" method="post">
+                <button type="submit">➕ Ajouter</button>
             </form>
+        </td>
+    </tr>
+</table>
 
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>👤 Nom</th>
-                            <th>📝 Prénom</th>
-                            <th>📧 Email</th>
-                            <th>⚧ Sexe</th>
-                            <th>🎂 Âge</th>
-                            <th>🏃 Niveau de pratique</th>
-                            <th>⚡ Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="u : ${utiliste}" th:if="${u.id != session.loggedInUser.id}">
-                            <td th:text="${u.nom}"></td>
-                            <td th:text="${u.prenom}"></td>
-                            <td th:text="${u.mail}"></td>
-                            <td th:text="${u.sexe}"></td>
-                            <td th:text="${u.age}"></td>
-                            <td th:switch="${#lists.isEmpty(u.listSportNivPratique)}">
-                                <span th:case="true" class="text-muted">Aucune information</span>
-                                <ul th:case="*" style="list-style: none; padding: 0; margin: 0;">
-                                    <li th:each="sn : ${u.listSportNivPratique}" class="badge badge-info" style="margin: 0.25rem;">
-                                        <span th:text="${sn.sport.nom}"></span> - <span th:text="${sn.niveau}"></span>
-                                    </li>
-                                </ul>
-                            </td>
-                            <td>
-                                <span th:if="${#lists.contains(mesAmis, u)}" class="badge badge-success">✅ Déjà ami</span>
-                                <span th:if="${!#lists.contains(mesAmis, u) && #lists.contains(waitingIds, u.id)}" class="badge badge-warning">⏳ En attente...</span>
-                                <form th:if="${!#lists.contains(mesAmis, u) && !#lists.contains(waitingIds, u.id)}"
-                                      th:action="@{/user/ami/demander/{id}(id=${u.id})}" method="post">
-                                    <button type="submit" class="btn btn-primary btn-sm">➕ Ajouter</button>
-                                </form>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 </body>
 </html>

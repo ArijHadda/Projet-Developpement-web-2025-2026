@@ -55,7 +55,7 @@ class ObjectifControllerTest {
     @Test
     void testListerObjectifs_RedirectIfNoSession() {
         when(session.getAttribute("loggedInUser")).thenReturn(null);
-        String view = objectifController.listerObjectifs(null, null, model, session);
+        String view = objectifController.listerObjectifs(model, session);
         assertEquals("redirect:/user/login", view);
     }
 
@@ -64,7 +64,7 @@ class ObjectifControllerTest {
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
         when(objectifService.getObjectifsAvecProgression(mockUser)).thenReturn(Collections.emptyList());
 
-        String view = objectifController.listerObjectifs(null, null, model, session);
+        String view = objectifController.listerObjectifs(model, session);
 
         assertEquals("objectif-list", view);
         verify(model).addAttribute(eq("objectifsProgress"), anyList());
