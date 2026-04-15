@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400">
+  <defs>
+    <linearGradient id="runnerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF7F50;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#FF6347;stop-opacity:0.1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Abstract runner silhouettes -->
+  <g fill="url(#runnerGrad)">
+    <!-- Runner 1 -->
+    <ellipse cx="100" cy="200" rx="40" ry="80" transform="rotate(-15 100 200)"/>
+    <ellipse cx="180" cy="150" rx="30" ry="60" transform="rotate(30 180 150)"/>
+    <ellipse cx="160" cy="280" rx="25" ry="70" transform="rotate(-20 160 280)"/>
+    <ellipse cx="220" cy="260" rx="20" ry="60" transform="rotate(40 220 260)"/>
+    
+    <!-- Runner 2 -->
+    <ellipse cx="400" cy="180" rx="45" ry="85" transform="rotate(-10 400 180)"/>
+    <ellipse cx="490" cy="130" rx="35" ry="65" transform="rotate(25 490 130)"/>
+    <ellipse cx="470" cy="300" rx="30" ry="75" transform="rotate(-15 470 300)"/>
+    <ellipse cx="540" cy="280" rx="25" ry="65" transform="rotate(35 540 280)"/>
+    
+    <!-- Runner 3 -->
+    <ellipse cx="700" cy="190" rx="40" ry="80" transform="rotate(-20 700 190)"/>
+    <ellipse cx="780" cy="140" rx="30" ry="60" transform="rotate(35 780 140)"/>
+    <ellipse cx="760" cy="290" rx="25" ry="70" transform="rotate(-25 760 290)"/>
+  </g>
+  
+  <!-- Decorative circles -->
+  <circle cx="50" cy="50" r="30" fill="#FFD700" opacity="0.2"/>
+  <circle cx="750" cy="100" r="40" fill="#90EE90" opacity="0.2"/>
+  <circle cx="400" cy="350" r="50" fill="#87CEFA" opacity="0.2"/>
+  <circle cx="200" cy="80" r="25" fill="#FF7F50" opacity="0.15"/>
+  <circle cx="600" cy="320" r="35" fill="#DDA0DD" opacity="0.2"/>
+</svg>

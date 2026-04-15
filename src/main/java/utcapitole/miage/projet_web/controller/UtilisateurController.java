@@ -48,6 +48,15 @@ public class UtilisateurController {
     @Autowired
     private BadgeAttributionService badgeAttributionService;
 
+    @Autowired
+    private utcapitole.miage.projet_web.model.jpa.ActiviteService activiteService;
+
+    @Autowired
+    private utcapitole.miage.projet_web.model.jpa.ObjectifService objectifService;
+
+    @Autowired
+    private utcapitole.miage.projet_web.model.jpa.ChallengeService challengeService;
+
     @GetMapping("/login")
     public String showLoginForm() {
         return "login";
@@ -100,16 +109,34 @@ public class UtilisateurController {
             return "redirect:/user/login";
         }
 
-        Map<String, Object> infosMeteo = recupererInfosMeteo();
-        model.addAttribute("meteoTemperature", infosMeteo.get(METEO_TEMPERATURE));
-        model.addAttribute("meteoIcone", infosMeteo.get(METEO_ICONE));
-        model.addAttribute("meteoVille", infosMeteo.get(METEO_VILLE));
-        model.addAttribute("meteoEtatCiel", infosMeteo.get(METEO_ETAT_CIEL));
-        model.addAttribute("meteoVentVitesse", infosMeteo.get(METEO_VENT_VITESSE));
-        model.addAttribute("meteoVentDirection", infosMeteo.get(METEO_VENT_DIRECTION));
-        model.addAttribute("meteoMoment", infosMeteo.get(METEO_MOMENT));
-        model.addAttribute("userProfile", user);
-        return "profile";
+        // Si c'est le profil de l'utilisateur connecte, afficher son propre profil
+        if (loggedInUser.getId().equals(IdU)) {
+            Map<String, Object> infosMeteo = recupererInfosMeteo();
+            model.addAttribute("meteoTemperature", infosMeteo.get(METEO_TEMPERATURE));
+            model.addAttribute("meteoIcone", infosMeteo.get(METEO_ICONE));
+            model.addAttribute("meteoVille", infosMeteo.get(METEO_VILLE));
+            model.addAttribute("meteoEtatCiel", infosMeteo.get(METEO_ETAT_CIEL));
+            model.addAttribute("meteoVentVitesse", infosMeteo.get(METEO_VENT_VITESSE));
+            model.addAttribute("meteoVentDirection", infosMeteo.get(METEO_VENT_DIRECTION));
+            model.addAttribute("meteoMoment", infosMeteo.get(METEO_MOMENT));
+            model.addAttribute("userProfile", user);
+            return "profile";
+        }
+        
+        // Si c'est le profil d'un ami, afficher le profil ami en lecture seule
+        model.addAttribute("ami", user);
+        // Ajouter les activites recentes de l'ami
+        List<Activite> activitesAmi = activiteService.getActivitesByUtilisateur(user);
+        if (activitesAmi != null && activitesAmi.size() > 5) {
+            activitesAmi = activitesAmi.subList(0, 5);
+        }
+        model.addAttribute("activitesRecentes", activitesAmi);
+        // Ajouter les objectifs en cours de l'ami
+        model.addAttribute("objectifsEnCours", objectifService.getObjectifsAvecProgression(user));
+        // Ajouter les challenges auxquels l'ami participe
+        // model.addAttribute("challengesParticipes", challengeService.getChallengesByParticipant(user.getId()));
+        
+        return "ami-profile";
     }
 
     private Map<String, Object> recupererInfosMeteo() {
