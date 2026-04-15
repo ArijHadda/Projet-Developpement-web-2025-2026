@@ -92,63 +92,50 @@
         <!-- Activites recentes -->
         <div th:if="${!#lists.isEmpty(activitesRecentes)}">
             <h3 class="mt-lg">Activites recentes</h3>
-            <div th:each="act : ${activitesRecentes}" class="card" style="margin-bottom: 1.5rem;">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h3 style="color: var(--color-accent-blue); margin-bottom: 0.5rem;">
-                            <span th:text="${act.nom}"></span>
-                        </h3>
-                        <p class="text-muted">
-                            📅 Le <span th:text="${act.date}"></span>
-                        </p>
-                    </div>
+            <div th:each="act : ${activitesRecentes}" class="activity-card">
+                <div class="activity-header">
+                    🏃‍♂️ <span th:text="${act.nom}">Activité</span>
                 </div>
 
-                <div class="divider"></div>
-
-                <div class="grid grid-4" style="text-align: center;">
-                    <div class="badge badge-info">
-                        ⏱️ <span th:text="${act.duree}"></span> min
-                    </div>
-                    <div th:if="${act.sport != null and act.sport.estBaseSurVitesse}" class="badge badge-primary">
-                        📏 <span th:text="${act.distance}"></span> km
-                    </div>
-                    <div th:if="${act.sport == null or !act.sport.estBaseSurVitesse}" class="badge badge-warning">
-                        💪 Intensité: <span th:text="${act.niveauIntensite}"></span>/5
-                    </div>
-                    <div class="badge badge-danger">
-                        🔥 <span th:text="${act.caloriesConsommees}"></span> kcal
-                    </div>
-                    <div class="badge badge-success">
-                        👍 <span th:text="${act.nbKudos}"></span> Kudos
-                    </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; color: var(--color-gray-600); font-size: 0.875rem;">
+                    <span>📅 <span th:text="${act.date}">Date</span></span>
+                    <span th:if="${act.note != null}">⭐ <span th:text="${act.note}">-</span>/10</span>
                 </div>
 
-                <div class="divider"></div>
+                <div class="activity-stats">
+                    <span>⏱️ <strong th:text="${act.duree}">-</strong> min</span>
+                    <span th:if="${act.sport != null and act.sport.estBaseSurVitesse}">📏 <strong th:text="${act.distance}">-</strong> km</span>
+                    <span th:if="${act.sport == null or !act.sport.estBaseSurVitesse}">💪 Intensité: <strong th:text="${act.niveauIntensite}">-</strong>/5</span>
+                    <span>🔥 <strong th:text="${act.caloriesConsommees}">-</strong> kcal</span>
+                    <span style="color: var(--color-warning);">👍 <strong th:text="${act.nbKudos}">-</strong> Kudos</span>
+                </div>
 
-                <div class="flex justify-between items-center">
-                    <form th:action="@{/activite/flux/kudos/{id}(id=${act.id})}" method="post">
+                <div class="activity-actions">
+                    <form th:action="@{/activite/flux/kudos/{id}(id=${act.id})}" method="post" style="margin: 0;">
                         <button th:if="${!#lists.contains(act.likers.![id], session.loggedInUser.id)}"
-                                type="submit" class="btn btn-warning">
+                                type="submit" class="btn btn-sm" style="background: linear-gradient(135deg, #CD853F 0%, #8B4513 100%); color: white;">
                             👏 Bravo !
                         </button>
                         <button th:if="${#lists.contains(act.likers.![id], session.loggedInUser.id)}"
-                                type="submit" class="btn btn-outline">
-                            ✖ Retirer le Bravo
+                                type="submit" class="btn btn-outline btn-sm">
+                            ✖ Retirer
                         </button>
                     </form>
                 </div>
 
-                <div class="card" style="background: var(--color-gray-100); margin-top: 1rem;">
-                    <h4>💬 Commentaires</h4>
-                    <div th:each="com : ${act.commentaires}" class="card" style="padding: 0.75rem; margin-bottom: 0.5rem;">
-                        <strong th:text="${com.auteur.prenom}"></strong> :
-                        <span th:text="${com.contenu}"></span>
+                <!-- Commentaires -->
+                <div class="comments-card">
+                    <h4 style="margin-bottom: 0.75rem; font-size: 1rem;">💬 Commentaires</h4>
+                    <div th:if="${#lists.isEmpty(act.commentaires)}" style="color: var(--color-gray-500); font-style: italic; font-size: 0.875rem;">
+                        Aucun commentaire pour l'instant
                     </div>
-
-                    <form th:action="@{/activite/flux/comment/{id}(id=${act.id})}" method="post" class="flex gap-sm" style="margin-top: 1rem;">
-                        <input type="text" name="contenu" class="form-control" placeholder="Écrire un message..." required>
-                        <button type="submit" class="btn btn-primary">📤 Envoyer</button>
+                    <div th:each="com : ${act.commentaires}" class="comment-item">
+                        <span th:text="${com.auteur.prenom}" style="font-weight: 600;">Auteur</span> :
+                        <span th:text="${com.contenu}">Commentaire</span>
+                    </div>
+                    <form th:action="@{/activite/flux/comment/{id}(id=${act.id})}" method="post" style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                        <input type="text" name="contenu" class="form-control" placeholder="Ajouter un commentaire..." required style="flex: 1;">
+                        <button type="submit" class="btn btn-primary btn-sm">Envoyer</button>
                     </form>
                 </div>
             </div>

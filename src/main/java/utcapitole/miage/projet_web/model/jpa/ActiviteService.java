@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Commentaire;
 import utcapitole.miage.projet_web.model.Utilisateur;
+import utcapitole.miage.projet_web.model.Sport;
 
 @Service
 public class ActiviteService {
@@ -40,7 +41,6 @@ public class ActiviteService {
     }
 
     public Activite enregistrerActivite(Activite activite) {
-        
         // 1. Associer le Sport s'il n'est pas déjà présent
         if (activite.getSport() == null && activite.getNom() != null) {
             activite.setSport(sportRepository.findByNom(activite.getNom()));
@@ -64,90 +64,84 @@ public class ActiviteService {
 
     private double[] getCoordonnees() {
         try {
-            // Utilisation d'un API IP pour obtenir les coordonnées automatiquement (via ip-api)
+            @SuppressWarnings("unchecked")
             Map<String, Object> response = restTemplate.getForObject("http://ip-api.com/json/", Map.class);
+            if (response == null || response.get("lat") == null || response.get("lon") == null) {
+                return new double[]{43.6047, 1.4442};
+            }
             double lat = ((Number) response.get("lat")).doubleValue();
             double lon = ((Number) response.get("lon")).doubleValue();
             return new double[]{lat, lon};
         } catch (Exception e) {
-            // Coordonnées par défaut (Toulouse) en cas d'échec de l'API
             return new double[]{43.6047, 1.4442};
         }
-    }
-
-    private int calculerCalories(Activite activite) {
-        Utilisateur user = activite.getUtilisateur();
-        utcapitole.miage.projet_web.model.Sport sport = activite.getSport();
-        
-        if (user == null || activite.getDuree() <= 0) {
-            return 0;
-        }
-
-        float weight = user.getPoids();
-        if (weight <= 0) {
-            weight = 70.0f; // Poids par défaut si non renseigné
-        }
-
-        double durationMinutes = activite.getDuree();
-        double durationHours = durationMinutes / 60.0;
-        
-        double met = 4.0; // Valeur par défaut
-
-       /* if (sport != null) {
-            if (Boolean.TRUE.equals(sport.getEstBaseSurVitesse())) {
-                double distance = activite.getDistance();
-                double speedKmH = (durationHours > 0) ? (distance / durationHours) : 0;
-                met = sport.getIntensiteBase() + sport.getCoeffIntensite() * speedKmH;
-            } else {
-                // Utilise le niveau d'intensité de l'activité (par défaut 3 si non renseigné)
-                int niveau = (activite.getNiveauIntensite() > 0) ? activite.getNiveauIntensite() : 3;
-                met = sport.getIntensiteBase() + sport.getCoeffIntensite() * niveau;
-            }
-        }
-        */
-        if (sport != null) {
-
-            double intensiteBase = (sport.getIntensiteBase() != null) ? sport.getIntensiteBase() : 0.0;
-            double coeff = (sport.getCoeffIntensite() != null) ? sport.getCoeffIntensite() : 0.0;
-
-            if (Boolean.TRUE.equals(sport.getEstBaseSurVitesse())) {
-                double distance = activite.getDistance();
-                double speedKmH = (durationHours > 0) ? (distance / durationHours) : 0;
-                met = intensiteBase + coeff * speedKmH;
-            } else {
-                int niveau = (activite.getNiveauIntensite() > 0) ? activite.getNiveauIntensite() : 3;
-                met = intensiteBase + coeff * niveau;
-            }
-        }
-        else {
-
-            // Logique de repli minimaliste si le Sport n'est pas trouvé
-            String type = (activite.getNom() != null) ? activite.getNom() : "Autre";
-            if (type.equals("Course")) met = 8.0;
-            else if (type.equals("Cyclisme")) met = 6.0;
-            else met = 4.0;
-        }
-
-        // Formule: Calories = MET * Poids * Heures
-        return (int) Math.round(met * weight * durationHours);
     }
 
     private String recupererMeteo(double lat, double lon) {
         try {
             String url = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&current_weather=true";
+            @SuppressWarnings("unchecked")
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            if (response == null || response.get("current_weather") == null) {
+                return "Météo indisponible";
+            }
+
+            @SuppressWarnings("unchecked")
             Map<String, Object> currentWeather = (Map<String, Object>) response.get("current_weather");
-            
             return "Température: " + currentWeather.get("temperature") + "°C";
         } catch (Exception e) {
             return "Météo indisponible";
         }
     }
 
+    //Refactorisation de calculerCalories pour réduire la complexité cognitive (SonarQube java:S3776)
+    private int calculerCalories(Activite activite) {
+        Utilisateur user = activite.getUtilisateur();
+        if (user == null || activite.getDuree() <= 0) {
+            return 0;
+        }
+
+        float weight = user.getPoids() > 0 ? user.getPoids() : 70.0f;
+        double durationHours = activite.getDuree() / 60.0;
+
+        // Délégation de la logique de calcul du MET à une autre méthode
+        double met = determinerMet(activite, durationHours);
+
+        return (int) Math.round(met * weight * durationHours);
+    }
+
+    private double determinerMet(Activite activite, double durationHours) {
+        Sport sport = activite.getSport();
+        if (sport != null) {
+            return calculerMetAvecSport(sport, activite, durationHours);
+        }
+        return calculerMetParDefaut(activite.getNom());
+    }
+
+    private double calculerMetAvecSport(Sport sport, Activite activite, double durationHours) {
+        double intensiteBase = (sport.getIntensiteBase() != null) ? sport.getIntensiteBase() : 0.0;
+        double coeff = (sport.getCoeffIntensite() != null) ? sport.getCoeffIntensite() : 0.0;
+
+        if (Boolean.TRUE.equals(sport.getEstBaseSurVitesse())) {
+            double speedKmH = (durationHours > 0) ? (activite.getDistance() / durationHours) : 0;
+            return intensiteBase + coeff * speedKmH;
+        }
+
+        int niveau = (activite.getNiveauIntensite() > 0) ? activite.getNiveauIntensite() : 3;
+        return intensiteBase + coeff * niveau;
+    }
+
+    private double calculerMetParDefaut(String nomSport) {
+        String type = (nomSport != null) ? nomSport : "Autre";
+        if (type.equals("Course")) return 8.0;
+        if (type.equals("Cyclisme")) return 6.0;
+        return 4.0;
+    }
+
     public List<Activite> getToutesLesActivites() {
         return activiteRepository.findAll();
     }
-    
+
     public List<Activite> getProgresUtilisateur(Long id) {
         return activiteRepository.findByUtilisateurIdOrderByDateDesc(id);
     }
@@ -173,7 +167,7 @@ public class ActiviteService {
         stats.put("totalDuree", totalDuree);
         stats.put("totalDistance", totalDistance);
         stats.put("totalCalories", totalCalories);
-        
+
         return stats;
     }
 

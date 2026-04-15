@@ -15,10 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -102,6 +99,17 @@ class UtilisateurServiceTest {
         assertEquals(75.0f, updatedUser.getPoids());
 
         verify(utilisateurRepository).save(mockUser);
+    }
+
+    // --- NOUVEAU TEST : Couvrir l'exception si l'utilisateur n'est pas trouvé (pour maintenir 100% coverage) ---
+    @Test
+    void testModifierProfileUserNotFoundShouldThrow() {
+        when(utilisateurRepository.findById(CORRECT_ID)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                utilisateurService.modifierProfile(CORRECT_ID, "new@miage.fr", "M", 25, 1.80f, 75.0f)
+        );
+        assertEquals("Utilisateur non trouvé.", exception.getMessage());
     }
 
     @Test
@@ -309,5 +317,33 @@ class UtilisateurServiceTest {
         assertEquals(CORRECT_NOM, result.get(0).getNom());
 
         verify(utilisateurRepository).findByNomContainingIgnoreCaseOrPrenomContainingIgnoreCase(motCle, motCle);
+    }
+
+    @Test
+    void testGetUtilisateurAvecSports() {
+        mockUser.setListSportNivPratique(new ArrayList<>());
+
+        when(utilisateurRepository.findById(CORRECT_ID)).thenReturn(Optional.of(mockUser));
+
+        Utilisateur result = utilisateurService.getUtilisateurAvecSports(CORRECT_ID);
+
+        assertNotNull(result);
+        assertEquals(CORRECT_ID, result.getId());
+        verify(utilisateurRepository).findById(CORRECT_ID);
+    }
+
+    @Test
+    void testGetUtilisateurAvecSportsNotFoundShouldThrow() {
+        when(utilisateurRepository.findById(CORRECT_ID)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () ->
+                utilisateurService.getUtilisateurAvecSports(CORRECT_ID)
+        );
+    }
+
+    @Test
+    void testSave() {
+        utilisateurService.save(mockUser);
+        verify(utilisateurRepository).save(mockUser);
     }
 }

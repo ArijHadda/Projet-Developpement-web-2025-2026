@@ -14,21 +14,27 @@ import java.util.List;
 @Service
 public class ChallengeService {
 
-    @Autowired
-    private ChallengeRepository challengeRepository;
+    private final ChallengeRepository challengeRepository;
+    private final ActiviteRepository activiteRepository;
+    private final ParticipationRepository participationRepository;
 
-    @Autowired
-    private ActiviteRepository activiteRepository;
+    private static final String MESSAGE_DE_INTROUVABLE = "Challenge introuvable";
+    private static final String MESSAGE_NON_AUTORISATION_MODIFIIER = "Non autorisé à modifier ce challenge.";
+    private static final String MESSAGE_NON_AUTORISATION_SUPPRIMER = "Non autorisé à supprimer ce challenge.";
+    private static final String MESSAGE_REPETITION = "Vous participez déjà à ce challenge !";
 
-    @Autowired
-    private ParticipationRepository participationRepository;
+    public ChallengeService(ChallengeRepository challengeRepository, ActiviteRepository activiteRepository, ParticipationRepository participationRepository) {
+        this.challengeRepository = challengeRepository;
+        this.activiteRepository = activiteRepository;
+        this.participationRepository = participationRepository;
+    }
 
     @Autowired
     private BadgeAttributionService badgeAttributionService;
 
     public List<ClassementDTO> getClassement(Long challengeId) {
         Challenge challenge = challengeRepository.findById(challengeId)
-                .orElseThrow(() -> new RuntimeException("Challenge introuvable"));
+                .orElseThrow(() -> new IllegalArgumentException(MESSAGE_DE_INTROUVABLE));
 
         List<ClassementDTO> classement = new ArrayList<>();
 
@@ -65,10 +71,10 @@ public class ChallengeService {
 
     public void rejoindreChallenge(Long challengeId, Utilisateur utilisateur) {
         Challenge challenge = challengeRepository.findById(challengeId)
-                .orElseThrow(() -> new RuntimeException("Challenge introuvable"));
+                .orElseThrow(() -> new IllegalArgumentException(MESSAGE_DE_INTROUVABLE));
 
         if (participationRepository.existsByUtilisateurAndChallenge(utilisateur, challenge)) {
-            throw new RuntimeException("Vous participez d\u00e9j\u00e0 \u00e0 ce challenge !");
+            throw new IllegalStateException(MESSAGE_REPETITION);
         }
 
         Participation participation = new Participation();
@@ -81,24 +87,24 @@ public class ChallengeService {
 
     public void supprimerChallenge(Long challengeId, Utilisateur utilisateurActuel) {
         Challenge challenge = challengeRepository.findById(challengeId)
-                .orElseThrow(() -> new RuntimeException("Challenge introuvable"));
+                .orElseThrow(() -> new IllegalArgumentException(MESSAGE_DE_INTROUVABLE));
 
         if (challenge.getCreateur().getId().equals(utilisateurActuel.getId())) {
             challengeRepository.delete(challenge);
         } else {
-            throw new RuntimeException("Non autoris\u00e9 \u00e0 supprimer ce challenge.");
+            throw new IllegalStateException(MESSAGE_NON_AUTORISATION_SUPPRIMER);
         }
     }
 
     public void modifierTitreChallenge(Long challengeId, String nouveauTitre, Utilisateur utilisateurActuel) {
         Challenge challenge = challengeRepository.findById(challengeId)
-                .orElseThrow(() -> new RuntimeException("Challenge introuvable"));
+                .orElseThrow(() -> new IllegalArgumentException(MESSAGE_DE_INTROUVABLE));
 
         if (challenge.getCreateur().getId().equals(utilisateurActuel.getId())) {
             challenge.setTitre(nouveauTitre);
             challengeRepository.save(challenge);
         } else {
-            throw new RuntimeException("Non autoris\u00e9 \u00e0 modifier ce challenge.");
+            throw new IllegalStateException(MESSAGE_NON_AUTORISATION_MODIFIIER);
         }
     }
 

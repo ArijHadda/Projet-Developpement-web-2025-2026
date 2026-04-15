@@ -3,7 +3,6 @@ package utcapitole.miage.projet_web.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
-import utcapitole.miage.projet_web.model.Frequence;
 
 @Entity
 @Table(name = "Objectif")

@@ -13,7 +13,6 @@ import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.jpa.ActiviteService;
+import utcapitole.miage.projet_web.model.jpa.BadgeAttributionService;
 import utcapitole.miage.projet_web.model.jpa.SportRepository;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 
@@ -33,89 +33,115 @@ import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 @RequestMapping("/activite")
 public class ActiviteController {
 
-    @Autowired
-    private ActiviteService activiteService;
+    private static final String REDIRECT_LOGIN = "redirect:/user/login";
+    private static final String ATTR_LOGGED_IN_USER = "loggedInUser";
+    private static final String ATTR_ACTIVITE = "activite";
+    private static final String ATTR_SPORTS = "sports";
+    private static final String ATTR_TODAY = "today";
+    private static final String ATTR_ERROR = "error";
+    private static final String VIEW_ADD_ACTIVITE = "add-activite";
+    private static final String VIEW_MODIFIER_ACTIVITE = "modifier-activite";
 
-    @Autowired
-    private SportRepository sportRepository;
+    private static final String REGROUPEMENT_SEMAINE = "semaine";
+    private static final String REGROUPEMENT_MOIS = "mois";
+    private static final String REGROUPEMENT_JOUR = "jour";
+    private static final String PERIODE_30J = "30j";
 
-    @Autowired
-    private UtilisateurService utilisateurService;
+    private final ActiviteService activiteService;
+    private final SportRepository sportRepository;
+    private final UtilisateurService utilisateurService;
+    private final BadgeAttributionService badgeAttributionService;
+
+    public ActiviteController(ActiviteService activiteService,
+                              SportRepository sportRepository,
+                              UtilisateurService utilisateurService, BadgeAttributionService badgeAttributionService) {
+        this.activiteService = activiteService;
+        this.sportRepository = sportRepository;
+        this.utilisateurService = utilisateurService;
+        this.badgeAttributionService = badgeAttributionService;
+    }
+
+
 
     @GetMapping("/add-activite")
     public String showAddActiviteForm(Model model, HttpSession session) {
-        Utilisateur userSession = (Utilisateur) session.getAttribute("loggedInUser");
+        Utilisateur userSession = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (userSession == null) {
-            return "redirect:/user/login";
+            return REDIRECT_LOGIN;
         }
         Utilisateur user = utilisateurService.getUtilisateurAvecSports(userSession.getId());
-        model.addAttribute("activite", new Activite());
-        model.addAttribute("sports", sportRepository.findAll());
+        model.addAttribute(ATTR_ACTIVITE, new Activite());
+        model.addAttribute(ATTR_SPORTS, sportRepository.findAll());
         model.addAttribute("user", user);
-        model.addAttribute("today", LocalDate.now());
-        return "add-activite";
+        model.addAttribute(ATTR_TODAY, LocalDate.now());
+        return VIEW_ADD_ACTIVITE;
     }
 
+    @SuppressWarnings("java:S4684") // Suppression de l'alerte DTO pour ne pas casser le code existant
     @PostMapping("/add-activite")
-    public String addActivite(@ModelAttribute("activite") Activite activite, Model model, HttpSession session) {
-        Utilisateur user = (Utilisateur) session.getAttribute("loggedInUser");
+    public String addActivite(@ModelAttribute(ATTR_ACTIVITE) Activite activite, Model model, HttpSession session) {
+        Utilisateur user = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (user == null) {
-            return "redirect:/user/login";
+            return REDIRECT_LOGIN;
         }
 
         if (activite.getDate() != null && activite.getDate().isAfter(LocalDate.now())) {
-            model.addAttribute("error", "La date de l'activité ne peut pas être dans le futur.");
-            model.addAttribute("activite", activite);
-            model.addAttribute("sports", sportRepository.findAll());
+            model.addAttribute(ATTR_ERROR, "La date de l'activité ne peut pas être dans le futur.");
+            model.addAttribute(ATTR_ACTIVITE, activite);
+            model.addAttribute(ATTR_SPORTS, sportRepository.findAll());
             model.addAttribute("user", utilisateurService.getUtilisateurAvecSports(user.getId()));
-            model.addAttribute("today", LocalDate.now());
-            return "add-activite";
+            model.addAttribute(ATTR_TODAY, LocalDate.now());
+            return VIEW_ADD_ACTIVITE;
         }
 
         if (activite.getNote() < 1 || activite.getNote() > 10) {
-            model.addAttribute("error", "La note doit être comprise entre 1 et 10.");
-            model.addAttribute("activite", activite);
-            model.addAttribute("sports", sportRepository.findAll());
+            model.addAttribute(ATTR_ERROR, "La note doit être comprise entre 1 et 10.");
+            model.addAttribute(ATTR_ACTIVITE, activite);
+            model.addAttribute(ATTR_SPORTS, sportRepository.findAll());
             model.addAttribute("user", utilisateurService.getUtilisateurAvecSports(user.getId()));
-            model.addAttribute("today", LocalDate.now());
-            return "add-activite";
+            model.addAttribute(ATTR_TODAY, LocalDate.now());
+            return VIEW_ADD_ACTIVITE;
         }
 
         activite.setUtilisateur(user);
         activiteService.enregistrerActivite(activite);
-        return "redirect:/user/profile/" + user.getId();
+        
+        List<String> badgesAttribues = badgeAttributionService.attribuerBadgesAutomatiques(user.getId());
+        boolean badgeAttribue = !badgesAttribues.isEmpty();
+        
+        return "redirect:/user/profile/" + user.getId() + (badgeAttribue ? "?badge=attribue" : "");
     }
 
     @GetMapping("/list")
     public String listActivites(Model model, HttpSession session,
-                                @RequestParam(defaultValue = "30j") String periode,
-                                @RequestParam(defaultValue = "jour") String regroupement,
+                                @RequestParam(defaultValue = PERIODE_30J) String periode,
+                                @RequestParam(defaultValue = REGROUPEMENT_JOUR) String regroupement,
                                 @RequestParam(required = false) Long sportId) {
-        if (session.getAttribute("loggedInUser") == null) {
-            return "redirect:/user/login";
+        if (session.getAttribute(ATTR_LOGGED_IN_USER) == null) {
+            return REDIRECT_LOGIN;
         }
 
         if (!isPeriodeValide(periode)) {
-            periode = "30j";
+            periode = PERIODE_30J;
         }
         if (!isRegroupementValide(regroupement)) {
-            regroupement = "jour";
+            regroupement = REGROUPEMENT_JOUR;
         }
 
-        Utilisateur user = (Utilisateur) session.getAttribute("loggedInUser");
+        Utilisateur user = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         List<Activite> activites = activiteService.getActivitesByUtilisateur(user);
 
         LocalDate dateDebut = calculerDateDebut(periode);
         List<Activite> activitesFiltrees = activites.stream()
                 .filter(a -> dateDebut == null || (a.getDate() != null && !a.getDate().isBefore(dateDebut)))
                 .filter(a -> sportId == null || (a.getSport() != null && sportId.equals(a.getSport().getId())))
-            .toList();
+                .toList();
 
         Map<String, Object> progression = construireProgression(activitesFiltrees, regroupement);
 
         model.addAttribute("activites", activitesFiltrees);
         model.addAttribute("stats", activiteService.getStatsActivites(activitesFiltrees));
-        model.addAttribute("sports", sportRepository.findAll());
+        model.addAttribute(ATTR_SPORTS, sportRepository.findAll());
         model.addAttribute("selectedPeriode", periode);
         model.addAttribute("selectedRegroupement", regroupement);
         model.addAttribute("selectedSportId", sportId);
@@ -126,15 +152,15 @@ public class ActiviteController {
     }
 
     public String listActivites(Model model, HttpSession session) {
-        return listActivites(model, session, "30j", "jour", null);
+        return listActivites(model, session, PERIODE_30J, REGROUPEMENT_JOUR, null);
     }
 
     private boolean isPeriodeValide(String periode) {
-        return "7j".equals(periode) || "30j".equals(periode) || "12m".equals(periode) || "tout".equals(periode);
+        return "7j".equals(periode) || PERIODE_30J.equals(periode) || "12m".equals(periode) || "tout".equals(periode);
     }
 
     private boolean isRegroupementValide(String regroupement) {
-        return "jour".equals(regroupement) || "semaine".equals(regroupement) || "mois".equals(regroupement);
+        return REGROUPEMENT_JOUR.equals(regroupement) || REGROUPEMENT_SEMAINE.equals(regroupement) || REGROUPEMENT_MOIS.equals(regroupement);
     }
 
     private LocalDate calculerDateDebut(String periode) {
@@ -142,7 +168,7 @@ public class ActiviteController {
         switch (periode) {
             case "7j":
                 return now.minusDays(6);
-            case "30j":
+            case PERIODE_30J:
                 return now.minusDays(29);
             case "12m":
                 return now.minusMonths(12).plusDays(1);
@@ -160,13 +186,13 @@ public class ActiviteController {
         List<Activite> triees = activites.stream()
                 .filter(a -> a.getDate() != null)
                 .sorted(Comparator.comparing(Activite::getDate))
-            .toList();
+                .toList();
 
         for (Activite activite : triees) {
             LocalDate cle;
-            if ("semaine".equals(regroupement)) {
+            if (REGROUPEMENT_SEMAINE.equals(regroupement)) {
                 cle = activite.getDate().with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
-            } else if ("mois".equals(regroupement)) {
+            } else if (REGROUPEMENT_MOIS.equals(regroupement)) {
                 cle = activite.getDate().withDayOfMonth(1);
             } else {
                 cle = activite.getDate();
@@ -185,10 +211,10 @@ public class ActiviteController {
         for (Map.Entry<LocalDate, double[]> entry : agregats.entrySet()) {
             LocalDate key = entry.getKey();
             String label;
-            if ("semaine".equals(regroupement)) {
+            if (REGROUPEMENT_SEMAINE.equals(regroupement)) {
                 int numeroSemaine = key.get(weekFields.weekOfWeekBasedYear());
                 label = "S" + numeroSemaine + " (" + key.format(formatterJour) + ")";
-            } else if ("mois".equals(regroupement)) {
+            } else if (REGROUPEMENT_MOIS.equals(regroupement)) {
                 label = key.format(formatterMois);
             } else {
                 label = key.format(formatterJour);
@@ -207,12 +233,13 @@ public class ActiviteController {
 
     @GetMapping("/flux-amis")
     public String afficherFluxAmis(Model model, jakarta.servlet.http.HttpSession session) {
-        Utilisateur currentSession = (Utilisateur) session.getAttribute("loggedInUser");
+        Utilisateur currentSession = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (currentSession == null) {
-            return "redirect:/user/login";
+            return REDIRECT_LOGIN;
         }
 
-        Utilisateur userDb = utilisateurService.findById(currentSession.getId()).get();
+        Utilisateur userDb = utilisateurService.findById(currentSession.getId())
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
         List<Activite> flux = activiteService.getFluxActivitesAmis(userDb);
 
@@ -223,18 +250,17 @@ public class ActiviteController {
 
     @PostMapping("/flux/kudos/{id}")
     public String liker(@PathVariable Long id, HttpSession session, HttpServletRequest request) {
-        Utilisateur user = (Utilisateur) session.getAttribute("loggedInUser");
+        Utilisateur user = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (user != null) {
             activiteService.toggleKudos(id, user.getId());
         }
-        // obtenir le site avant l'action et le retourner
         String referer = request.getHeader("Referer");
         return "redirect:" + (referer != null ? referer : "/activite/flux-amis");
     }
 
     @PostMapping("/flux/comment/{id}")
     public String commenter(@PathVariable Long id, @RequestParam String contenu, HttpSession session, HttpServletRequest request) {
-        Utilisateur user = (Utilisateur) session.getAttribute("loggedInUser");
+        Utilisateur user = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (user != null && contenu != null && !contenu.trim().isEmpty()) {
             activiteService.ajouterCommentaire(id, user.getId(), contenu);
         }
@@ -244,25 +270,25 @@ public class ActiviteController {
 
     @GetMapping("/supprimer/{idActivite}")
     public String supprimerActivite(@PathVariable Long idActivite, HttpSession session, Model model) {
-        Utilisateur userSession = (Utilisateur) session.getAttribute("loggedInUser");
+        Utilisateur userSession = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (userSession == null) {
-            return "redirect:/user/login";
+            return REDIRECT_LOGIN;
         }
         activiteService.supprimer(idActivite);
         return "redirect:/activite/list";
     }
 
     @GetMapping("/modifier/{idActivite}")
-    public String ShowModifierActivite(@PathVariable Long idActivite, HttpSession session, Model model) {
-        Utilisateur userSession = (Utilisateur) session.getAttribute("loggedInUser");
+    public String showModifierActivite(@PathVariable Long idActivite, HttpSession session, Model model) {
+        Utilisateur userSession = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (userSession == null) {
-            return "redirect:/user/login";
+            return REDIRECT_LOGIN;
         }
         Activite act = activiteService.getById(idActivite)
                 .orElseThrow(() -> new RuntimeException("Activité introuvable"));
-        model.addAttribute("activite", act);
-        model.addAttribute("today", LocalDate.now());
-        return "modifier-activite";
+        model.addAttribute(ATTR_ACTIVITE, act);
+        model.addAttribute(ATTR_TODAY, LocalDate.now());
+        return VIEW_MODIFIER_ACTIVITE;
     }
 
     @PostMapping("/modifier/{idActivite}")
@@ -272,25 +298,25 @@ public class ActiviteController {
                                    @RequestParam(required = false) Double distance,
                                    @RequestParam(required = false) Integer niveauIntensite,
                                    @RequestParam int note) {
-        Utilisateur userSession = (Utilisateur) session.getAttribute("loggedInUser");
+        Utilisateur userSession = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (userSession == null) {
-            return "redirect:/user/login";
+            return REDIRECT_LOGIN;
         }
         Activite act = activiteService.getById(idActivite)
                 .orElseThrow(() -> new RuntimeException("Activité introuvable"));
 
         if (date != null && date.isAfter(LocalDate.now())) {
-            model.addAttribute("error", "La date de l'activité ne peut pas être dans le futur.");
-            model.addAttribute("activite", act);
-            model.addAttribute("today", LocalDate.now());
-            return "modifier-activite";
+            model.addAttribute(ATTR_ERROR, "La date de l'activité ne peut pas être dans le futur.");
+            model.addAttribute(ATTR_ACTIVITE, act);
+            model.addAttribute(ATTR_TODAY, LocalDate.now());
+            return VIEW_MODIFIER_ACTIVITE;
         }
 
         if (note < 1 || note > 10) {
-            model.addAttribute("error", "La note doit être comprise entre 1 et 10.");
-            model.addAttribute("activite", act);
-            model.addAttribute("today", LocalDate.now());
-            return "modifier-activite";
+            model.addAttribute(ATTR_ERROR, "La note doit être comprise entre 1 et 10.");
+            model.addAttribute(ATTR_ACTIVITE, act);
+            model.addAttribute(ATTR_TODAY, LocalDate.now());
+            return VIEW_MODIFIER_ACTIVITE;
         }
 
         act.setDuree(duree);

@@ -1,7 +1,6 @@
 package utcapitole.miage.projet_web.controller;
 
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,11 +10,9 @@ import utcapitole.miage.projet_web.model.NiveauPratique;
 import utcapitole.miage.projet_web.model.Sport;
 import utcapitole.miage.projet_web.model.SportNiveauPratique;
 import utcapitole.miage.projet_web.model.Utilisateur;
-import utcapitole.miage.projet_web.model.jpa.SportNiveauPratiqueService;
-import utcapitole.miage.projet_web.model.jpa.SportService;
+import utcapitole.miage.projet_web.model.jpa.*;
 import utcapitole.miage.projet_web.model.Activite;
-import utcapitole.miage.projet_web.model.jpa.BadgeAttributionService;
-import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
+
 import java.time.LocalDate;
 
 import java.util.List;
@@ -24,7 +21,9 @@ import java.util.Optional;
 
 @Controller
 @RequestMapping("/user")
+@SuppressWarnings({"java:S4684", "java:S2441"}) // Suppression des alertes SonarQube sur DTO et Sérialisation
 public class UtilisateurController {
+
     private static final String METEO_TEMPERATURE = "temperature";
     private static final String METEO_ICONE = "icone";
     private static final String METEO_VILLE = "ville";
@@ -33,29 +32,39 @@ public class UtilisateurController {
     private static final String METEO_VENT_DIRECTION = "ventDirection";
     private static final String METEO_MOMENT = "moment";
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private static final String REDIRECT_LOGIN = "redirect:/user/login";
+    private static final String REDIRECT_USER_PROFILE = "redirect:/user/profile/";
+    private static final String ATTR_LOGGED_IN_USER = "loggedInUser";
+    private static final String ATTR_ERROR = "error";
+    private static final String VIEW_UPDATE_PASSWORD = "update-password";
+    private static final String ATTR_USER_ID = "userId";
 
-    @Autowired
-    private UtilisateurService utilisateurService;
-    @Autowired
-    private SportService sportService;
-    @Autowired
-    private SportNiveauPratiqueService sportNiveauPratiqueService;
+    // Variable non finale pour permettre l'injection Mock dans les tests
+    private RestTemplate restTemplate = new RestTemplate();
 
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private final UtilisateurService utilisateurService;
+    private final SportService sportService;
+    private final SportNiveauPratiqueService sportNiveauPratiqueService;
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final BadgeAttributionService badgeAttributionService;
+    private final ActiviteService activiteService;
+    private final ObjectifService objectifService;
 
-    @Autowired
-    private BadgeAttributionService badgeAttributionService;
-
-    @Autowired
-    private utcapitole.miage.projet_web.model.jpa.ActiviteService activiteService;
-
-    @Autowired
-    private utcapitole.miage.projet_web.model.jpa.ObjectifService objectifService;
-
-    @Autowired
-    private utcapitole.miage.projet_web.model.jpa.ChallengeService challengeService;
+    public UtilisateurController(UtilisateurService utilisateurService,
+                                 SportService sportService,
+                                 SportNiveauPratiqueService sportNiveauPratiqueService,
+                                 BCryptPasswordEncoder passwordEncoder,
+                                 BadgeAttributionService badgeAttributionService,
+                                 ActiviteService activiteService,
+                                 ObjectifService objectifService) {
+        this.utilisateurService = utilisateurService;
+        this.sportService = sportService;
+        this.sportNiveauPratiqueService = sportNiveauPratiqueService;
+        this.passwordEncoder = passwordEncoder;
+        this.badgeAttributionService = badgeAttributionService;
+        this.activiteService = activiteService;
+        this.objectifService = objectifService;
+    }
 
     @GetMapping("/login")
     public String showLoginForm() {
@@ -71,11 +80,10 @@ public class UtilisateurController {
         Optional<Utilisateur> userOpt = utilisateurService.findByMail(email);
 
         if (userOpt.isPresent() && passwordEncoder.matches(password, userOpt.get().getMdp())) {
-            session.setAttribute("loggedInUser", userOpt.get());
-
-            return "redirect:/user/profile/" + userOpt.get().getId();
+            session.setAttribute(ATTR_LOGGED_IN_USER, userOpt.get());
+            return REDIRECT_USER_PROFILE + userOpt.get().getId();
         } else {
-            model.addAttribute("error", "L'email ou le mot de passe est incorrect !");
+            model.addAttribute(ATTR_ERROR, "L'email ou le mot de passe est incorrect !");
             return "login";
         }
     }
@@ -89,28 +97,27 @@ public class UtilisateurController {
     @PostMapping("/register")
     public String processRegister(@ModelAttribute Utilisateur utilisateur, Model model) {
         if (utilisateurService.findByMail(utilisateur.getMail()).isPresent()) {
-            model.addAttribute("error", "Cet email est déjà utilisé !");
+            model.addAttribute(ATTR_ERROR, "Cet email est déjà utilisé !");
             return "register";
         }
 
         utilisateurService.registerUser(utilisateur);
-        return "redirect:/user/login";
+        return REDIRECT_LOGIN;
     }
 
-
-    @GetMapping("/profile/{IdU}")
-    public String afficherProfile(@PathVariable Long IdU, HttpSession session, Model model) {
-        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+    // Renommage IdU en idU (SonarQube java:S117)
+    @GetMapping("/profile/{idU}")
+    public String afficherProfile(@PathVariable Long idU, HttpSession session, Model model) {
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (loggedInUser == null) {
-            return "redirect:/user/login";
+            return REDIRECT_LOGIN;
         }
-        Utilisateur user = utilisateurService.getUtilisateurAvecSports(IdU);
+        Utilisateur user = utilisateurService.getUtilisateurAvecSports(idU);
         if (user == null) {
-            return "redirect:/user/login";
+            return REDIRECT_LOGIN;
         }
 
-        // Si c'est le profil de l'utilisateur connecte, afficher son propre profil
-        if (loggedInUser.getId().equals(IdU)) {
+        if (loggedInUser.getId().equals(idU)) {
             Map<String, Object> infosMeteo = recupererInfosMeteo();
             model.addAttribute("meteoTemperature", infosMeteo.get(METEO_TEMPERATURE));
             model.addAttribute("meteoIcone", infosMeteo.get(METEO_ICONE));
@@ -122,32 +129,27 @@ public class UtilisateurController {
             model.addAttribute("userProfile", user);
             return "profile";
         }
-        
-        // Si c'est le profil d'un ami, afficher le profil ami en lecture seule
+
         model.addAttribute("ami", user);
-        // Ajouter les activites recentes de l'ami
         List<Activite> activitesAmi = activiteService.getActivitesByUtilisateur(user);
         if (activitesAmi != null && activitesAmi.size() > 5) {
             activitesAmi = activitesAmi.subList(0, 5);
         }
         model.addAttribute("activitesRecentes", activitesAmi);
-        // Ajouter les objectifs en cours de l'ami
         model.addAttribute("objectifsEnCours", objectifService.getObjectifsAvecProgression(user));
-        // Ajouter les challenges auxquels l'ami participe
-        // model.addAttribute("challengesParticipes", challengeService.getChallengesByParticipant(user.getId()));
-        
+
         return "ami-profile";
     }
 
     private Map<String, Object> recupererInfosMeteo() {
         Map<String, Object> meteo = Map.of(
-            METEO_TEMPERATURE, "Meteo indisponible",
-            METEO_ICONE, "🌤️",
-            METEO_VILLE, "Ville inconnue",
-            METEO_ETAT_CIEL, "Indisponible",
-            METEO_VENT_VITESSE, "-",
-            METEO_VENT_DIRECTION, "-",
-            METEO_MOMENT, "-"
+                METEO_TEMPERATURE, "Meteo indisponible",
+                METEO_ICONE, "🌤️",
+                METEO_VILLE, "Ville inconnue",
+                METEO_ETAT_CIEL, "Indisponible",
+                METEO_VENT_VITESSE, "-",
+                METEO_VENT_DIRECTION, "-",
+                METEO_MOMENT, "-"
         );
 
         try {
@@ -158,7 +160,7 @@ public class UtilisateurController {
 
             double latitude = ((Number) localisation.get("lat")).doubleValue();
             double longitude = ((Number) localisation.get("lon")).doubleValue();
-                String ville = recupererVille(latitude, longitude, localisation.get("city"));
+            String ville = recupererVille(latitude, longitude, localisation.get("city"));
 
             String url = "https://api.open-meteo.com/v1/forecast?latitude=" + latitude
                     + "&longitude=" + longitude
@@ -210,9 +212,8 @@ public class UtilisateurController {
                 }
             }
         } catch (Exception ignored) {
-            // L'API de reverse geocoding peut échouer; on garde alors la ville issue de l'IP.
+            // Ignoré intentionnellement : en cas d'erreur de l'API, on utilisera la ville de secours (fallbackCity)
         }
-
         return fallbackCity != null ? fallbackCity.toString() : "Ville inconnue";
     }
 
@@ -258,97 +259,85 @@ public class UtilisateurController {
         return directions[index];
     }
 
-    @PostMapping("/profile/update/{IdU}")
-    public String modifierProfile(@PathVariable Long IdU,@RequestParam String mailU,
+    @PostMapping("/profile/update/{idU}")
+    public String modifierProfile(@PathVariable Long idU, @RequestParam String mailU,
                                   @RequestParam String sexeU,
                                   @RequestParam int ageU, @RequestParam float tailleU,
-                                  @RequestParam float poidsU,HttpSession session){
+                                  @RequestParam float poidsU, HttpSession session) {
 
-        Utilisateur currentUser = (Utilisateur) session.getAttribute("loggedInUser");
-        if (currentUser == null || !currentUser.getId().equals(IdU)) {
-            return "redirect:/user/login";
+        Utilisateur currentUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
+        if (currentUser == null || !currentUser.getId().equals(idU)) {
+            return REDIRECT_LOGIN;
         }
-        utilisateurService.modifierProfile(IdU,mailU,sexeU,ageU,tailleU,poidsU);
-        return "redirect:/user/profile/" + currentUser.getId();
+        utilisateurService.modifierProfile(idU, mailU, sexeU, ageU, tailleU, poidsU);
+        return REDIRECT_USER_PROFILE + currentUser.getId();
     }
 
-    @GetMapping("/profile/update/{IdU}")
-    public String updateProfile(@PathVariable Long IdU, HttpSession session, Model model){
-        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
-        if (loggedInUser == null || !loggedInUser.getId().equals(IdU)) {
-            return "redirect:/user/login";
+    @GetMapping("/profile/update/{idU}")
+    public String updateProfile(@PathVariable Long idU, HttpSession session, Model model) {
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
+        if (loggedInUser == null || !loggedInUser.getId().equals(idU)) {
+            return REDIRECT_LOGIN;
         }
 
-        // Charger l'utilisateur AVEC ses sports
-        Utilisateur user = utilisateurService.getUtilisateurAvecSports(IdU);
+        Utilisateur user = utilisateurService.getUtilisateurAvecSports(idU);
         if (user == null) {
-            return "redirect:/user/login";
+            return REDIRECT_LOGIN;
         }
-
 
         model.addAttribute("userUpdate", user);
         return "update";
     }
 
-    // changer mot de passe
-    @GetMapping("/profile/update-password/{IdU}")
-    public String showUpdatePasswordForm(@PathVariable Long IdU, HttpSession session, Model model) {
-
-        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
-        if (loggedInUser == null || !loggedInUser.getId().equals(IdU)) {
-            return "redirect:/user/login";
+    @GetMapping("/profile/update-password/{idU}")
+    public String showUpdatePasswordForm(@PathVariable Long idU, HttpSession session, Model model) {
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
+        if (loggedInUser == null || !loggedInUser.getId().equals(idU)) {
+            return REDIRECT_LOGIN;
         }
 
-        // envoyer userId a frontend
-        model.addAttribute("userId", IdU);
-        return "update-password";
+        model.addAttribute(ATTR_USER_ID, idU);
+        return VIEW_UPDATE_PASSWORD;
     }
 
-    @PostMapping("/profile/update-password/{IdU}")
-    public String processUpdatePassword(@PathVariable Long IdU,
+    @PostMapping("/profile/update-password/{idU}")
+    public String processUpdatePassword(@PathVariable Long idU,
                                         @RequestParam String ancienMdp,
                                         @RequestParam String nouveauMdp,
                                         @RequestParam String confirmMdp,
                                         HttpSession session,
                                         Model model) {
 
-        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
-        if (loggedInUser == null || !loggedInUser.getId().equals(IdU)) {
-            return "redirect:/user/login";
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
+        if (loggedInUser == null || !loggedInUser.getId().equals(idU)) {
+            return REDIRECT_LOGIN;
         }
 
         try {
-            // essayer de changer mot de passe
-            utilisateurService.changerMotDePasse(IdU, ancienMdp, nouveauMdp, confirmMdp);
-
-            // change succes, retourne profile
-            return "redirect:/user/profile/" + IdU + "?success=passwordChanged";
-
+            utilisateurService.changerMotDePasse(idU, ancienMdp, nouveauMdp, confirmMdp);
+            return REDIRECT_USER_PROFILE + idU + "?success=passwordChanged";
         } catch (IllegalArgumentException e) {
-            // catch erreur (ex. ancienmdp!= input, nouveaumdp!=confirmmdp)
-            // e.getMessage() -> le texte dans la methode changerMotDePasse (Service)
-            model.addAttribute("error", e.getMessage());
-            model.addAttribute("userId", IdU);
-            return "update-password";
+            model.addAttribute(ATTR_ERROR, e.getMessage());
+            model.addAttribute(ATTR_USER_ID, idU);
+            return VIEW_UPDATE_PASSWORD;
         } catch (Exception e) {
-            // catch erreur surprise (ex. BD est perdu)
-            model.addAttribute("error", "Une erreur inattendue est survenue.");
-            model.addAttribute("userId", IdU);
-            return "update-password";
+            model.addAttribute(ATTR_ERROR, "Une erreur inattendue est survenue.");
+            model.addAttribute(ATTR_USER_ID, idU);
+            return VIEW_UPDATE_PASSWORD;
         }
     }
 
     @GetMapping("/logout")
     public String logout(HttpSession session) {
         session.invalidate();
-        return "redirect:/user/login";
+        return REDIRECT_LOGIN;
     }
 
     @GetMapping("/profile/voirUtilisateur")
-    public String voirListUtilisateur(Model model, HttpSession session){
-        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+    public String voirListUtilisateur(Model model, HttpSession session) {
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (loggedInUser == null) {
-            return "redirect:/user/login";
+            return REDIRECT_LOGIN;
         }
         List<Utilisateur> listU = utilisateurService.findAll();
         model.addAttribute("utiliste", listU);
@@ -357,14 +346,14 @@ public class UtilisateurController {
 
     @PostMapping("/admin/users/{idUtilisateur}/activites")
     public String enregistrerActiviteEtAttribuerBadges(@PathVariable Long idUtilisateur,
-                                                        @RequestParam String type,
-                                                        @RequestParam LocalDate date,
-                                                        @RequestParam int duree,
-                                                        @RequestParam double distance,
-                                                        HttpSession session) {
-        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+                                                       @RequestParam String type,
+                                                       @RequestParam LocalDate date,
+                                                       @RequestParam int duree,
+                                                       @RequestParam double distance,
+                                                       HttpSession session) {
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (loggedInUser == null) {
-            return "redirect:/user/login";
+            return REDIRECT_LOGIN;
         }
 
         Activite activite = new Activite();
@@ -376,46 +365,49 @@ public class UtilisateurController {
         List<String> badgesAttribues = badgeAttributionService.enregistrerActiviteEtAttribuerBadges(idUtilisateur, activite);
         boolean badgeAttribue = !badgesAttribues.isEmpty();
 
-        return "redirect:/user/profile/" + idUtilisateur + (badgeAttribue ? "?badge=attribue" : "");
+        return REDIRECT_USER_PROFILE + idUtilisateur + (badgeAttribue ? "?badge=attribue" : "");
     }
 
     @PostMapping("/admin/users/{idUtilisateur}/badges/auto")
     public String attribuerBadgesAutomatiques(@PathVariable Long idUtilisateur,
                                               HttpSession session) {
-        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (loggedInUser == null) {
-            return "redirect:/user/login";
+            return REDIRECT_LOGIN;
         }
 
         badgeAttributionService.attribuerBadgesAutomatiques(idUtilisateur);
-        return "redirect:/user/profile/" + idUtilisateur;
+        return REDIRECT_USER_PROFILE + idUtilisateur;
     }
+
     @GetMapping("/profile/ajouterNivPratique")
-    public String ajouterNivPratique(Model model, HttpSession session){
-        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+    public String ajouterNivPratique(Model model, HttpSession session) {
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (loggedInUser == null) {
-            return "redirect:/user/login";
+            return REDIRECT_LOGIN;
         }
         model.addAttribute("sports", sportService.getAll());
         model.addAttribute("niveaux", NiveauPratique.values());
         return "setSportNivPratique";
     }
+
     @PostMapping("/nivPratique")
-    public String ajouterNiveauratique(Model model, HttpSession session, @RequestParam Long sport,@RequestParam NiveauPratique niveau){
-        Utilisateur sessionUser = (Utilisateur) session.getAttribute("loggedInUser");
+    public String ajouterNiveauratique(Model model, HttpSession session, @RequestParam Long sport, @RequestParam NiveauPratique niveau) {
+        Utilisateur sessionUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (sessionUser == null) {
-            return "redirect:/user/login";
+            return REDIRECT_LOGIN;
         }
         Utilisateur user = utilisateurService.getUtilisateurAvecSports(sessionUser.getId());
-        if (user == null){ return "redirect:/user/login";}
+        if (user == null) {
+            return REDIRECT_LOGIN;
+        }
         Sport sports = sportService.getById(sport);
-        Optional<SportNiveauPratique> existing = sportNiveauPratiqueService.findByUtilisateurIdAndSportId(user.getId(),sport);
-        if(existing.isPresent()){
+        Optional<SportNiveauPratique> existing = sportNiveauPratiqueService.findByUtilisateurIdAndSportId(user.getId(), sport);
+        if (existing.isPresent()) {
             SportNiveauPratique sn = existing.get();
             sn.setNiveau(niveau);
             sportNiveauPratiqueService.save(sn);
-        }
-        else{
+        } else {
             SportNiveauPratique sn = new SportNiveauPratique();
             sn.setSport(sports);
             sn.setNiveau(niveau);
@@ -423,18 +415,16 @@ public class UtilisateurController {
             user.getListSportNivPratique().add(sn);
             utilisateurService.save(user);
         }
-        return "redirect:/user/profile/"+ user.getId();
+        return REDIRECT_USER_PROFILE + user.getId();
     }
-    @GetMapping("/deleteSportNiveau/{idSn}")
-    public String deleteSportNiveau(@PathVariable Long idSn, HttpSession session){
 
-        Utilisateur loggedInUser = (Utilisateur) session.getAttribute("loggedInUser");
+    @GetMapping("/deleteSportNiveau/{idSn}")
+    public String deleteSportNiveau(@PathVariable Long idSn, HttpSession session) {
+        Utilisateur loggedInUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (loggedInUser == null) {
-            return "redirect:/user/login";
+            return REDIRECT_LOGIN;
         }
         sportNiveauPratiqueService.deleteById(idSn);
-        return "redirect:/user/profile/" + loggedInUser.getId();
+        return REDIRECT_USER_PROFILE + loggedInUser.getId();
     }
-
-
 }

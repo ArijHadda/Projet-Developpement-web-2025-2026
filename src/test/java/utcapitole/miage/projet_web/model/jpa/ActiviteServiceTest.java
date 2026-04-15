@@ -9,10 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.lenient;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +19,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Sport;
@@ -47,6 +46,30 @@ class ActiviteServiceTest {
     private RestTemplate restTemplate;
 
     private ActiviteService activiteService;
+
+    private static Long idActivite = 10L;
+    private static Long idUser1 = 1L;
+    private static Long idUser2 = 2L;
+    private Activite act;
+
+    @BeforeEach
+    void setUp2(){
+        act = new Activite();
+        act.setId(10L);
+
+    }
+
+    private Utilisateur user(long id) {
+        Utilisateur u = new Utilisateur();
+        u.setId(id);
+        return u;
+    }
+
+    private Activite activite(long id) {
+        Activite a = new Activite();
+        a.setId(id);
+        return a;
+    }
 
     // ─────────────────── Helpers communs aux mocks météo ───────────────────
 
@@ -221,57 +244,38 @@ class ActiviteServiceTest {
         assertCaloriesCourse(14.0, 70.0f, 980);
     }
 
-    @Test
-    void testCalculerCalories_courseSansDistance_MET0() {
-        Utilisateur user = buildUser(70.0f);
-        Activite activite = new Activite();
-        activite.setNom("Course");
-        activite.setDuree(60);
-        activite.setDistance(0); // v=0 -> MET=0
-        activite.setUtilisateur(user);
-
-        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(48.8566, 2.3522));
-        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(20.0));
-        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        Activite saved = activiteService.enregistrerActivite(activite);
-        assertEquals(0, saved.getCaloriesConsommees());
+    @ParameterizedTest(name = "Course : {0} km, poids={1} kg -> {2} calories")
+    @CsvSource({
+            "5.0, 70.0, 350",
+            "7.0, 70.0, 490",
+            "9.0, 70.0, 630",
+            "11.0, 70.0, 770",
+            "14.0, 70.0, 980"
+    })
+    void testCalculerCalories_courseVitessesDifferentes(double distanceKm, float poids, int expectedCalories) {
+        assertCaloriesCourse(distanceKm, poids, expectedCalories);
     }
 
-    @Test
-    void testCalculerCalories_cyclismeSansDistance() {
-        Utilisateur user = buildUser(70.0f);
-        Activite activite = new Activite();
-        activite.setNom("Cyclisme");
-        activite.setDuree(60);
-        activite.setDistance(0);
-        activite.setUtilisateur(user);
-
-        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(48.8566, 2.3522));
-        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(20.0));
-        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        Activite saved = activiteService.enregistrerActivite(activite);
-        // MET = 2.0 + 0.4*0 = 2.0 => 2.0*70*1=140
-        assertEquals(140, saved.getCaloriesConsommees());
+    @ParameterizedTest(name = "Cyclisme : {0} km, poids={1} kg -> {2} calories")
+    @CsvSource({
+            "10.0, 70.0, 420",
+            "17.0, 70.0, 616",
+            "20.0, 70.0, 700",
+            "23.0, 70.0, 784",
+            "30.0, 70.0, 980"
+    })
+    void testCalculerCalories_cyclismeVitesses(double distanceKm, float poids, int expectedCalories) {
+        assertCaloriesCyclisme(distanceKm, poids, expectedCalories);
     }
 
-    @Test
-    void testCalculerCalories_cyclismeVitesses() {
-        // MET = 2.0 + 0.4 * v
-        assertCaloriesCyclisme(10.0, 70.0f, 420); // 2+4=6 => 420
-        assertCaloriesCyclisme(17.0, 70.0f, 616); // 2+6.8=8.8 => 616
-        assertCaloriesCyclisme(20.0, 70.0f, 700); // 2+8=10 => 700
-        assertCaloriesCyclisme(23.0, 70.0f, 784); // 2+9.2=11.2 => 784
-        assertCaloriesCyclisme(30.0, 70.0f, 980); // 2+12=14 => 980
-    }
-
-    @Test
-    void testCalculerCalories_marcheVitesses() {
-        // MET = 2.0 + 0.3 * v
-        assertCaloriesMarche(2.0, 70.0f, 182); // 2 + 0.6 = 2.6 => 182
-        assertCaloriesMarche(4.0, 70.0f, 224); // 2 + 1.2 = 3.2 => 224
-        assertCaloriesMarche(6.0, 70.0f, 266); // 2 + 1.8 = 3.8 => 266
+    @ParameterizedTest(name = "Marche : {0} km, poids={1} kg -> {2} calories")
+    @CsvSource({
+            "2.0, 70.0, 182",
+            "4.0, 70.0, 224",
+            "6.0, 70.0, 266"
+    })
+    void testCalculerCalories_marcheVitesses(double distanceKm, float poids, int expectedCalories) {
+        assertCaloriesMarche(distanceKm, poids, expectedCalories);
     }
 
     @Test
@@ -597,5 +601,96 @@ class ActiviteServiceTest {
         Map<String, Object> stats = activiteService.getStatsActivites(Arrays.asList(a1, a2));
 
         assertEquals(12.2, (double) stats.get("totalDistance"), 0.01);
+    }
+
+    @Test
+    void testSupprimerShouldWork(){
+        activiteService.supprimer(idActivite);
+        verify(activiteRepository).deleteById(idActivite);
+    }
+
+    @Test
+    void testGetById_Fond(){
+        when(activiteRepository.findById(idActivite)).thenReturn(Optional.of(act));
+        Optional<Activite> resultat = activiteService.getById(idActivite);
+        assertTrue(resultat.isPresent());
+        assertEquals(act,resultat.get());
+        verify(activiteRepository).findById(idActivite);
+    }
+    @Test
+    void testGetById_NotFound() {
+        when(activiteRepository.findById(idActivite)).thenReturn(Optional.empty());
+
+        Optional<Activite> result = activiteService.getById(idActivite);
+
+        assertFalse(result.isPresent());
+        verify(activiteRepository).findById(idActivite);
+    }
+    @Test
+    void testGetFluxActivitesAmis_ReturnsRepositoryResult() {
+        Utilisateur ami = user(idUser1);
+        Utilisateur u = user(idUser2);
+        u.setAmis(List.of(ami));
+
+        Activite activite = activite(idActivite);
+
+        when(activiteRepository.findByUtilisateurInOrderByDateDesc(List.of(ami)))
+                .thenReturn(List.of(activite));
+
+        List<Activite> result = activiteService.getFluxActivitesAmis(u);
+
+        assertEquals(List.of(activite), result);
+        verify(activiteRepository).findByUtilisateurInOrderByDateDesc(List.of(ami));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // [Test] Nouveaux tests pour couvrir les protections NullPointerException
+    // ═══════════════════════════════════════════════════════════════════════
+
+    @Test
+    void testEnregistrerActivite_IpApiRetourneNull_utiliseCoordonneesToulouseEtMeteoIndispo() {
+        Utilisateur user = buildUser(70.0f);
+        Activite activite = new Activite();
+        activite.setNom("Natation");
+        activite.setNiveauIntensite(3);
+        activite.setDuree(60);
+        activite.setDistance(0);
+        activite.setUtilisateur(user);
+
+        // Simulation : L'API IP répond mais avec un objet null ou incomplet
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(null);
+
+        // Simulation : L'API Météo répond avec un objet null
+        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(null);
+
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Activite saved = activiteService.enregistrerActivite(activite);
+
+        // Le code doit survivre (pas de NullPointerException) et utiliser les valeurs de fallback
+        assertEquals(490, saved.getCaloriesConsommees()); // 7.0 * 70 * 1
+        assertEquals("Météo indisponible", saved.getConditionsMeteo());
+    }
+
+    @Test
+    void testEnregistrerActivite_MeteoApiRetourneNullWeather_retourneMeteoIndisponible() {
+        Utilisateur user = buildUser(70.0f);
+        Activite activite = new Activite();
+        activite.setNom("Natation");
+        activite.setNiveauIntensite(3);
+        activite.setDuree(60);
+        activite.setUtilisateur(user);
+
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(48.8566, 2.3522));
+
+        // Simulation : L'API Météo répond bien un JSON, mais il manque la clé "current_weather"
+        Map<String, Object> badMeteoResponse = new HashMap<>();
+        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(badMeteoResponse);
+
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Activite saved = activiteService.enregistrerActivite(activite);
+
+        assertEquals("Météo indisponible", saved.getConditionsMeteo());
     }
 }

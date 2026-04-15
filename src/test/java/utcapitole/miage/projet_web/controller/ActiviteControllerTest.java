@@ -12,6 +12,7 @@ import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Sport;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.jpa.ActiviteService;
+import utcapitole.miage.projet_web.model.jpa.BadgeAttributionService;
 import utcapitole.miage.projet_web.model.jpa.SportRepository;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 
@@ -31,7 +32,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ActiviteControllerTest {
+class ActiviteControllerTest {
 
     @Mock
     private ActiviteService activiteService;
@@ -41,6 +42,9 @@ public class ActiviteControllerTest {
 
     @Mock
     private UtilisateurService utilisateurService;
+
+    @Mock
+    private BadgeAttributionService badgeAttributionService;
 
     @Mock
     private jakarta.servlet.http.HttpServletRequest request;
@@ -123,6 +127,7 @@ public class ActiviteControllerTest {
     @Test
     void addActivite_loggedIn_associeUtilisateurEtEnregistre() {
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(badgeAttributionService.attribuerBadgesAutomatiques(mockUser.getId())).thenReturn(Collections.emptyList());
 
         String viewName = activiteController.addActivite(mockActivite, model, session);
 
@@ -130,12 +135,14 @@ public class ActiviteControllerTest {
         assertEquals(mockUser, mockActivite.getUtilisateur(),
                 "L'activité doit être associée à l'utilisateur connecté");
         verify(activiteService).enregistrerActivite(mockActivite);
+        verify(badgeAttributionService).attribuerBadgesAutomatiques(mockUser.getId());
         assertEquals("redirect:/user/profile/1", viewName);
     }
 
     @Test
     void addActivite_loggedIn_redirectsToUserProfile() {
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(badgeAttributionService.attribuerBadgesAutomatiques(mockUser.getId())).thenReturn(Collections.emptyList());
 
         String viewName = activiteController.addActivite(mockActivite, model, session);
 
@@ -157,6 +164,7 @@ public class ActiviteControllerTest {
 
         assertEquals("add-activite", viewName);
         verify(activiteService, never()).enregistrerActivite(any());
+        verify(badgeAttributionService, never()).attribuerBadgesAutomatiques(any());
         verify(model).addAttribute(eq("error"), any());
     }
 
@@ -177,15 +185,15 @@ public class ActiviteControllerTest {
     void listActivites_loggedIn_addsActivitesAndStatsToModel() {
         // Initialisation
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
-        
+
         Activite a1 = new Activite();
         a1.setNom("Running");
         a1.setDate(java.time.LocalDate.now());
         a1.setDuree(45);
-        
+
         List<Activite> activites = Arrays.asList(a1);
         when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(activites);
-        
+
         Map<String, Object> mockStats = new HashMap<>();
         mockStats.put("count", 1);
         when(activiteService.getStatsActivites(activites)).thenReturn(mockStats);
@@ -197,7 +205,7 @@ public class ActiviteControllerTest {
         assertEquals("activiteList", viewName);
         verify(model).addAttribute("activites", activites);
         verify(model).addAttribute("stats", mockStats);
-        
+
         // Vérification explicite pour Issue #62 (données présentes dans l'objet)
         assertEquals("Running", activites.get(0).getNom());
         assertEquals(45, activites.get(0).getDuree());
@@ -215,7 +223,8 @@ public class ActiviteControllerTest {
         verify(model).addAttribute(eq("activites"), any());
         verify(model).addAttribute(eq("stats"), any());
     }
-// Validation de la note d'addActivite
+
+    // Validation de la note d'addActivite
 
     @Test
     void addActivite_noteInferieureA1_resteSurLeFormulaire() {
@@ -232,6 +241,7 @@ public class ActiviteControllerTest {
 
         assertEquals("add-activite", viewName);
         verify(activiteService, never()).enregistrerActivite(any());
+        verify(badgeAttributionService, never()).attribuerBadgesAutomatiques(any());
         verify(model).addAttribute(eq("error"), any());
     }
 
@@ -250,6 +260,7 @@ public class ActiviteControllerTest {
 
         assertEquals("add-activite", viewName);
         verify(activiteService, never()).enregistrerActivite(any());
+        verify(badgeAttributionService, never()).attribuerBadgesAutomatiques(any());
         verify(model).addAttribute(eq("error"), any());
     }
 
@@ -281,7 +292,7 @@ public class ActiviteControllerTest {
     void showModifierActivite_notLoggedIn_redirectsToLogin() {
         when(session.getAttribute("loggedInUser")).thenReturn(null);
 
-        String viewName = activiteController.ShowModifierActivite(1L, session, model);
+        String viewName = activiteController.showModifierActivite(1L, session, model);
 
         assertEquals("redirect:/user/login", viewName);
     }
@@ -291,7 +302,7 @@ public class ActiviteControllerTest {
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
         when(activiteService.getById(1L)).thenReturn(Optional.of(mockActivite));
 
-        String viewName = activiteController.ShowModifierActivite(1L, session, model);
+        String viewName = activiteController.showModifierActivite(1L, session, model);
 
         assertEquals("modifier-activite", viewName);
         verify(model).addAttribute("activite", mockActivite);
@@ -303,9 +314,10 @@ public class ActiviteControllerTest {
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
         when(activiteService.getById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> {
-            activiteController.ShowModifierActivite(999L, session, model);
-        });
+        // Suppression des accolades (java:S5778)
+        assertThrows(RuntimeException.class, () ->
+                activiteController.showModifierActivite(999L, session, model)
+        );
     }
 
     // modifierActivite (POST)
@@ -393,10 +405,10 @@ public class ActiviteControllerTest {
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
         when(activiteService.getById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> {
-            activiteController.modifierActivite(
-                    999L, session, model, LocalDate.now(), 30, null, null, 5);
-        });
+        LocalDate today = LocalDate.now();
+        assertThrows(RuntimeException.class, () ->
+                activiteController.modifierActivite(999L, session, model, today, 30, null, null, 5)
+        );
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -448,7 +460,7 @@ public class ActiviteControllerTest {
 
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
 
-// Action
+        // Action
         String viewName = activiteController.supprimerActivite(10L, session, model);
 
         // Vérification
@@ -489,7 +501,8 @@ public class ActiviteControllerTest {
         String viewName = activiteController.listActivites(model, session, "7j", "jour", null);
 
         assertEquals("activiteList", viewName);
-        verify(model).addAttribute(eq("selectedPeriode"), eq("7j"));
+        // Suppression du eq() (java:S6068)
+        verify(model).addAttribute("selectedPeriode", "7j");
     }
 
     @Test
@@ -502,7 +515,8 @@ public class ActiviteControllerTest {
         String viewName = activiteController.listActivites(model, session, "12m", "jour", null);
 
         assertEquals("activiteList", viewName);
-        verify(model).addAttribute(eq("selectedPeriode"), eq("12m"));
+        // Suppression du eq() (java:S6068)
+        verify(model).addAttribute("selectedPeriode", "12m");
     }
 
     @Test
@@ -523,7 +537,8 @@ public class ActiviteControllerTest {
         String viewName = activiteController.listActivites(model, session, "tout", "jour", null);
 
         assertEquals("activiteList", viewName);
-        verify(model).addAttribute(eq("selectedPeriode"), eq("tout"));
+        // Suppression du eq() (java:S6068)
+        verify(model).addAttribute("selectedPeriode", "tout");
     }
 
     @Test
@@ -536,7 +551,8 @@ public class ActiviteControllerTest {
         String viewName = activiteController.listActivites(model, session, "invalid", "jour", null);
 
         assertEquals("activiteList", viewName);
-        verify(model).addAttribute(eq("selectedPeriode"), eq("30j"));
+        // Suppression du eq() (java:S6068)
+        verify(model).addAttribute("selectedPeriode", "30j");
     }
 
     @Test
@@ -557,7 +573,8 @@ public class ActiviteControllerTest {
         String viewName = activiteController.listActivites(model, session, "30j", "semaine", null);
 
         assertEquals("activiteList", viewName);
-        verify(model).addAttribute(eq("selectedRegroupement"), eq("semaine"));
+        // Suppression du eq() (java:S6068)
+        verify(model).addAttribute("selectedRegroupement", "semaine");
     }
 
     @Test
@@ -578,7 +595,8 @@ public class ActiviteControllerTest {
         String viewName = activiteController.listActivites(model, session, "30j", "mois", null);
 
         assertEquals("activiteList", viewName);
-        verify(model).addAttribute(eq("selectedRegroupement"), eq("mois"));
+        // Suppression du eq() (java:S6068)
+        verify(model).addAttribute("selectedRegroupement", "mois");
     }
 
     @Test
@@ -591,7 +609,8 @@ public class ActiviteControllerTest {
         String viewName = activiteController.listActivites(model, session, "30j", "invalid", null);
 
         assertEquals("activiteList", viewName);
-        verify(model).addAttribute(eq("selectedRegroupement"), eq("jour"));
+        // Suppression du eq() (java:S6068)
+        verify(model).addAttribute("selectedRegroupement", "jour");
     }
 
     @Test
@@ -629,7 +648,8 @@ public class ActiviteControllerTest {
         String viewName = activiteController.listActivites(model, session, "30j", "jour", 1L);
 
         assertEquals("activiteList", viewName);
-        verify(model).addAttribute(eq("selectedSportId"), eq(1L));
+        // Suppression du eq() (java:S6068)
+        verify(model).addAttribute("selectedSportId", 1L);
     }
 
     @Test
@@ -648,7 +668,8 @@ public class ActiviteControllerTest {
         String viewName = activiteController.listActivites(model, session, "7j", "jour", null);
 
         assertEquals("activiteList", viewName);
-        verify(model).addAttribute(eq("selectedPeriode"), eq("7j"));
+        // Suppression du eq() (java:S6068)
+        verify(model).addAttribute("selectedPeriode", "7j");
     }
 
     // --- liker : cas non couverts ---
@@ -721,11 +742,38 @@ public class ActiviteControllerTest {
         assertEquals("redirect:/activite/flux-amis", viewName);
     }
 
+    // --- addActivite : attribution des badges ---
+
+    @Test
+    void addActivite_avecBadgeAttribue_redirigeAvecParametreBadge() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(badgeAttributionService.attribuerBadgesAutomatiques(mockUser.getId())).thenReturn(Arrays.asList("1er 10km"));
+
+        String viewName = activiteController.addActivite(mockActivite, model, session);
+
+        verify(activiteService).enregistrerActivite(mockActivite);
+        verify(badgeAttributionService).attribuerBadgesAutomatiques(mockUser.getId());
+        assertEquals("redirect:/user/profile/1?badge=attribue", viewName);
+    }
+
+    @Test
+    void addActivite_sansBadgeAttribue_redirigeSansParametre() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(badgeAttributionService.attribuerBadgesAutomatiques(mockUser.getId())).thenReturn(Collections.emptyList());
+
+        String viewName = activiteController.addActivite(mockActivite, model, session);
+
+        verify(activiteService).enregistrerActivite(mockActivite);
+        verify(badgeAttributionService).attribuerBadgesAutomatiques(mockUser.getId());
+        assertEquals("redirect:/user/profile/1", viewName);
+    }
+
     // --- addActivite : date null ---
 
     @Test
     void addActivite_dateNull_passeLaValidationNoteEtEnregistre() {
         when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(badgeAttributionService.attribuerBadgesAutomatiques(mockUser.getId())).thenReturn(Collections.emptyList());
 
         Activite nullDateActivite = new Activite();
         nullDateActivite.setNom("Running");
@@ -735,6 +783,7 @@ public class ActiviteControllerTest {
         String viewName = activiteController.addActivite(nullDateActivite, model, session);
 
         verify(activiteService).enregistrerActivite(nullDateActivite);
+        verify(badgeAttributionService).attribuerBadgesAutomatiques(mockUser.getId());
         assertEquals("redirect:/user/profile/1", viewName);
     }
 
@@ -853,7 +902,8 @@ public class ActiviteControllerTest {
         String viewName = activiteController.listActivites(model, session, "7j", "jour", null);
 
         assertEquals("activiteList", viewName);
-        verify(model).addAttribute(eq("stats"), eq(statsRecentSeulement));
+        // Suppression du eq() (java:S6068)
+        verify(model).addAttribute("stats", statsRecentSeulement);
         assertEquals(5.0, statsRecentSeulement.get("totalDistance"));
         assertEquals(300, statsRecentSeulement.get("totalCalories"));
     }

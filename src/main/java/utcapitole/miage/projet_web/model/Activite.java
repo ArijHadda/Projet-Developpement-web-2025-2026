@@ -74,20 +74,7 @@ public class Activite {
     )
     private List<Utilisateur> likers = new ArrayList<>();
 
-    public Activite() {
-    }
-
-    public Activite(Long id, String nom, LocalDate date, String conditionsMeteo, int duree, double distance, int note,
-            int niveauIntensite, int caloriesConsommees) {
-        this.id = id;
-        this.nom = nom;
-        this.date = date;
-        this.conditionsMeteo = conditionsMeteo;
-        this.duree = duree;
-        this.distance = distance;
-        this.note = note;
-        this.niveauIntensite = niveauIntensite;
-        this.caloriesConsommees = caloriesConsommees;
+    public Activite() { // no args constructor
     }
 
     public Long getId() {

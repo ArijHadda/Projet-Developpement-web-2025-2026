@@ -5,14 +5,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.PathVariable;
 import utcapitole.miage.projet_web.model.Challenge;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.jpa.ChallengeService;
@@ -21,7 +19,6 @@ import utcapitole.miage.projet_web.model.jpa.SportRepository;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -45,22 +42,20 @@ class ChallengeControllerTest {
     private MockHttpSession session;
 
     private Utilisateur mockUser;
+
     @Mock
     private Model model;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         mockUser = new Utilisateur();
         mockUser.setId(1L);
         mockUser.setMail("test@test.com");
 
-        mockMvc = MockMvcBuilders.standaloneSetup(challengeController).build();
-
-        mockUser = new Utilisateur();
-        mockUser.setId(1L);
         session = new MockHttpSession();
         session.setAttribute("loggedInUser", mockUser);
+
+        mockMvc = MockMvcBuilders.standaloneSetup(challengeController).build();
     }
 
     @Test
@@ -116,7 +111,6 @@ class ChallengeControllerTest {
         verify(challengeService).rejoindreChallenge(10L, mockUser);
     }
 
-
     @Test
     void testSupprimerChallenge() throws Exception {
         mockMvc.perform(post("/challenge/10/delete").session(session))
@@ -156,7 +150,6 @@ class ChallengeControllerTest {
                 .andExpect(redirectedUrl("/challenge/list"));
     }
 
-
     @Test
     void testModifierChallengePost() throws Exception {
         mockMvc.perform(post("/challenge/10/edit")
@@ -177,8 +170,7 @@ class ChallengeControllerTest {
 
     @Test
     void testRejoindreChallenge_RejoindreFail_CatchShouldThrowException() throws Exception {
-        session.setAttribute("loggedInUser", mockUser);
-
+        // session est déjà configurée dans setUp()
         doThrow(new RuntimeException("Erreur interne"))
                 .when(challengeService).rejoindreChallenge(10L, mockUser);
 
@@ -187,12 +179,10 @@ class ChallengeControllerTest {
                 .andExpect(redirectedUrl("/challenge/10/classement"));
 
         verify(challengeService).rejoindreChallenge(10L, mockUser);
-
     }
+
     @Test
     void testSupprimerChallenge_SuppressionFail_CatchShouldThrowException() throws Exception {
-        session.setAttribute("loggedInUser", mockUser);
-
         doThrow(new RuntimeException("Erreur interne"))
                 .when(challengeService).supprimerChallenge(10L, mockUser);
 
@@ -201,20 +191,17 @@ class ChallengeControllerTest {
                 .andExpect(redirectedUrl("/challenge/list"));
 
         verify(challengeService).supprimerChallenge(10L, mockUser);
-
     }
+
     @Test
     void testModifierChallenge_ModifyFail_CatchShouldThrowException() throws Exception {
-        session.setAttribute("loggedInUser", mockUser);
-
         doThrow(new RuntimeException("Erreur interne"))
-                .when(challengeService).modifierTitreChallenge(10L, "Nouveau Titre",mockUser);
+                .when(challengeService).modifierTitreChallenge(10L, "Nouveau Titre", mockUser);
 
-        mockMvc.perform(post("/challenge/10/edit").session(session).param("titre","Nouveau Titre"))
+        mockMvc.perform(post("/challenge/10/edit").session(session).param("titre", "Nouveau Titre"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/challenge/list"));
 
-        verify(challengeService).modifierTitreChallenge(10L,"Nouveau Titre", mockUser);
-
+        verify(challengeService).modifierTitreChallenge(10L, "Nouveau Titre", mockUser);
     }
 }
