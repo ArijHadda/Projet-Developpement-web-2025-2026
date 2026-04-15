@@ -177,6 +177,30 @@ class UtilisateurTest {
     }
 
     @Test
+    void testGetAmisWhenNull() {
+        Utilisateur user = new Utilisateur();
+        user.setAmis(null);
+
+        assertNull(user.getAmis());
+    }
+
+    @Test
+    void testGetAmisWhenNotNull() {
+        Utilisateur user = new Utilisateur();
+
+        Utilisateur a1 = new Utilisateur();
+        Utilisateur a2 = new Utilisateur();
+
+        List<Utilisateur> list = new ArrayList<>();
+        list.add(a1);
+        list.add(a2);
+
+        user.setAmis(list);
+
+        assertEquals(2, user.getAmis().size());
+        assertSame(list, user.getAmis());
+    }
+    @Test
     void testAddAmi_AjoutAmi() {
         Utilisateur u1 = new Utilisateur();
         Utilisateur u2 = new Utilisateur();
@@ -273,4 +297,101 @@ class UtilisateurTest {
         assertSame(listB, result);
     }
 
+    @Test
+    void testGetChallengesCreesWhenNull() {
+        Utilisateur user = new Utilisateur();
+        user.setChallengesCrees(null);
+
+        assertNull(user.getChallengesCrees());
+    }
+
+    @Test
+    void testGetChallengesCreesWhenNotNull() {
+        Utilisateur user = new Utilisateur();
+
+        Challenge c1 = new Challenge();
+        Challenge c2 = new Challenge();
+
+        List<Challenge> list = new ArrayList<>();
+        list.add(c1);
+        list.add(c2);
+
+        user.setChallengesCrees(list);
+
+        assertEquals(2, user.getChallengesCrees().size());
+        assertSame(list, user.getChallengesCrees());
+    }
+
+    @Test
+    void testGetListSportNivPratiqueWhenNull() {
+        Utilisateur user = new Utilisateur();
+        user.setListSportNivPratique(null);
+
+        assertNull(user.getListSportNivPratique());
+    }
+
+    @Test
+    void testGetListSportNivPratiqueWhenNotNull() {
+        Utilisateur user = new Utilisateur();
+
+        SportNiveauPratique s1 = new SportNiveauPratique();
+        SportNiveauPratique s2 = new SportNiveauPratique();
+
+        List<SportNiveauPratique> list = new ArrayList<>();
+        list.add(s1);
+        list.add(s2);
+
+        user.setListSportNivPratique(list);
+
+        assertEquals(2, user.getListSportNivPratique().size());
+        assertSame(list, user.getListSportNivPratique());
+    }
+    @Test
+    void testGetParticipationsWhenNull() {
+        Utilisateur user = new Utilisateur();
+        user.setParticipations(null);
+
+        assertNull(user.getParticipations());
+    }
+
+    @Test
+    void testGetParticipationsWhenNotNull() {
+        Utilisateur user = new Utilisateur();
+
+        Participation p1 = new Participation();
+        Participation p2 = new Participation();
+
+        List<Participation> list = new ArrayList<>();
+        list.add(p1);
+        list.add(p2);
+
+        user.setParticipations(list);
+
+        assertEquals(2, user.getParticipations().size());
+        assertSame(list, user.getParticipations());
+    }
+    @Test
+    void testGetObjectifsWhenNull() {
+        Utilisateur user = new Utilisateur();
+        user.setObjectifs(null);
+
+        assertNull(user.getObjectifs());
+    }
+
+    @Test
+    void testGetObjectifsWhenNotNull() {
+        Utilisateur user = new Utilisateur();
+
+        Objectif o1 = new Objectif();
+        Objectif o2 = new Objectif();
+
+        List<Objectif> list = new ArrayList<>();
+        list.add(o1);
+        list.add(o2);
+
+        user.setObjectifs(list);
+
+        assertEquals(2, user.getObjectifs().size());
+        assertSame(list, user.getObjectifs());
+    }
 }
