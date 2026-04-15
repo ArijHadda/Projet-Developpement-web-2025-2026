@@ -239,4 +239,58 @@ public class ActiviteTest {
         assertEquals("Bravo !", activite.getCommentaires().get(0).getContenu());
     }
 
+    @Test
+    void testGetNbKudos_nullLikers_returnsZero() {
+        Activite activite = new Activite();
+        activite.setLikers(null);
+        assertEquals(0, activite.getNbKudos());
+    }
+
+    @Test
+    void testSetAndGetSport() {
+        Activite activite = new Activite();
+        Sport sport = new Sport();
+        sport.setNom("Tennis");
+        
+        activite.setSport(sport);
+        assertEquals(sport, activite.getSport());
+        assertEquals("Tennis", activite.getSport().getNom());
+    }
+
+    @Test
+    void testSetAndGetLikers() {
+        Activite activite = new Activite();
+        Utilisateur u1 = new Utilisateur();
+        u1.setId(1L);
+        Utilisateur u2 = new Utilisateur();
+        u2.setId(2L);
+        
+        java.util.List<Utilisateur> likers = new java.util.ArrayList<>();
+        likers.add(u1);
+        likers.add(u2);
+        
+        activite.setLikers(likers);
+        assertEquals(2, activite.getLikers().size());
+        assertTrue(activite.getLikers().contains(u1));
+        assertTrue(activite.getLikers().contains(u2));
+    }
+
+    @Test
+    void testSetAndGetCommentaires() {
+        Activite activite = new Activite();
+        Commentaire com1 = new Commentaire();
+        com1.setContenu("Commentaire 1");
+        Commentaire com2 = new Commentaire();
+        com2.setContenu("Commentaire 2");
+        
+        java.util.List<Commentaire> commentaires = new java.util.ArrayList<>();
+        commentaires.add(com1);
+        commentaires.add(com2);
+        
+        activite.setCommentaires(commentaires);
+        assertEquals(2, activite.getCommentaires().size());
+        assertEquals("Commentaire 1", activite.getCommentaires().get(0).getContenu());
+        assertEquals("Commentaire 2", activite.getCommentaires().get(1).getContenu());
+    }
+
 }
