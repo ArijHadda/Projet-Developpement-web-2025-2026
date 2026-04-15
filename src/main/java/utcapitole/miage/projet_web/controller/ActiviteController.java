@@ -50,17 +50,18 @@ public class ActiviteController {
     private final ActiviteService activiteService;
     private final SportRepository sportRepository;
     private final UtilisateurService utilisateurService;
+    private final BadgeAttributionService badgeAttributionService;
 
     public ActiviteController(ActiviteService activiteService,
                               SportRepository sportRepository,
-                              UtilisateurService utilisateurService) {
+                              UtilisateurService utilisateurService, BadgeAttributionService badgeAttributionService) {
         this.activiteService = activiteService;
         this.sportRepository = sportRepository;
         this.utilisateurService = utilisateurService;
+        this.badgeAttributionService = badgeAttributionService;
     }
 
-    @Autowired
-    private BadgeAttributionService badgeAttributionService;
+
 
     @GetMapping("/add-activite")
     public String showAddActiviteForm(Model model, HttpSession session) {
