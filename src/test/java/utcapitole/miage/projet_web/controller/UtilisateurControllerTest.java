@@ -525,6 +525,11 @@ class UtilisateurControllerTest {
         public List<String> attribuerBadgesAutomatiques(Long utilisateurId) {
             return autoBadgesToReturn;
         }
+
+        @Override
+        public List<utcapitole.miage.projet_web.model.Badge> getAllBadges() {
+            return new ArrayList<>();
+        }
     }
 
     @Test

@@ -11,6 +11,7 @@ import utcapitole.miage.projet_web.model.Badge;
 import utcapitole.miage.projet_web.model.Utilisateur;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,6 +52,7 @@ class BadgeAttributionServiceTest {
         when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.of(utilisateur));
         Activite activite = new Activite();
         activite.setDistance(10.0);
+
         when(activiteRepository.findByUtilisateurId(USER_ID)).thenReturn(List.of(activite));
         when(activiteRepository.calculerDureeMusculation(USER_ID)).thenReturn(0L);
         when(badgeRepository.findByEntitule(BadgeAttributionService.BADGE_PREMIER_10KM)).thenReturn(Optional.empty());
@@ -82,6 +84,7 @@ class BadgeAttributionServiceTest {
 
     @Test
     void attribuerBadgesAutomatiquesNAttribuePasDeuxFoisLeMemeBadge() {
+        // CORRECTION 1: Ajout de "10KM" pour l'imageName dans le constructeur
         Badge dejaAttribue = new Badge(1L, BadgeAttributionService.BADGE_PREMIER_10KM, "10KM");
         utilisateur.setBadges(new ArrayList<>(List.of(dejaAttribue)));
 
@@ -104,10 +107,10 @@ class BadgeAttributionServiceTest {
         activite.setNom("Course");
         activite.setDistance(10.2);
 
+        // CORRECTION 1: Ajout de "10KM" pour l'imageName
         Badge badge = new Badge(2L, BadgeAttributionService.BADGE_PREMIER_10KM, "10KM");
 
         when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.of(utilisateur));
-        when(activiteRepository.save(activite)).thenReturn(activite);
         when(activiteRepository.findByUtilisateurId(USER_ID)).thenReturn(List.of(activite));
         when(activiteRepository.calculerDureeMusculation(USER_ID)).thenReturn(0L);
         when(badgeRepository.findByEntitule(BadgeAttributionService.BADGE_PREMIER_10KM)).thenReturn(Optional.of(badge));
@@ -140,10 +143,17 @@ class BadgeAttributionServiceTest {
 
     @Test
     void attribuerBadgesAutomatiquesUtiliseBadgeExistantEnBdd() {
-        Badge badgeExistant = new Badge(100L, BadgeAttributionService.BADGE_PREMIER_10KM);
+        // CORRECTION 1: Constructeur valide
+        Badge badgeExistant = new Badge(100L, BadgeAttributionService.BADGE_PREMIER_10KM, "10KM");
 
         when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.of(utilisateur));
-        when(activiteRepository.existsByUtilisateurIdAndDistanceGreaterThanEqual(USER_ID, 10.0)).thenReturn(true);
+
+        // CORRECTION 2: Remplacement de l'ancien appel existsBy... qui n'existe plus dans le Service
+        Activite activite = new Activite();
+        activite.setDistance(15.0);
+        when(activiteRepository.findByUtilisateurId(USER_ID)).thenReturn(List.of(activite));
+        when(activiteRepository.calculerDureeMusculation(USER_ID)).thenReturn(0L);
+
         when(badgeRepository.findByEntitule(BadgeAttributionService.BADGE_PREMIER_10KM)).thenReturn(Optional.of(badgeExistant));
 
         List<String> badgesAttribues = badgeAttributionService.attribuerBadgesAutomatiques(USER_ID);
@@ -152,5 +162,101 @@ class BadgeAttributionServiceTest {
         assertTrue(utilisateur.getBadges().contains(badgeExistant));
         verify(badgeRepository, never()).save(any(Badge.class));
         verify(utilisateurRepository).save(utilisateur);
+    }
+
+    @Test
+    void attribuerBadgesAutomatiques_MusculationBadge() {
+        when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.of(utilisateur));
+        when(activiteRepository.findByUtilisateurId(USER_ID)).thenReturn(List.of()); // Pas de distance
+        when(activiteRepository.calculerDureeMusculation(USER_ID)).thenReturn(600L); // 10h = 600 min
+
+        Badge badgeMuscu = new Badge(3L, BadgeAttributionService.BADGE_10H_MUSCULATION, "10H");
+        when(badgeRepository.findByEntitule(BadgeAttributionService.BADGE_10H_MUSCULATION)).thenReturn(Optional.of(badgeMuscu));
+
+        List<String> badges = badgeAttributionService.attribuerBadgesAutomatiques(USER_ID);
+        assertEquals(1, badges.size());
+        assertEquals(BadgeAttributionService.BADGE_10H_MUSCULATION, badges.get(0));
+    }
+
+    @Test
+    void attribuerBadgesAutomatiques_DureeMusculationNull_NePlantePas() {
+        when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.of(utilisateur));
+        when(activiteRepository.findByUtilisateurId(USER_ID)).thenReturn(List.of());
+        when(activiteRepository.calculerDureeMusculation(USER_ID)).thenReturn(null); // La DB peut retourner null si vide
+
+        List<String> badges = badgeAttributionService.attribuerBadgesAutomatiques(USER_ID);
+
+        assertTrue(badges.isEmpty());
+    }
+
+    @Test
+    void calculerDistanceTotaleEnKm_NormaliseLesGrandesDistances() {
+        when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.of(utilisateur));
+
+        Activite activite = new Activite();
+        activite.setDistance(10000.0); // > 500, le code va le diviser par 1000 -> 10.0 km
+
+        when(activiteRepository.findByUtilisateurId(USER_ID)).thenReturn(List.of(activite));
+        when(activiteRepository.calculerDureeMusculation(USER_ID)).thenReturn(0L);
+
+        Badge badge = new Badge(1L, "10km", "10KM");
+        when(badgeRepository.findByEntitule("10km")).thenReturn(Optional.of(badge));
+
+        List<String> badges = badgeAttributionService.attribuerBadgesAutomatiques(USER_ID);
+
+        assertEquals(1, badges.size());
+        assertEquals("10km", badges.get(0));
+    }
+
+    @Test
+    void calculerDistanceTotaleEnKm_IgnoreActivitesNullesOuNegatives() {
+        when(utilisateurRepository.findById(USER_ID)).thenReturn(Optional.of(utilisateur));
+
+        Activite act1 = null;
+        Activite act2 = new Activite();
+        act2.setDistance(0.0);
+        Activite act3 = new Activite();
+        act3.setDistance(-5.0);
+
+        when(activiteRepository.findByUtilisateurId(USER_ID)).thenReturn(Arrays.asList(act1, act2, act3));
+        when(activiteRepository.calculerDureeMusculation(USER_ID)).thenReturn(0L);
+
+        List<String> badges = badgeAttributionService.attribuerBadgesAutomatiques(USER_ID);
+
+        assertTrue(badges.isEmpty());
+    }
+
+    @Test
+    void attribuerBadgeObjectifComplet_AttribueBadge() {
+        Badge badgeObj = new Badge(BadgeAttributionService.BADGE_OBJECTIF_COMPLETE, "OBJECTIF");
+        when(badgeRepository.findByEntitule(BadgeAttributionService.BADGE_OBJECTIF_COMPLETE)).thenReturn(Optional.of(badgeObj));
+
+        List<String> badges = badgeAttributionService.attribuerBadgeObjectifComplet(utilisateur);
+
+        assertEquals(1, badges.size());
+        assertEquals(BadgeAttributionService.BADGE_OBJECTIF_COMPLETE, badges.get(0));
+        assertTrue(utilisateur.getBadges().contains(badgeObj));
+        verify(utilisateurRepository).save(utilisateur);
+    }
+
+    @Test
+    void attribuerBadgeChallengeGagne_AttribueBadge() {
+        Badge badgeChal = new Badge(BadgeAttributionService.BADGE_CHALLENGE_GAGNE, "CHALLENGE");
+        when(badgeRepository.findByEntitule(BadgeAttributionService.BADGE_CHALLENGE_GAGNE)).thenReturn(Optional.of(badgeChal));
+
+        List<String> badges = badgeAttributionService.attribuerBadgeChallengeGagne(utilisateur);
+
+        assertEquals(1, badges.size());
+        assertEquals(BadgeAttributionService.BADGE_CHALLENGE_GAGNE, badges.get(0));
+        assertTrue(utilisateur.getBadges().contains(badgeChal));
+        verify(utilisateurRepository).save(utilisateur);
+    }
+
+    @Test
+    void getAllBadges_RetourneListe() {
+        when(badgeRepository.findAll()).thenReturn(List.of(new Badge(), new Badge()));
+        List<Badge> badges = badgeAttributionService.getAllBadges();
+        assertEquals(2, badges.size());
+        verify(badgeRepository).findAll();
     }
 }
