@@ -1,6 +1,5 @@
 package utcapitole.miage.projet_web.model.jpa;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import utcapitole.miage.projet_web.dto.ClassementDTO;
 import utcapitole.miage.projet_web.model.Challenge;
@@ -17,20 +16,19 @@ public class ChallengeService {
     private final ChallengeRepository challengeRepository;
     private final ActiviteRepository activiteRepository;
     private final ParticipationRepository participationRepository;
+    private final BadgeAttributionService badgeAttributionService;
 
     private static final String MESSAGE_DE_INTROUVABLE = "Challenge introuvable";
     private static final String MESSAGE_NON_AUTORISATION_MODIFIIER = "Non autorisé à modifier ce challenge.";
     private static final String MESSAGE_NON_AUTORISATION_SUPPRIMER = "Non autorisé à supprimer ce challenge.";
     private static final String MESSAGE_REPETITION = "Vous participez déjà à ce challenge !";
 
-    public ChallengeService(ChallengeRepository challengeRepository, ActiviteRepository activiteRepository, ParticipationRepository participationRepository) {
+    public ChallengeService(ChallengeRepository challengeRepository, ActiviteRepository activiteRepository, ParticipationRepository participationRepository, BadgeAttributionService badgeAttributionService) {
         this.challengeRepository = challengeRepository;
         this.activiteRepository = activiteRepository;
         this.participationRepository = participationRepository;
+        this.badgeAttributionService = badgeAttributionService;
     }
-
-    @Autowired
-    private BadgeAttributionService badgeAttributionService;
 
     public List<ClassementDTO> getClassement(Long challengeId) {
         Challenge challenge = challengeRepository.findById(challengeId)

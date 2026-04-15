@@ -24,27 +24,36 @@ public class BadgeImageMapper {
         // Badges de distance
         if (normalized.equals("10km")) {
             return "10KM";
-        } else if (normalized.equals("25km")) {
+        }
+        if (normalized.equals("25km")) {
             return "25KM";
-        } else if (normalized.equals("50km")) {
+        }
+        if (normalized.equals("50km")) {
             return "50KM";
-        } else if (normalized.equals("100km")) {
+        }
+        if (normalized.equals("100km")) {
             return "100KM";
         }
+
         // Badges de musculation
-        else if (normalized.contains("10h") || normalized.contains("10h musculation")) {
+        if (normalized.contains("10h")) {
             return "10H";
-        } else if (normalized.contains("25h") || normalized.contains("25h musculation")) {
+        }
+        if (normalized.contains("25h")) {
             return "25H";
-        } else if (normalized.contains("50h") || normalized.contains("50h musculation")) {
+        }
+        if (normalized.contains("50h")) {
             return "50H";
-        } else if (normalized.contains("100h") || normalized.contains("100h musculation")) {
+        }
+        if (normalized.contains("100h")) {
             return "100H";
         }
+
         // Badges d'accomplissement
-        else if (normalized.contains("objectif") || normalized.contains("Premier Objectif Complété")) {
+        if (normalized.contains("objectif")) {
             return "OBJECTIF";
-        } else if (normalized.contains("challenge") || normalized.contains("Première Victoire de Challenge")) {
+        }
+        if (normalized.contains("challenge")) {
             return "CHALLENGE";
         }
 
