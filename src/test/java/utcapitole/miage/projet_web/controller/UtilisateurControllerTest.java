@@ -679,4 +679,21 @@ class UtilisateurControllerTest {
         // Restaurer le service par défaut pour les autres tests
         setField(controller, "badgeAttributionService", badgeService);
     }
+
+    @Test
+    void testAfficherProfileMeteoExceptionGenerale() {
+        Utilisateur logged = user(1L, "p@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+        utilisateurService.byId.put(1L, logged);
+        when(restTemplate.getForObject(anyString(), eq(Map.class)))
+                .thenThrow(new RuntimeException("Erreur réseau imprévue"));
+        Model model = new ExtendedModelMap();
+        String view = controller.afficherProfile(1L, session, model);
+        assertEquals("profile", view);
+        assertEquals("Meteo indisponible", model.getAttribute("meteoTemperature"));
+        assertEquals("🌤️", model.getAttribute("meteoIcone"));
+        assertEquals("Ville inconnue", model.getAttribute("meteoVille"));
+        assertEquals("Indisponible", model.getAttribute("meteoEtatCiel"));
+    }
 }
