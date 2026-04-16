@@ -1,4 +1,4 @@
-# Documentation du Système de Style UI SportTrack
+# Documentation du Système de Style UI KudoSport
 
 ## Palette de Couleurs
 
