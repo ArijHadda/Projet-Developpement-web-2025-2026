@@ -65,4 +65,63 @@ class ObjectifTest {
 
         assertTrue(violations.isEmpty(), "Un objectif correctement rempli ne doit avoir aucune erreur");
     }
+
+    @Test
+    void testConstructeurShouldWork(){
+        Objectif obj = new Objectif();
+
+        assertNull(obj.getId());
+        assertNull(obj.getTitre());
+        assertEquals(Frequence.MENSUEL, obj.getFrequence());
+        assertEquals(0, obj.getDuree());
+        assertEquals(0.0, obj.getDistance());
+        assertNull(obj.getUtilisateur());
+        assertNull(obj.getSport());
+    }
+
+    @Test
+    void testSetTitle(){
+        Objectif obj = new Objectif();
+        obj.setTitre("hello");
+        String title = obj.getTitre();
+        assertEquals("hello",title);
+    }
+
+    @Test
+    void testSetFrequence() {
+        Objectif obj = new Objectif();
+        obj.setFrequence(Frequence.QUOTIDIEN);
+        assertEquals(Frequence.QUOTIDIEN, obj.getFrequence());
+    }
+
+    @Test
+    void testSetDuree() {
+        Objectif obj = new Objectif();
+        obj.setDuree(45);
+        assertEquals(45, obj.getDuree());
+    }
+
+    @Test
+    void testSetDistance() {
+        Objectif obj = new Objectif();
+        obj.setDistance(3.2);
+        assertEquals(3.2, obj.getDistance());
+    }
+
+    @Test
+    void testSetUtilisateur() {
+        Objectif obj = new Objectif();
+        Utilisateur user = new Utilisateur();
+
+        obj.setUtilisateur(user);
+        assertEquals(user, obj.getUtilisateur());
+    }
+    @Test
+    void testSetSport() {
+        Objectif obj = new Objectif();
+        Sport sport = new Sport();
+
+        obj.setSport(sport);
+        assertEquals(sport, obj.getSport());
+    }
 }
