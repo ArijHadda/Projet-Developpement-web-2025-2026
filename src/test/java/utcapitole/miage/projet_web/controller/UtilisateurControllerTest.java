@@ -696,4 +696,69 @@ class UtilisateurControllerTest {
         assertEquals("Ville inconnue", model.getAttribute("meteoVille"));
         assertEquals("Indisponible", model.getAttribute("meteoEtatCiel"));
     }
+
+    @Test
+    void testProcessLogin_UserNotFound() {
+        HttpSession session = new MockHttpSession();
+        Model model = new ExtendedModelMap();
+
+        // On s'assure que byMail ne contient pas l'email
+        utilisateurService.byMail.clear();
+
+        String view = controller.processLogin("nonexistent@test.fr", "password", session, model);
+
+        assertEquals("login", view);
+        assertEquals("L'email ou le mot de passe est incorrect !", model.getAttribute("error"));
+    }
+
+    @Test
+    void testProcessUpdatePassword_MismatchId() {
+        Utilisateur logged = user(1L, "admin@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+
+        // Tentative de modifier le mot de passe de l'utilisateur ID 99
+        String view = controller.processUpdatePassword(99L, "old", "new", "new", session, new ExtendedModelMap());
+
+        assertEquals("redirect:/user/login", view);
+    }
+
+    @Test
+    void testModifierProfile_SessionNull() {
+        MockHttpSession session = new MockHttpSession(); // Session vide
+
+        String view = controller.modifierProfile(1L, "mail@test.fr", "M", 30, 1.8f, 80f, session);
+
+        assertEquals("redirect:/user/login", view);
+    }
+
+    @Test
+    void testAfficherProfileMeteoDetailedFieldNulls() {
+        Utilisateur logged = user(1L, "p@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+        utilisateurService.byId.put(1L, logged);
+
+        // Localisation OK
+        Map<String, Object> ipApiResponse = new HashMap<>();
+        ipApiResponse.put("lat", 43.6);
+        ipApiResponse.put("lon", 1.4);
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(ipApiResponse);
+
+        // Weather OK mais current_weather contient des nulls
+        Map<String, Object> weatherResponse = new HashMap<>();
+        Map<String, Object> currentWeather = new HashMap<>();
+        currentWeather.put("temperature", 20.0);
+        // On omet "weathercode" ou on le met à null pour déclencher la condition d'erreur
+        currentWeather.put("weathercode", null); 
+        weatherResponse.put("current_weather", currentWeather);
+        
+        when(restTemplate.getForObject(contains("api.open-meteo.com"), eq(Map.class))).thenReturn(weatherResponse);
+
+        Model model = new ExtendedModelMap();
+        controller.afficherProfile(1L, session, model);
+
+        // Doit retourner "Meteo indisponible" car un champ est null
+        assertEquals("Meteo indisponible", model.getAttribute("meteoTemperature"));
+    }
 }

@@ -224,4 +224,38 @@ class ObjectifControllerTest {
         assertEquals("redirect:/objectif/list", view);
         verify(objectifService, never()).supprimerObjectif(any());
     }
+
+    @Test
+    void testListerObjectifs_FrequenceVide() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(objectifService.getObjectifsAvecProgression(mockUser)).thenReturn(Collections.emptyList());
+
+        // frequence est une chaîne vide
+        String view = objectifController.listerObjectifs(null, "", model, session);
+
+        assertEquals("objectif-list", view);
+        // On vérifie que selectedFrequence est bien l'objet vide dans le modèle
+        verify(model).addAttribute("selectedFrequence", "");
+    }
+
+
+    @Test
+    void testListerObjectifs_FrequenceNonMatch() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        utcapitole.miage.projet_web.dto.ObjectifProgressDTO mockDto = mock(utcapitole.miage.projet_web.dto.ObjectifProgressDTO.class);
+        Objectif mockObjFilter = mock(Objectif.class);
+        when(mockDto.getObjectif()).thenReturn(mockObjFilter);
+        // Fréquence en base : HEBDOMADAIRE
+        doReturn(utcapitole.miage.projet_web.model.Frequence.HEBDOMADAIRE).when(mockObjFilter).getFrequence();
+
+        when(objectifService.getObjectifsAvecProgression(mockUser)).thenReturn(java.util.List.of(mockDto));
+
+        // On filtre par MENSUEL
+        String view = objectifController.listerObjectifs(null, "MENSUEL", model, session);
+
+        assertEquals("objectif-list", view);
+        // La liste résultante doit être vide car HEBDOMADAIRE != MENSUEL
+        verify(model).addAttribute(eq("objectifsProgress"), argThat(list -> ((java.util.List<?>)list).isEmpty()));
+    }
 }

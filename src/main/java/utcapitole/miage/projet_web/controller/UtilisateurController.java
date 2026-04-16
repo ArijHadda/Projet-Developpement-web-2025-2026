@@ -1,6 +1,8 @@
 package utcapitole.miage.projet_web.controller;
 
 import jakarta.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,6 +31,8 @@ import java.util.Optional;
 @RequestMapping("/user")
 @SuppressWarnings({"java:S4684", "java:S2441"})
 public class UtilisateurController {
+
+    private static final Logger logger = LoggerFactory.getLogger(UtilisateurController.class);
 
     // --- Constantes météo ---
     private static final String METEO_TEMPERATURE = "temperature";
@@ -299,7 +303,8 @@ public class UtilisateurController {
                     return villeData.get("name").toString();
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            logger.error("Impossible de récupérer le nom de la ville : {}", e.getMessage());
         }
         return fallbackCity != null ? fallbackCity.toString() : "Ville inconnue";
     }
