@@ -10,17 +10,30 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Initialise tous les badges du système dans la base de données au démarrage
+ * Initialise tous les badges du système dans la base de données au démarrage.
+ * Implémente {@link CommandLineRunner} pour s'exécuter après le démarrage du contexte Spring.
  */
 @Component
 public class BadgeImageInitializer implements CommandLineRunner {
 
+    /**
+     * Dépôt pour la gestion des badges en base de données.
+     */
     private final BadgeRepository badgeRepository;
 
+    /**
+     * Constructeur avec injection de dépendance.
+     * @param badgeRepository Le dépôt des badges
+     */
     public BadgeImageInitializer(BadgeRepository badgeRepository) {
         this.badgeRepository = badgeRepository;
     }
 
+    /**
+     * Méthode d'exécution au démarrage de l'application.
+     * @param args Arguments de la ligne de commande
+     * @throws Exception en cas d'erreur lors de l'initialisation
+     */
     @Override
     public void run(String... args) throws Exception {
 
