@@ -132,6 +132,32 @@ class UtilisateurControllerTest {
         assertEquals("redirect:/user/login", noSession);
     }
 
+    @Test
+    void testUpdateProfileGet_SecurityCheck() {
+        Utilisateur logged = user(1L, "u@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+
+        // Pas de session -> redirect login
+        assertEquals("redirect:/user/login", controller.updateProfile(1L, new MockHttpSession(), new ExtendedModelMap()));
+
+        // Mauvais ID -> redirect login (L414)
+        assertEquals("redirect:/user/login", controller.updateProfile(99L, session, new ExtendedModelMap()));
+    }
+
+    @Test
+    void testShowUpdatePasswordForm_SecurityCheck() {
+        Utilisateur logged = user(1L, "u@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+
+        // Pas de session -> redirect login
+        assertEquals("redirect:/user/login", controller.showUpdatePasswordForm(1L, new MockHttpSession(), new ExtendedModelMap()));
+
+        // Mauvais ID -> redirect login (L442)
+        assertEquals("redirect:/user/login", controller.showUpdatePasswordForm(99L, session, new ExtendedModelMap()));
+    }
+
     // NOUVEAU TEST POUR LA COUVERTURE : Profil de l'ami
     @Test
     void testAfficherProfileAmi() {
@@ -739,26 +765,98 @@ class UtilisateurControllerTest {
         session.setAttribute("loggedInUser", logged);
         utilisateurService.byId.put(1L, logged);
 
-        // Localisation OK
         Map<String, Object> ipApiResponse = new HashMap<>();
         ipApiResponse.put("lat", 43.6);
         ipApiResponse.put("lon", 1.4);
         when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(ipApiResponse);
 
-        // Weather OK mais current_weather contient des nulls
+        // Test L263 : Un champ parmi temperature, weathercode, windspeed, winddirection, is_day est null
+        String[] fields = {"temperature", "weathercode", "windspeed", "winddirection", "is_day"};
+        for (String field : fields) {
+            Map<String, Object> weatherResponse = new HashMap<>();
+            Map<String, Object> currentWeather = new HashMap<>();
+            // On initialise tous les champs au début
+            currentWeather.put("temperature", 20.0);
+            currentWeather.put("weathercode", 0);
+            currentWeather.put("windspeed", 10.0);
+            currentWeather.put("winddirection", 180);
+            currentWeather.put("is_day", 1);
+            
+            // Puis on en met un à null (L263)
+            currentWeather.put(field, null);
+            weatherResponse.put("current_weather", currentWeather);
+            
+            when(restTemplate.getForObject(contains("api.open-meteo.com"), eq(Map.class))).thenReturn(weatherResponse);
+
+            Model model = new ExtendedModelMap();
+            controller.afficherProfile(1L, session, model);
+            assertEquals("Meteo indisponible", model.getAttribute("meteoTemperature"));
+        }
+    }
+
+    @Test
+    void testAfficherProfileMeteoCurrentWeatherNotAMap() {
+        Utilisateur logged = user(1L, "p@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+        utilisateurService.byId.put(1L, logged);
+
+        Map<String, Object> ipApiResponse = new HashMap<>();
+        ipApiResponse.put("lat", 43.6);
+        ipApiResponse.put("lon", 1.4);
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(ipApiResponse);
+
         Map<String, Object> weatherResponse = new HashMap<>();
-        Map<String, Object> currentWeather = new HashMap<>();
-        currentWeather.put("temperature", 20.0);
-        // On omet "weathercode" ou on le met à null pour déclencher la condition d'erreur
-        currentWeather.put("weathercode", null); 
-        weatherResponse.put("current_weather", currentWeather);
-        
+        // current_weather n'est pas une Map (L254)
+        weatherResponse.put("current_weather", "not-a-map");
         when(restTemplate.getForObject(contains("api.open-meteo.com"), eq(Map.class))).thenReturn(weatherResponse);
 
         Model model = new ExtendedModelMap();
         controller.afficherProfile(1L, session, model);
-
-        // Doit retourner "Meteo indisponible" car un champ est null
         assertEquals("Meteo indisponible", model.getAttribute("meteoTemperature"));
+    }
+
+    @Test
+    void testAfficherProfileMeteoGeocodingEdgeCases() {
+        Utilisateur logged = user(1L, "p@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+        utilisateurService.byId.put(1L, logged);
+
+        Map<String, Object> ipApiResponse = new HashMap<>();
+        ipApiResponse.put("lat", 43.6);
+        ipApiResponse.put("lon", 1.4);
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(ipApiResponse);
+
+        // L300 : response == null pour le geocoding
+        when(restTemplate.getForObject(contains("geocoding-api.open-meteo.com"), eq(Map.class))).thenReturn(null);
+        Model modelNull = new ExtendedModelMap();
+        controller.afficherProfile(1L, session, modelNull);
+        // Doit utiliser le fallback (L309) car le geocoding a échoué proprement
+        assertTrue(modelNull.containsAttribute("meteoVille"));
+
+        // L300 : results n'est pas une liste
+        Map<String, Object> geoNotList = new HashMap<>();
+        geoNotList.put("results", "not-a-list");
+        when(restTemplate.getForObject(contains("geocoding-api.open-meteo.com"), eq(Map.class))).thenReturn(geoNotList);
+        controller.afficherProfile(1L, session, new ExtendedModelMap());
+
+        // L302 : first result n'est pas une map
+        Map<String, Object> geoBadFirst = new HashMap<>();
+        List<Object> resultsBadFirst = new ArrayList<>();
+        resultsBadFirst.add("not-a-map");
+        geoBadFirst.put("results", resultsBadFirst);
+        when(restTemplate.getForObject(contains("geocoding-api.open-meteo.com"), eq(Map.class))).thenReturn(geoBadFirst);
+        controller.afficherProfile(1L, session, new ExtendedModelMap());
+
+        // L302 : name est null
+        Map<String, Object> geoNoName = new HashMap<>();
+        List<Object> resultsNoName = new ArrayList<>();
+        Map<String, Object> cityData = new HashMap<>();
+        cityData.put("name", null);
+        resultsNoName.add(cityData);
+        geoNoName.put("results", resultsNoName);
+        when(restTemplate.getForObject(contains("geocoding-api.open-meteo.com"), eq(Map.class))).thenReturn(geoNoName);
+        controller.afficherProfile(1L, session, new ExtendedModelMap());
     }
 }

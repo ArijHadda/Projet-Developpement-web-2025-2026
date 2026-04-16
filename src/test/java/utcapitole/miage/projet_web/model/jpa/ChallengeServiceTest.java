@@ -95,6 +95,53 @@ class ChallengeServiceTest {
     }
 
     @Test
+    void testGetClassement_ChallengeFini_WinnerExplicitlyMatches() {
+        // Test covering line 170-176 loop and match
+        Utilisateur winner = new Utilisateur();
+        winner.setId(2L);
+        winner.setPrenom("Alice");
+        winner.setNom("Wonderland");
+
+        Participation p1 = new Participation();
+        p1.setUtilisateur(mockUser); // Jean Dupont
+
+        Participation p2 = new Participation();
+        p2.setUtilisateur(winner); // Alice Wonderland
+
+        mockChallenge.getParticipations().add(p1);
+        mockChallenge.getParticipations().add(p2);
+        mockChallenge.setDateFin(LocalDate.now().minusDays(1));
+
+        when(challengeRepository.findById(10L)).thenReturn(Optional.of(mockChallenge));
+        // Mock Alice as winner (600 cal) and Jean as loser (500 cal)
+        when(activiteRepository.calculerCaloriesPourChallenge(1L, null, null, mockChallenge.getDateFin())).thenReturn(500);
+        when(activiteRepository.calculerCaloriesPourChallenge(2L, null, null, mockChallenge.getDateFin())).thenReturn(600);
+
+        List<ClassementDTO> result = challengeService.getClassement(10L);
+
+        assertEquals(2, result.size());
+        assertEquals("Alice Wonderland", result.get(0).getNomComplet());
+        
+        // Ensure winner got the badge
+        verify(badgeAttributionService).attribuerBadgeChallengeGagne(winner);
+        verify(badgeAttributionService, never()).attribuerBadgeChallengeGagne(mockUser);
+    }
+
+    @Test
+    void testGetClassement_ChallengeFini_NoParticipants_NoBadge() {
+        // Test covering line 167 branch (!classement.isEmpty() == false)
+        mockChallenge.setDateFin(LocalDate.now().minusDays(1));
+        mockChallenge.setParticipations(new ArrayList<>()); // empty
+
+        when(challengeRepository.findById(10L)).thenReturn(Optional.of(mockChallenge));
+
+        List<ClassementDTO> result = challengeService.getClassement(10L);
+
+        assertTrue(result.isEmpty());
+        verify(badgeAttributionService, never()).attribuerBadgeChallengeGagne(any());
+    }
+
+    @Test
     void testGetClassementChallengeIntrouvable() {
         when(challengeRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -128,12 +175,40 @@ class ChallengeServiceTest {
     }
 
     @Test
+    void testCreerChallenge_DateFinPassee_ThrowsException() {
+        Challenge challenge = new Challenge();
+        challenge.setDateFin(LocalDate.now().minusDays(1));
+
+        Exception ex = assertThrows(IllegalArgumentException.class, () -> challengeService.creerChallenge(challenge, mockUser));
+        assertEquals("La date de fin du challenge ne peut pas être dans le passé.", ex.getMessage());
+    }
+
+    @Test
+    void testCreerChallenge_DateDebutApresDateFin_ThrowsException() {
+        Challenge challenge = new Challenge();
+        challenge.setDateDebut(LocalDate.now().plusDays(2));
+        challenge.setDateFin(LocalDate.now().plusDays(1));
+
+        Exception ex = assertThrows(IllegalArgumentException.class, () -> challengeService.creerChallenge(challenge, mockUser));
+        assertEquals("La date de début ne peut pas être après la date de fin.", ex.getMessage());
+    }
+
+    @Test
     void testRejoindreChallengeSuccess() {
         when(challengeRepository.findById(10L)).thenReturn(Optional.of(mockChallenge));
         when(participationRepository.existsByUtilisateurAndChallenge(mockUser, mockChallenge)).thenReturn(false);
 
         assertDoesNotThrow(() -> challengeService.rejoindreChallenge(10L, mockUser));
         verify(participationRepository).save(any(Participation.class));
+    }
+
+    @Test
+    void testRejoindreChallenge_ChallengeFini_ThrowsException() {
+        mockChallenge.setDateFin(LocalDate.now().minusDays(1));
+        when(challengeRepository.findById(10L)).thenReturn(Optional.of(mockChallenge));
+
+        Exception ex = assertThrows(IllegalStateException.class, () -> challengeService.rejoindreChallenge(10L, mockUser));
+        assertEquals("Ce challenge est déjà terminé. Vous ne pouvez plus le rejoindre.", ex.getMessage());
     }
 
     @Test
