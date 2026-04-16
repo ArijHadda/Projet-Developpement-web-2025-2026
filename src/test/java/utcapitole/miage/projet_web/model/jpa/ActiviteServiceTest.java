@@ -134,9 +134,80 @@ class ActiviteServiceTest {
         assertTrue(savedActivite.getCaloriesConsommees() > 0);
         verify(activiteRepository).save(activite);
 
-        // vitesse = 10 km/h → MET = 0.0 + 1.0 * 10 = 10.0
         // calories = 10.0 * 70 * 1.0 = 700
         assertEquals(700, savedActivite.getCaloriesConsommees());
+    }
+
+    @Test
+    void testEnregistrerActivite_SportNull_RechercheParNom() {
+        // Initialisation
+        Utilisateur user = buildUser(70.0f);
+        Activite activite = new Activite();
+        activite.setSport(null); // Sport est null (L65)
+        activite.setNom("Marche");
+        activite.setDuree(60);
+        activite.setDistance(5.0);
+        activite.setUtilisateur(user);
+
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(buildIpApiResponse(43.6, 1.4));
+        when(restTemplate.getForObject(contains("https://api.open-meteo.com/v1/forecast"), eq(Map.class))).thenReturn(buildMeteoResponse(15.0));
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Action
+        Activite saved = activiteService.enregistrerActivite(activite);
+
+        // Then
+        // Marche (base 2.0, coeff 0.3, vitesse 5 km/h) -> MET = 2.0 + 0.3 * 5 = 3.5
+        // Cal = 3.5 * 70 * 1 = 245
+        assertNotNull(saved.getSport());
+        assertEquals("Marche", saved.getSport().getNom());
+        assertEquals(245, saved.getCaloriesConsommees());
+        verify(sportRepository).findByNom("Marche");
+    }
+
+    @Test
+    void testEnregistrerActivite_BadgeServiceNull_NeDeclenchePas() {
+        // Utilisation du constructeur sans BadgeService (L81 sera null)
+        ActiviteService serviceSansBadge = new ActiviteService(activiteRepository, sportRepository, commentaireRepository, utilisateurRepository);
+        ReflectionTestUtils.setField(serviceSansBadge, "restTemplate", restTemplate);
+
+        Utilisateur user = buildUser(70.0f);
+        user.setId(5L);
+        Activite activite = activite(10L);
+        activite.setUtilisateur(user);
+        activite.setNom("Course");
+        activite.setDuree(60);
+
+        when(restTemplate.getForObject(anyString(), eq(Map.class))).thenReturn(new HashMap<>());
+        when(activiteRepository.save(any(Activite.class))).thenReturn(activite);
+
+        // Action : ne doit pas lever de NPE même si badgeAttributionService est null
+        serviceSansBadge.enregistrerActivite(activite);
+        
+        // Pas d'appel possible au badge service car il est nul
+    }
+
+    @Test
+    void testEnregistrerActivite_IpApiChampsNull_UtiliseCoordonneesToulouse() {
+        Utilisateur user = buildUser(70.0f);
+        Activite activite = activite(10L);
+        activite.setUtilisateur(user);
+        activite.setNom("Course");
+        activite.setDuree(60);
+
+        // Mock IP API avec lat/lon null (L91)
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("lat", null);
+        resp.put("lon", 1.4);
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(resp);
+
+        // Doit appeler la météo avec coords Toulouse 43.6047, 1.4442
+        when(restTemplate.getForObject(contains("latitude=43.6047&longitude=1.4442"), eq(Map.class))).thenReturn(buildMeteoResponse(10.0));
+        when(activiteRepository.save(any(Activite.class))).thenReturn(activite);
+
+        activiteService.enregistrerActivite(activite);
+
+        verify(restTemplate).getForObject(contains("latitude=43.6047&longitude=1.4442"), eq(Map.class));
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -644,6 +715,80 @@ class ActiviteServiceTest {
         verify(activiteRepository).findByUtilisateurInOrderByDateDesc(List.of(ami));
     }
 
+    @Test
+    void testGetFluxActivitesAmis_AmisNull_RetourneListeVide() {
+        Utilisateur user = new Utilisateur();
+        user.setAmis(null); // L245
+
+        List<Activite> result = activiteService.getFluxActivitesAmis(user);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testCalculerMetAvecSport_IntensiteEtCoeffNull_UtiliseZeros() {
+        Utilisateur user = buildUser(70.0f);
+        Activite activite = new Activite();
+        activite.setUtilisateur(user);
+        activite.setNom("Inconnu");
+        activite.setDuree(60);
+        activite.setDistance(10.0);
+        
+        // Sport avec intensité et coeff null (L142, L143, L146, L150)
+        Sport sport = new Sport();
+        sport.setIntensiteBase(null);
+        sport.setCoeffIntensite(null);
+        sport.setEstBaseSurVitesse(true);
+        activite.setSport(sport);
+
+        when(restTemplate.getForObject(anyString(), eq(Map.class))).thenReturn(new HashMap<>());
+        when(activiteRepository.save(any(Activite.class))).thenReturn(activite);
+
+        Activite saved = activiteService.enregistrerActivite(activite);
+        // met = intensiteBase(0) + coeff(0) * speed = 0
+        assertEquals(0, saved.getCaloriesConsommees());
+        
+        // Test estBaseSurVitesse false (L150)
+        sport.setEstBaseSurVitesse(false);
+        activite.setNiveauIntensite(0); // -> utilise défaut 3 (L150)
+        
+        saved = activiteService.enregistrerActivite(activite);
+        // met = 0 + 0 * 3 = 0
+        assertEquals(0, saved.getCaloriesConsommees());
+    }
+
+    @Test
+    void testCalculerMetParDefaut_CourseEtCyclisme() {
+        Utilisateur user = buildUser(70.0f);
+        Activite activite = new Activite();
+        activite.setUtilisateur(user);
+        activite.setDuree(60);
+        
+        when(restTemplate.getForObject(anyString(), eq(Map.class))).thenReturn(new HashMap<>());
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(sportRepository.findByNom(any())).thenReturn(null);
+
+        // Course (L156) -> MET 8.0 -> Cal 8*70*1 = 560
+        activite.setNom("Course");
+        activite.setSport(null); // Force calculerMetParDefaut
+        Activite savedCourse = activiteService.enregistrerActivite(activite);
+        assertEquals(560, savedCourse.getCaloriesConsommees());
+
+        // Cyclisme (L157) -> MET 6.0 -> Cal 6*70*1 = 420
+        activite.setNom("Cyclisme");
+        Activite savedCyclisme = activiteService.enregistrerActivite(activite);
+        assertEquals(420, savedCyclisme.getCaloriesConsommees());
+
+        // Autre (L158) -> MET 4.0 -> Cal 4*70*1 = 280
+        activite.setNom("Autre");
+        Activite savedAutre = activiteService.enregistrerActivite(activite);
+        assertEquals(280, savedAutre.getCaloriesConsommees());
+
+        // Nom null (L155) -> type = "Autre" -> MET 4.0
+        activite.setNom(null);
+        Activite savedNull = activiteService.enregistrerActivite(activite);
+        assertEquals(280, savedNull.getCaloriesConsommees());
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // [Test] Nouveaux tests pour couvrir les protections NullPointerException
     // ═══════════════════════════════════════════════════════════════════════
@@ -711,6 +856,74 @@ class ActiviteServiceTest {
 
         // Vérifier que le service de badges est bien appelé après l'enregistrement
         verify(badgeAttributionService).attribuerBadgesAutomatiques(99L);
+    }
+
+    @Test
+    void testEnregistrerActivite_IpApiLonNull_UtiliseCoordonneesToulouse() {
+        Utilisateur user = buildUser(70.0f);
+        Activite activite = activite(10L);
+        activite.setUtilisateur(user);
+        activite.setNom("Course");
+        activite.setDuree(60);
+
+        // Mock IP API avec lat présent mais lon null (L91)
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("lat", 48.8);
+        resp.put("lon", null);
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(resp);
+
+        // Doit utiliser Toulouse car lon est null
+        when(restTemplate.getForObject(contains("latitude=43.6047&longitude=1.4442"), eq(Map.class))).thenReturn(buildMeteoResponse(10.0));
+        when(activiteRepository.save(any(Activite.class))).thenReturn(activite);
+
+        activiteService.enregistrerActivite(activite);
+
+        verify(restTemplate).getForObject(contains("latitude=43.6047&longitude=1.4442"), eq(Map.class));
+    }
+
+    @Test
+    void testEnregistrerActivite_IpApiFormatInvalide_UtiliseCoordonneesToulouse() {
+        Utilisateur user = buildUser(70.0f);
+        Activite activite = activite(10L);
+        activite.setUtilisateur(user);
+        activite.setNom("Course");
+        activite.setDuree(60);
+
+        // Mock IP API avec un format invalide (String au lieu de Number)
+        // Cela va provoquer un ClassCastException à la ligne 94 de ActiviteService
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("lat", "invalid_lat");
+        resp.put("lon", 1.4);
+        when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(resp);
+
+        // Le catch (L97) doit intercepter l'erreur et utiliser Toulouse
+        when(restTemplate.getForObject(contains("latitude=43.6047&longitude=1.4442"), eq(Map.class))).thenReturn(buildMeteoResponse(12.0));
+        when(activiteRepository.save(any(Activite.class))).thenReturn(activite);
+
+        activiteService.enregistrerActivite(activite);
+
+        verify(restTemplate).getForObject(contains("latitude=43.6047&longitude=1.4442"), eq(Map.class));
+    }
+
+    @Test
+    void testCalculerMetAvecSport_DureeNulle_RetourneZeroVitesse() {
+        // Test direct de la méthode privée pour couvrir le branchement L146 (: 0)
+        // Normalement inaccessible via enregistrerActivite à cause de la garde L121
+        Sport sport = new Sport();
+        sport.setEstBaseSurVitesse(true);
+        sport.setIntensiteBase(5.0);
+        sport.setCoeffIntensite(1.0);
+
+        Activite activite = new Activite();
+        activite.setDistance(10.0);
+        
+        double durationHours = 0.0;
+
+        // Appel via ReflectionTestUtils
+        Double met = ReflectionTestUtils.invokeMethod(activiteService, "calculerMetAvecSport", sport, activite, durationHours);
+
+        // Vitesse = 0 car durationHours <= 0 -> MET = intensiteBase(5.0) + coeff(1.0) * 0 = 5.0
+        assertEquals(5.0, met);
     }
 
     @Test

@@ -339,11 +339,13 @@ class ActiviteControllerTest {
         when(activiteService.getById(1L)).thenReturn(Optional.of(mockActivite));
 
         String viewName = activiteController.modifierActivite(
-                1L, session, model, LocalDate.of(2027, 1, 1), 30, null, null, 5);
+                1L, session, model, LocalDate.now().plusDays(1), 30, null, null, 5);
 
         assertEquals("modifier-activite", viewName);
         verify(activiteService, never()).enregistrerActivite(any());
         verify(model).addAttribute(eq("error"), any());
+        verify(model).addAttribute("activite", mockActivite);
+        verify(model).addAttribute(eq("today"), any(LocalDate.class));
     }
 
     @Test
@@ -409,6 +411,37 @@ class ActiviteControllerTest {
         assertThrows(RuntimeException.class, () ->
                 activiteController.modifierActivite(999L, session, model, today, 30, null, null, 5)
         );
+    }
+
+    @Test
+    void modifierActivite_dateNull_enregistreCorrectement() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(activiteService.getById(100L)).thenReturn(Optional.of(mockActivite));
+
+        String viewName = activiteController.modifierActivite(
+                100L, session, model, null, 30, null, null, 5);
+
+        assertEquals("redirect:/activite/list", viewName);
+        verify(activiteService).enregistrerActivite(mockActivite);
+        assertEquals(null, mockActivite.getDate());
+    }
+
+    @Test
+    void modifierActivite_noteLimites_enregistreCorrectement() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+        when(activiteService.getById(100L)).thenReturn(Optional.of(mockActivite));
+
+        // Note 1
+        String viewName1 = activiteController.modifierActivite(
+                100L, session, model, LocalDate.now(), 30, null, null, 1);
+        assertEquals("redirect:/activite/list", viewName1);
+
+        // Note 10
+        String viewName10 = activiteController.modifierActivite(
+                100L, session, model, LocalDate.now(), 30, null, null, 10);
+        assertEquals("redirect:/activite/list", viewName10);
+
+        verify(activiteService, times(2)).enregistrerActivite(mockActivite);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
