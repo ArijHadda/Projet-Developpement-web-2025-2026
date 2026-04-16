@@ -63,5 +63,31 @@
             </form>
         </div>
     </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const dateDebutInput = document.getElementById('dateDebut');
+            const dateFinInput = document.getElementById('dateFin');
+
+            // obtenir la date d'aujourd'hui YYYY-MM-DD
+            const today = new Date().toISOString().split('T')[0];
+
+            // la date de fin ne peut pas en avant aujourd'hui
+            dateFinInput.min = today;
+
+            // voir la change de la date debut
+            dateDebutInput.addEventListener('change', function() {
+                if (this.value) {
+                    dateFinInput.min = this.value > today ? this.value : today;
+                }
+            });
+
+            // voir la change de la date fin
+            dateFinInput.addEventListener('change', function() {
+                if (this.value) {
+                    dateDebutInput.max = this.value;
+                }
+            });
+        });
+    </script>
 </body>
 </html>

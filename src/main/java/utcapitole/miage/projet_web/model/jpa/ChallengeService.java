@@ -63,6 +63,15 @@ public class ChallengeService {
     }
 
     public Challenge creerChallenge(Challenge challenge, Utilisateur createur) {
+        LocalDate today = LocalDate.now();
+
+        if (challenge.getDateFin() != null && challenge.getDateFin().isBefore(today)) {
+            throw new IllegalArgumentException("La date de fin du challenge ne peut pas être dans le passé.");
+        }
+        if (challenge.getDateDebut() != null && challenge.getDateFin() != null && challenge.getDateDebut().isAfter(challenge.getDateFin())) {
+            throw new IllegalArgumentException("La date de début ne peut pas être après la date de fin.");
+        }
+
         challenge.setCreateur(createur);
         return challengeRepository.save(challenge);
     }
@@ -70,6 +79,10 @@ public class ChallengeService {
     public void rejoindreChallenge(Long challengeId, Utilisateur utilisateur) {
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new IllegalArgumentException(MESSAGE_DE_INTROUVABLE));
+
+        if (challenge.getDateFin() != null && LocalDate.now().isAfter(challenge.getDateFin())) {
+            throw new IllegalStateException("Ce challenge est déjà terminé. Vous ne pouvez plus le rejoindre.");
+        }
 
         if (participationRepository.existsByUtilisateurAndChallenge(utilisateur, challenge)) {
             throw new IllegalStateException(MESSAGE_REPETITION);

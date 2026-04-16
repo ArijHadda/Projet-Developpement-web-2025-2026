@@ -26,8 +26,17 @@
     <div class="container">
         <!-- Header -->
         <div class="flex justify-between items-center" style="margin-top: 2rem; flex-wrap: wrap; gap: 1rem;">
-            <h1>🎯 Mes Activités</h1>
-            <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="btn btn-outline btn-sm">← Retour au profil</a>
+            <h1 style="margin: 0;">🎯 Mes Activités</h1>
+
+            <div class="flex gap-sm">
+                <a th:href="@{/activite/add-activite}" class="btn btn-primary">
+                    ➕ Ajouter une activité
+                </a>
+
+                <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="btn btn-outline">
+                    🔙 Retour au profil
+                </a>
+            </div>
         </div>
 
         <!-- Messages -->

@@ -51,12 +51,12 @@
 
                 <div class="form-group">
                     <label for="duree">⏱️ Durée (minutes)</label>
-                    <input type="number" id="duree" name="duree" class="form-control" required>
+                    <input type="number" id="duree" name="duree" class="form-control" min="1" required>
                 </div>
 
                 <div id="distanceGroup" class="form-group" style="display: none;">
                     <label for="distance">📏 Distance (km)</label>
-                    <input type="number" step="0.1" id="distance" name="distance" class="form-control" value="0">
+                    <input type="number" step="0.1" id="distance" name="distance" class="form-control" min="0" value="0">
                 </div>
 
                 <div id="intensityGroup" class="form-group" style="display: none;">
