@@ -1,9 +1,7 @@
 package utcapitole.miage.projet_web.model.jpa;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.contains;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,6 +39,9 @@ class ActiviteServiceTest {
 
     @Mock
     private UtilisateurRepository utilisateurRepository;
+
+    @Mock
+    private BadgeAttributionService badgeAttributionService;
 
     @Mock
     private RestTemplate restTemplate;
@@ -96,7 +97,7 @@ class ActiviteServiceTest {
 
     @BeforeEach
     void setUp() {
-        activiteService = new ActiviteService(activiteRepository, sportRepository, commentaireRepository, utilisateurRepository);
+        activiteService = new ActiviteService(activiteRepository, sportRepository, commentaireRepository, utilisateurRepository, badgeAttributionService);
         ReflectionTestUtils.setField(activiteService, "restTemplate", restTemplate);
 
         lenient().when(sportRepository.findByNom(any())).thenAnswer(invocation -> {
@@ -692,5 +693,31 @@ class ActiviteServiceTest {
         Activite saved = activiteService.enregistrerActivite(activite);
 
         assertEquals("Météo indisponible", saved.getConditionsMeteo());
+    }
+
+    @Test
+    void testEnregistrerActivite_DeclencheAttributionBadges() {
+        Utilisateur user = buildUser(70.0f);
+        user.setId(99L);
+        Activite activite = new Activite();
+        activite.setNom("Course");
+        activite.setDuree(60);
+        activite.setUtilisateur(user);
+
+        when(restTemplate.getForObject(anyString(), eq(Map.class))).thenReturn(new HashMap<>());
+        when(activiteRepository.save(any(Activite.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        activiteService.enregistrerActivite(activite);
+
+        // Vérifier que le service de badges est bien appelé après l'enregistrement
+        verify(badgeAttributionService).attribuerBadgesAutomatiques(99L);
+    }
+
+    @Test
+    void testConstructeurAlternatif() {
+        // Appeler explicitement l'ancien constructeur à 4 paramètres
+        ActiviteService serviceAlternatif = new ActiviteService(
+                activiteRepository, sportRepository, commentaireRepository, utilisateurRepository);
+        assertNotNull(serviceAlternatif);
     }
 }

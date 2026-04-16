@@ -16,16 +16,18 @@ public class ChallengeService {
     private final ChallengeRepository challengeRepository;
     private final ActiviteRepository activiteRepository;
     private final ParticipationRepository participationRepository;
+    private final BadgeAttributionService badgeAttributionService;
 
     private static final String MESSAGE_DE_INTROUVABLE = "Challenge introuvable";
     private static final String MESSAGE_NON_AUTORISATION_MODIFIIER = "Non autorisé à modifier ce challenge.";
     private static final String MESSAGE_NON_AUTORISATION_SUPPRIMER = "Non autorisé à supprimer ce challenge.";
     private static final String MESSAGE_REPETITION = "Vous participez déjà à ce challenge !";
 
-    public ChallengeService(ChallengeRepository challengeRepository, ActiviteRepository activiteRepository, ParticipationRepository participationRepository) {
+    public ChallengeService(ChallengeRepository challengeRepository, ActiviteRepository activiteRepository, ParticipationRepository participationRepository, BadgeAttributionService badgeAttributionService) {
         this.challengeRepository = challengeRepository;
         this.activiteRepository = activiteRepository;
         this.participationRepository = participationRepository;
+        this.badgeAttributionService = badgeAttributionService;
     }
 
     public List<ClassementDTO> getClassement(Long challengeId) {
@@ -49,6 +51,9 @@ public class ChallengeService {
         }
 
         classement.sort((c1, c2) -> c2.getTotalCalories().compareTo(c1.getTotalCalories()));
+
+        // Attribuer le badge au top 1 si le challenge est termin�
+        verifierEtAttribuerBadgeChallengeGagne(challenge, classement);
 
         return classement;
     }
@@ -98,6 +103,22 @@ public class ChallengeService {
             challengeRepository.save(challenge);
         } else {
             throw new IllegalStateException(MESSAGE_NON_AUTORISATION_MODIFIIER);
+        }
+    }
+
+    private void verifierEtAttribuerBadgeChallengeGagne(Challenge challenge, List<ClassementDTO> classement) {
+        LocalDate today = LocalDate.now();
+
+        if (challenge.getDateFin() != null && today.isAfter(challenge.getDateFin()) && !classement.isEmpty()) {
+            ClassementDTO gagnant = classement.get(0);
+
+            for (Participation p : challenge.getParticipations()) {
+                String nomComplet = p.getUtilisateur().getPrenom() + " " + p.getUtilisateur().getNom();
+                if (badgeAttributionService != null && nomComplet.equals(gagnant.getNomComplet())) {
+                    badgeAttributionService.attribuerBadgeChallengeGagne(p.getUtilisateur());
+                    break;
+                }
+            }
         }
     }
 }

@@ -745,3 +745,94 @@ select.form-control {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--color-primary-dark);
 }
+
+/* Badges avec images */
+.badge-image {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 85px;
+    height: 85px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: var(--radius-md);
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+.badge-image:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-lg);
+}
+
+.badge-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: center;
+    justify-content: flex-start;
+}
+/* ============================================
+   Nouveaux styles pour le Mur des Trophées (Badges)
+   ============================================ */
+
+/* ============================================
+   Nouveaux styles pour le Mur des Trophées (Badges)
+   ============================================ */
+
+.badge-wall {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2rem;
+    padding: 2rem;
+    background: linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.05) 100%); /* 展柜背景色 */
+    border-radius: var(--radius-lg);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.badge-item {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Badge non débloqué : gris, transparent et un peu plus petit */
+/* Badge non débloqué : gris, transparent */
+.badge-image.locked {
+    filter: grayscale(100%);
+    opacity: 0.15;
+    transform: scale(0.9);
+    cursor: not-allowed;
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 50%;
+}
+
+/* Badge débloqué : avec une aura dorée/orange brillante */
+.badge-image.unlocked {
+    filter: drop-shadow(0 0 8px rgba(229, 122, 45, 0.6));
+    transform: scale(1.05);
+}
+
+.badge-label {
+    font-size: 0.8rem;
+    margin-top: 0.75rem;
+    font-weight: 600;
+    color: var(--color-gray-700);
+    line-height: 1.2;
+}
+
+/* Les petits badges à côté du nom de l'utilisateur */
+.mini-badge-icon {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 4px rgba(229, 122, 45, 0.5));
+    transition: transform 0.2s;
+}
+
+.mini-badge-icon:hover {
+    transform: scale(1.2);
+}

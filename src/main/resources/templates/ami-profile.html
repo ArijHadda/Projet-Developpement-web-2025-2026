@@ -31,7 +31,17 @@
 
         <!-- Profile Header -->
         <div class="card mt-lg">
-            <h2 style="margin-bottom: 1rem;">👤 Profil de <span th:text="${ami.prenom}">Ami</span></h2>
+            <h2 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                👤 Profil de <span th:text="${ami.prenom}">Ami</span>
+
+                <div style="display: flex; gap: 5px;">
+                    <img th:each="badge, iterStat : ${ami.badges}"
+                         th:if="${iterStat.index < 3}"
+                         th:src="@{'/images/' + ${badge.imageName} + '.png'}"
+                         th:title="${badge.entitule}"
+                         class="mini-badge-icon">
+                </div>
+            </h2>
             
             <!-- Informations personnelles -->
             <div>
@@ -77,12 +87,16 @@
             </div>
             
             <!-- Badges -->
-            <h3 class="mt-md">Badges obtenus</h3>
-            <div th:if="${#lists.isEmpty(ami.badges)}" class="text-muted">
-                Aucun badge pour le moment
-            </div>
-            <div th:unless="${#lists.isEmpty(ami.badges)}" class="flex flex-wrap gap-sm">
-                <span th:each="badge : ${ami.badges}" class="badge" th:text="${badge.entitule}">Badge</span>
+            <h3 class="mt-md">🏆 Badges et Trophées</h3>
+            <div class="badge-wall">
+                <div th:each="badge : ${allBadges}" class="badge-item">
+                    <div class="badge-image"
+                         th:classappend="${#lists.contains(ami.badges, badge)} ? 'unlocked' : 'locked'"
+                         th:style="'background-image: url(/images/' + ${badge.imageName} + '.png)'"
+                         th:title="${badge.entitule}">
+                    </div>
+                    <p class="badge-label" th:text="${badge.entitule}">Nom du badge</p>
+                </div>
             </div>
         </div>
         

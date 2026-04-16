@@ -11,6 +11,7 @@ import utcapitole.miage.projet_web.model.Challenge;
 import utcapitole.miage.projet_web.model.Participation;
 import utcapitole.miage.projet_web.model.Utilisateur;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +29,8 @@ class ChallengeServiceTest {
     private ActiviteRepository activiteRepository;
     @Mock
     private ParticipationRepository participationRepository;
+    @Mock
+    private BadgeAttributionService badgeAttributionService; // <-- Ajout du mock manquant
 
     @InjectMocks
     private ChallengeService challengeService;
@@ -55,6 +58,9 @@ class ChallengeServiceTest {
         p.setUtilisateur(mockUser);
         mockChallenge.getParticipations().add(p);
 
+        // Date de fin dans le futur pour ne pas déclencher le badge de fin
+        mockChallenge.setDateFin(LocalDate.now().plusDays(5));
+
         when(challengeRepository.findById(10L)).thenReturn(Optional.of(mockChallenge));
         when(activiteRepository.calculerCaloriesPourChallenge(anyLong(), any(), any(), any())).thenReturn(500);
 
@@ -63,6 +69,29 @@ class ChallengeServiceTest {
         assertEquals(1, result.size());
         assertEquals("Jean Dupont", result.get(0).getNomComplet());
         assertEquals(500, result.get(0).getTotalCalories());
+
+        // Le challenge n'est pas fini, on ne doit pas attribuer de badge
+        verify(badgeAttributionService, never()).attribuerBadgeChallengeGagne(any());
+    }
+
+    @Test
+    void testGetClassement_ChallengeFini_AttribueBadgeGagnant() {
+        Participation p = new Participation();
+        p.setUtilisateur(mockUser);
+        mockChallenge.getParticipations().add(p);
+
+        // Le challenge est terminé (dateFin dans le passé)
+        mockChallenge.setDateFin(LocalDate.now().minusDays(1));
+
+        when(challengeRepository.findById(10L)).thenReturn(Optional.of(mockChallenge));
+        when(activiteRepository.calculerCaloriesPourChallenge(anyLong(), any(), any(), any())).thenReturn(500);
+
+        List<ClassementDTO> result = challengeService.getClassement(10L);
+
+        assertEquals(1, result.size());
+
+        // Le challenge est fini et l'utilisateur est 1er, il doit recevoir le badge
+        verify(badgeAttributionService).attribuerBadgeChallengeGagne(mockUser);
     }
 
     @Test
