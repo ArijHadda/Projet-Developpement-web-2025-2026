@@ -29,6 +29,19 @@ import utcapitole.miage.projet_web.model.jpa.BadgeAttributionService;
 import utcapitole.miage.projet_web.model.jpa.SportRepository;
 import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 
+/**
+ * Contrôleur gérant toutes les opérations liées aux activités sportives :
+ * ajout, modification, suppression, affichage, filtrage, statistiques,
+ * flux des amis, commentaires et réactions (kudos).
+ *
+ * Ce contrôleur s'appuie sur :
+ * - {@link ActiviteService} pour la gestion métier des activités
+ * - {@link SportRepository} pour la récupération des sports disponibles
+ * - {@link UtilisateurService} pour la gestion des utilisateurs
+ * - {@link BadgeAttributionService} pour l'attribution automatique de badges
+ *
+ * Toutes les routes sont préfixées par /activite.
+ */
 @Controller
 @RequestMapping("/activite")
 public class ActiviteController {
@@ -52,6 +65,14 @@ public class ActiviteController {
     private final UtilisateurService utilisateurService;
     private final BadgeAttributionService badgeAttributionService;
 
+    /**
+     * Constructeur du contrôleur des activités.
+     *
+     * @param activiteService Service métier gérant les activités.
+     * @param sportRepository Repository permettant d'accéder aux sports.
+     * @param utilisateurService Service gérant les utilisateurs.
+     * @param badgeAttributionService Service attribuant automatiquement les badges.
+     */
     public ActiviteController(ActiviteService activiteService,
                               SportRepository sportRepository,
                               UtilisateurService utilisateurService, BadgeAttributionService badgeAttributionService) {
@@ -62,7 +83,13 @@ public class ActiviteController {
     }
 
 
-
+    /**
+     * Affiche le formulaire d'ajout d'une activité.
+     *
+     * @param model Modèle utilisé pour transmettre les données à la vue.
+     * @param session Session HTTP contenant l'utilisateur connecté.
+     * @return La vue du formulaire ou une redirection vers la page de login.
+     */
     @GetMapping("/add-activite")
     public String showAddActiviteForm(Model model, HttpSession session) {
         Utilisateur userSession = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
@@ -77,6 +104,16 @@ public class ActiviteController {
         return VIEW_ADD_ACTIVITE;
     }
 
+    /**
+     * Traite la soumission du formulaire d'ajout d'activité.
+     * Vérifie la validité de la date et de la note, enregistre l'activité,
+     * puis attribue automatiquement les badges éventuels.
+     *
+     * @param activite Activité soumise par l'utilisateur.
+     * @param model Modèle pour renvoyer des erreurs éventuelles.
+     * @param session Session contenant l'utilisateur connecté.
+     * @return Redirection vers le profil utilisateur ou retour au formulaire en cas d'erreur.
+     */
     @SuppressWarnings("java:S4684") // Suppression de l'alerte DTO pour ne pas casser le code existant
     @PostMapping("/add-activite")
     public String addActivite(@ModelAttribute(ATTR_ACTIVITE) Activite activite, Model model, HttpSession session) {
@@ -112,6 +149,16 @@ public class ActiviteController {
         return "redirect:/user/profile/" + user.getId() + (badgeAttribue ? "?badge=attribue" : "");
     }
 
+    /**
+     * Affiche la liste filtrée et regroupée des activités de l'utilisateur.
+     *
+     * @param model Modèle contenant les données pour la vue.
+     * @param session Session contenant l'utilisateur connecté.
+     * @param periode Période de filtrage (7j, 30j, 12m, tout).
+     * @param regroupement Type de regroupement (jour, semaine, mois).
+     * @param sportId Filtre optionnel par sport.
+     * @return La vue affichant la liste des activités.
+     */
     @GetMapping("/list")
     public String listActivites(Model model, HttpSession session,
                                 @RequestParam(defaultValue = PERIODE_30J) String periode,
@@ -155,14 +202,32 @@ public class ActiviteController {
         return listActivites(model, session, PERIODE_30J, REGROUPEMENT_JOUR, null);
     }
 
+    /**
+     * Vérifie si la période fournie est valide.
+     *
+     * @param periode Période à vérifier.
+     * @return true si la période est reconnue, false sinon.
+     */
     private boolean isPeriodeValide(String periode) {
         return "7j".equals(periode) || PERIODE_30J.equals(periode) || "12m".equals(periode) || "tout".equals(periode);
     }
 
+    /**
+     * Vérifie si le regroupement fourni est valide.
+     *
+     * @param regroupement Type de regroupement.
+     * @return true si le regroupement est valide, false sinon.
+     */
     private boolean isRegroupementValide(String regroupement) {
         return REGROUPEMENT_JOUR.equals(regroupement) || REGROUPEMENT_SEMAINE.equals(regroupement) || REGROUPEMENT_MOIS.equals(regroupement);
     }
 
+    /**
+     * Calcule la date de début correspondant à la période sélectionnée.
+     *
+     * @param periode Période choisie (7j, 30j, 12m, tout).
+     * @return La date de début ou null si toutes les activités doivent être affichées.
+     */
     private LocalDate calculerDateDebut(String periode) {
         LocalDate now = LocalDate.now();
         switch (periode) {
@@ -177,6 +242,14 @@ public class ActiviteController {
         }
     }
 
+    /**
+     * Construit les données nécessaires aux graphiques de progression :
+     * labels, durées cumulées et calories cumulées.
+     *
+     * @param activites Liste des activités filtrées.
+     * @param regroupement Type de regroupement (jour, semaine, mois).
+     * @return Une map contenant les labels, durées et calories.
+     */
     private Map<String, Object> construireProgression(List<Activite> activites, String regroupement) {
         DateTimeFormatter formatterJour = DateTimeFormatter.ofPattern("dd/MM");
         DateTimeFormatter formatterMois = DateTimeFormatter.ofPattern("MM/yyyy");
@@ -231,6 +304,13 @@ public class ActiviteController {
         return result;
     }
 
+    /**
+     * Affiche le flux des activités des amis de l'utilisateur connecté.
+     *
+     * @param model Modèle contenant les activités des amis.
+     * @param session Session contenant l'utilisateur connecté.
+     * @return La vue du flux ou une redirection vers la page de login.
+     */
     @GetMapping("/flux-amis")
     public String afficherFluxAmis(Model model, jakarta.servlet.http.HttpSession session) {
         Utilisateur currentSession = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
@@ -248,6 +328,14 @@ public class ActiviteController {
         return "fluxAmis";
     }
 
+    /**
+     * Ajoute ou retire un kudos sur une activité.
+     *
+     * @param id Identifiant de l'activité.
+     * @param session Session contenant l'utilisateur connecté.
+     * @param request Requête HTTP pour récupérer la page précédente.
+     * @return Redirection vers la page d'origine.
+     */
     @PostMapping("/flux/kudos/{id}")
     public String liker(@PathVariable Long id, HttpSession session, HttpServletRequest request) {
         Utilisateur user = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
@@ -258,6 +346,15 @@ public class ActiviteController {
         return "redirect:" + (referer != null ? referer : "/activite/flux-amis");
     }
 
+    /**
+     * Ajoute un commentaire sur une activité.
+     *
+     * @param id Identifiant de l'activité.
+     * @param contenu Contenu du commentaire.
+     * @param session Session contenant l'utilisateur connecté.
+     * @param request Requête HTTP pour récupérer la page précédente.
+     * @return Redirection vers la page d'origine.
+     */
     @PostMapping("/flux/comment/{id}")
     public String commenter(@PathVariable Long id, @RequestParam String contenu, HttpSession session, HttpServletRequest request) {
         Utilisateur user = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
@@ -268,6 +365,14 @@ public class ActiviteController {
         return "redirect:" + (referer != null ? referer : "/activite/flux-amis");
     }
 
+    /**
+     * Supprime une activité de l'utilisateur.
+     *
+     * @param idActivite Identifiant de l'activité à supprimer.
+     * @param session Session contenant l'utilisateur connecté.
+     * @param model Modèle pour la vue.
+     * @return Redirection vers la liste des activités.
+     */
     @GetMapping("/supprimer/{idActivite}")
     public String supprimerActivite(@PathVariable Long idActivite, HttpSession session, Model model) {
         Utilisateur userSession = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
@@ -278,6 +383,14 @@ public class ActiviteController {
         return "redirect:/activite/list";
     }
 
+    /**
+     * Affiche le formulaire de modification d'une activité.
+     *
+     * @param idActivite Identifiant de l'activité.
+     * @param session Session contenant l'utilisateur connecté.
+     * @param model Modèle contenant l'activité à modifier.
+     * @return La vue de modification ou une redirection vers la page de login.
+     */
     @GetMapping("/modifier/{idActivite}")
     public String showModifierActivite(@PathVariable Long idActivite, HttpSession session, Model model) {
         Utilisateur userSession = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
@@ -291,6 +404,20 @@ public class ActiviteController {
         return VIEW_MODIFIER_ACTIVITE;
     }
 
+    /**
+     * Traite la modification d'une activité existante.
+     * Vérifie la validité de la date et de la note avant enregistrement.
+     *
+     * @param idActivite Identifiant de l'activité.
+     * @param session Session contenant l'utilisateur connecté.
+     * @param model Modèle pour renvoyer les erreurs éventuelles.
+     * @param date Nouvelle date.
+     * @param duree Nouvelle durée.
+     * @param distance Nouvelle distance (optionnelle).
+     * @param niveauIntensite Nouveau niveau d'intensité (optionnel).
+     * @param note Nouvelle note.
+     * @return Redirection vers la liste des activités ou retour au formulaire en cas d'erreur.
+     */
     @PostMapping("/modifier/{idActivite}")
     public String modifierActivite(@PathVariable Long idActivite, HttpSession session, Model model,
                                    @RequestParam LocalDate date,
