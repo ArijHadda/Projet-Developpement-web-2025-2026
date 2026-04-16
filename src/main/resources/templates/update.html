@@ -47,17 +47,17 @@
 
                     <div class="form-group">
                         <label for="age">🎂 Âge</label>
-                        <input type="number" id="age" name="ageU" th:value="${userUpdate.age}" class="form-control" required />
+                        <input type="number" id="age" name="ageU" th:value="${userUpdate.age}" class="form-control" min="1" required />
                     </div>
 
                     <div class="form-group">
                         <label for="taille">📏 Taille (cm)</label>
-                        <input type="text" id="taille" name="tailleU" th:value="${userUpdate.taille}" class="form-control" required />
+                        <input type="number" id="taille" name="tailleU" th:value="${userUpdate.taille}" class="form-control" min="50" required />
                     </div>
 
                     <div class="form-group">
                         <label for="poids">⚖️ Poids (kg)</label>
-                        <input type="text" id="poids" name="poidsU" th:value="${userUpdate.poids}" class="form-control" required />
+                        <input type="number" step="0.1" id="poids" name="poidsU" th:value="${userUpdate.poids}" class="form-control" min="10" required />
                     </div>
                 </div>
 

@@ -9,6 +9,11 @@ import utcapitole.miage.projet_web.model.Utilisateur;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Service métier central pour la gestion des utilisateurs.
+ * Gère l'inscription, la modification des profils, la sécurité (hashage des mots de passe)
+ * et la logique sociale (demandes d'amitié).
+ */
 @Service
 public class UtilisateurService {
     private static final String STATUT_PENDING = "PENDING";
@@ -23,16 +28,32 @@ public class UtilisateurService {
         this.demandeAmiRepository = demandeAmiRepository;
     }
 
+    /**
+     * Enregistre un nouvel utilisateur dans le système après avoir sécurisé son mot de passe.
+     *
+     * @param utilisateur L'utilisateur à inscrire.
+     * @return L'utilisateur persisté en base de données.
+     */
     public Utilisateur registerUser(Utilisateur utilisateur) {
         String encodedPassword = passwordEncoder.encode(utilisateur.getMdp());
         utilisateur.setMdp(encodedPassword);
         return utilisateurRepository.save(utilisateur);
     }
 
+    /**
+     * Met à jour les informations personnelles et biométriques d'un utilisateur existant.
+     *
+     * @param idU L'identifiant de l'utilisateur.
+     * @param mailU La nouvelle adresse e-mail.
+     * @param sexeU Le sexe.
+     * @param ageU L'âge.
+     * @param tailleU La taille (en cm).
+     * @param poidsU Le poids (en kg).
+     * @return L'utilisateur mis à jour.
+     */
     public Utilisateur modifierProfile(Long idU, String mailU, String sexeU, int ageU,
                                        float tailleU, float poidsU) {
 
-        // Remplacement de .get() par .orElseThrow() (SonarQube java:S3655)
         Utilisateur user = utilisateurRepository.findById(idU)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur non trouvé."));
 
@@ -44,6 +65,15 @@ public class UtilisateurService {
         return utilisateurRepository.save(user);
     }
 
+    /**
+     * Change le mot de passe d'un utilisateur en vérifiant l'ancien mot de passe
+     * et la correspondance de la confirmation.
+     *
+     * @param idU L'identifiant de l'utilisateur.
+     * @param ancienMdp Le mot de passe actuel (en clair).
+     * @param nouveauMdp Le nouveau mot de passe souhaité.
+     * @param confirmMdp La confirmation du nouveau mot de passe.
+     */
     public void changerMotDePasse(Long idU, String ancienMdp, String nouveauMdp, String confirmMdp) {
         Utilisateur user = utilisateurRepository.findById(idU)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé."));
@@ -64,6 +94,13 @@ public class UtilisateurService {
         utilisateurRepository.save(user);
     }
 
+    /**
+     * Envoie une demande d'amitié à un autre utilisateur.
+     * Si une demande inverse est déjà en attente, les deux utilisateurs deviennent automatiquement amis.
+     *
+     * @param expId L'identifiant de l'expéditeur de la demande.
+     * @param destId L'identifiant du destinataire de la demande.
+     */
     public void envoyerDemande(Long expId, Long destId) {
         Utilisateur exp = utilisateurRepository.findById(expId).orElseThrow();
         Utilisateur dest = utilisateurRepository.findById(destId).orElseThrow();
@@ -72,7 +109,6 @@ public class UtilisateurService {
             throw new IllegalArgumentException("Vous êtes déjà amis !");
         }
 
-        // Utilisation de la constante STATUT_PENDING
         if (demandeAmiRepository.existsByExpediteurAndDestinataireAndStatut(exp, dest, STATUT_PENDING)) {
             throw new IllegalArgumentException("Une demande est déjà en cours.");
         }
@@ -92,6 +128,12 @@ public class UtilisateurService {
         demandeAmiRepository.save(demande);
     }
 
+    /**
+     * Accepte une demande d'amitié en attente.
+     * Lie les deux utilisateurs et supprime la demande de la file d'attente.
+     *
+     * @param demandeId L'identifiant de la demande d'amitié à accepter.
+     */
     @jakarta.transaction.Transactional
     public void accepterDemande(Long demandeId) {
         DemandeAmi demande = demandeAmiRepository.findById(demandeId).orElseThrow();
@@ -106,6 +148,11 @@ public class UtilisateurService {
         demandeAmiRepository.delete(demande);
     }
 
+    /**
+     * Refuse (supprime) une demande d'amitié.
+     *
+     * @param demandeId L'identifiant de la demande à supprimer.
+     */
     public void refuserDemande(Long demandeId) {
         demandeAmiRepository.deleteById(demandeId);
     }
@@ -126,16 +173,28 @@ public class UtilisateurService {
         return utilisateurRepository.findAll();
     }
 
+    /**
+     * Recherche des utilisateurs dont le nom ou le prénom correspond (totalement ou partiellement) au mot-clé.
+     *
+     * @param motCle La chaîne de caractères à rechercher.
+     * @return Une liste d'utilisateurs correspondants.
+     */
     public List<Utilisateur> rechercherParNomOuPrenom(String motCle) {
         return utilisateurRepository.findByNomContainingIgnoreCaseOrPrenomContainingIgnoreCase(motCle, motCle);
     }
 
+    /**
+     * Récupère un utilisateur en forçant l'initialisation de sa collection de niveaux de pratique sportive.
+     * Permet d'éviter les exceptions "LazyInitializationException" dans la vue.
+     *
+     * @param id L'identifiant de l'utilisateur.
+     * @return L'utilisateur avec sa liste de sports chargée en mémoire.
+     */
     @Transactional
     public Utilisateur getUtilisateurAvecSports(Long id) {
         Utilisateur u = utilisateurRepository.findById(id).orElseThrow();
 
         // Correction pour forcer le Lazy Loading sans alerter SonarQube (java:S2201)
-        // forEach ne retourne rien, donc on n'ignore aucune valeur de retour
         u.getListSportNivPratique().forEach(s -> {});
 
         return u;

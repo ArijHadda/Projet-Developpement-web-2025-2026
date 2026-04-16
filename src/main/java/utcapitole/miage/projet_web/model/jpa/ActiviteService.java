@@ -16,6 +16,11 @@ import utcapitole.miage.projet_web.model.Commentaire;
 import utcapitole.miage.projet_web.model.Utilisateur;
 import utcapitole.miage.projet_web.model.Sport;
 
+/**
+ * Service métier central gérant le cycle de vie des activités sportives.
+ * Responsable de la création, du calcul métabolique (calories), de l'intégration
+ * des données météorologiques et des intéractions sociales (Kudos, Commentaires).
+ */
 @Service
 public class ActiviteService {
 
@@ -27,6 +32,13 @@ public class ActiviteService {
     private final BadgeAttributionService badgeAttributionService;
     private final RestTemplate restTemplate = new RestTemplate();
 
+    /**
+     * Constructeur alternatif permettant d'instancier ActiviteService sans le système de badges.
+     * * @param activiteRepository le repository de l'entité Activite
+     * @param sportRepository le repository de l'entité Sport
+     * @param commentaireRepository le repository de l'entité Commentaire
+     * @param utilisateurRepository le repository de l'entité Utilisateur
+     */
     public ActiviteService(ActiviteRepository activiteRepository, SportRepository sportRepository, CommentaireRepository commentaireRepository, UtilisateurRepository utilisateurRepository) {
         this(activiteRepository, sportRepository, commentaireRepository, utilisateurRepository, null);
     }
@@ -40,6 +52,14 @@ public class ActiviteService {
         this.badgeAttributionService = badgeAttributionService;
     }
 
+    /**
+     * Enregistre une nouvelle activité pour un utilisateur.
+     * Ce processus inclut automatiquement le calcul des calories brûlées via le coefficient MET du sport,
+     * la récupération des conditions météorologiques du lieu, et déclenche la vérification des badges.
+     *
+     * @param activite L'objet Activite contenant les détails saisis par l'utilisateur.
+     * @return L'activité persistée dans la base de données, avec ses attributs enrichis.
+     */
     public Activite enregistrerActivite(Activite activite) {
         // 1. Associer le Sport s'il n'est pas déjà présent
         if (activite.getSport() == null && activite.getNom() != null) {
@@ -56,6 +76,8 @@ public class ActiviteService {
         activite.setConditionsMeteo(meteo);
 
         Activite savedActivite = activiteRepository.save(activite);
+
+        // 4. Déclencher le processus d'attribution des badges
         if (badgeAttributionService != null && activite.getUtilisateur() != null) {
             badgeAttributionService.attribuerBadgesAutomatiques(activite.getUtilisateur().getId());
         }
@@ -94,7 +116,6 @@ public class ActiviteService {
         }
     }
 
-    //Refactorisation de calculerCalories pour réduire la complexité cognitive (SonarQube java:S3776)
     private int calculerCalories(Activite activite) {
         Utilisateur user = activite.getUtilisateur();
         if (user == null || activite.getDuree() <= 0) {
@@ -104,7 +125,6 @@ public class ActiviteService {
         float weight = user.getPoids() > 0 ? user.getPoids() : 70.0f;
         double durationHours = activite.getDuree() / 60.0;
 
-        // Délégation de la logique de calcul du MET à une autre méthode
         double met = determinerMet(activite, durationHours);
 
         return (int) Math.round(met * weight * durationHours);
@@ -138,18 +158,41 @@ public class ActiviteService {
         return 4.0;
     }
 
+    /**
+     * Récupère l'intégralité des activités enregistrées dans le système.
+     * @return La liste complète des objets Activite.
+     */
     public List<Activite> getToutesLesActivites() {
         return activiteRepository.findAll();
     }
 
+    /**
+     * Récupère l'historique chronologique des activités d'un utilisateur spécifique.
+     *
+     * @param id L'identifiant de l'utilisateur.
+     * @return La liste de ses activités triée de la plus récente à la plus ancienne.
+     */
     public List<Activite> getProgresUtilisateur(Long id) {
         return activiteRepository.findByUtilisateurIdOrderByDateDesc(id);
     }
 
+    /**
+     * Surcharge de la méthode permettant de récupérer l'historique en passant directement l'objet Utilisateur.
+     *
+     * @param user L'objet Utilisateur concerné.
+     * @return La liste de ses activités.
+     */
     public List<Activite> getActivitesByUtilisateur(Utilisateur user) {
         return activiteRepository.findByUtilisateurIdOrderByDateDesc(user.getId());
     }
 
+    /**
+     * Agrége les données d'une liste d'activités pour générer un résumé global.
+     * Utile pour alimenter les tableaux de bord et les widgets statistiques (ex: Total des calories).
+     *
+     * @param activites La collection d'activités à analyser.
+     * @return Un Map (Dictionnaire) contenant les indicateurs clés: "count", "totalDuree", "totalDistance", "totalCalories".
+     */
     public Map<String, Object> getStatsActivites(List<Activite> activites) {
         Map<String, Object> stats = new HashMap<>();
         int totalActivites = activites.size();
@@ -171,14 +214,31 @@ public class ActiviteService {
         return stats;
     }
 
+    /**
+     * Supprime définitivement une activité de la base de données.
+     *
+     * @param idActivite L'identifiant de l'activité à supprimer.
+     */
     public void supprimer(Long idActivite) {
         activiteRepository.deleteById(idActivite);
     }
 
+    /**
+     * Récupère les détails d'une activité spécifique grâce à son identifiant.
+     *
+     * @param idActivite L'identifiant de l'activité.
+     * @return Un Optional contenant l'activité si elle existe.
+     */
     public Optional<Activite> getById(Long idActivite) {
         return activiteRepository.findById(idActivite);
     }
 
+    /**
+     * Génère le flux d'actualité (Feed) d'un utilisateur en compilant les activités de ses amis.
+     *
+     * @param utilisateur L'utilisateur qui consulte le flux.
+     * @return Une liste chronologique des activités réalisées par son réseau d'amis.
+     */
     public List<Activite> getFluxActivitesAmis(Utilisateur utilisateur) {
         List<Utilisateur> amis = utilisateur.getAmis();
 
@@ -189,6 +249,13 @@ public class ActiviteService {
         return activiteRepository.findByUtilisateurInOrderByDateDesc(amis);
     }
 
+    /**
+     * Gère l'action d'applaudir (Kudo) sur une activité.
+     * Si l'utilisateur a déjà donné un kudo, la méthode le retire (effet toggle).
+     *
+     * @param activiteId L'identifiant de l'activité ciblée.
+     * @param userId L'identifiant de l'utilisateur effectuant l'action.
+     */
     @Transactional
     public void toggleKudos(Long activiteId, Long userId) {
         Activite a = activiteRepository.findById(activiteId).orElseThrow();
@@ -203,6 +270,13 @@ public class ActiviteService {
         activiteRepository.save(a);
     }
 
+    /**
+     * Permet à un utilisateur de publier un commentaire texte sur une activité spécifique.
+     *
+     * @param activiteId L'identifiant de l'activité commentée.
+     * @param userId L'identifiant de l'auteur du commentaire.
+     * @param contenu Le texte du commentaire.
+     */
     @Transactional
     public void ajouterCommentaire(Long activiteId, Long userId, String contenu) {
         Activite a = activiteRepository.findById(activiteId).orElseThrow();

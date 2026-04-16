@@ -11,7 +11,11 @@ import utcapitole.miage.projet_web.model.Utilisateur;
 import java.time.LocalDate;
 import java.util.List;
 
-
+/**
+ * Interface de gestion des accès aux données pour l'entité {@link Activite}.
+ * Fournit les requêtes personnalisées nécessaires pour le calcul des statistiques,
+ * l'évaluation des objectifs et les classements des challenges.
+ */
 @Repository
 public interface ActiviteRepository extends JpaRepository<Activite, Long> {
 
@@ -21,6 +25,16 @@ public interface ActiviteRepository extends JpaRepository<Activite, Long> {
 
     List<Activite> findByUtilisateur(Utilisateur user);
 
+    /**
+     * Calcule la somme totale des calories brûlées par un utilisateur pour un sport spécifique,
+     * dans un intervalle de temps donné. Utilisé pour générer le classement des challenges.
+     *
+     * @param userId L'identifiant de l'utilisateur.
+     * @param sportCible Le nom du sport ciblé par le challenge.
+     * @param dateDebut La date de début du challenge.
+     * @param dateFin La date de fin du challenge.
+     * @return Le total des calories consommées (retourne 0 si aucune activité n'est trouvée).
+     */
     @Query("SELECT COALESCE(SUM(a.caloriesConsommees), 0) FROM Activite a " +
             "WHERE a.utilisateur.id = :userId " +
             "AND a.nom = :sportCible " +
@@ -36,10 +50,25 @@ public interface ActiviteRepository extends JpaRepository<Activite, Long> {
     boolean existsByUtilisateurIdAndDistanceGreaterThanEqual(Long utilisateurId, double distance);
 
     List<Activite> findByUtilisateurId(Long utilisateurId);
-    // Trouve les activités d'une liste des amis triées par date la plus récente
+
+    /**
+     * Récupère le flux d'activités récentes pour un groupe d'amis.
+     *
+     * @param amis La liste des utilisateurs amis.
+     * @return Une liste d'activités triée par date décroissante (les plus récentes en premier).
+     */
     List<Activite> findByUtilisateurInOrderByDateDesc(List<Utilisateur> amis);
 
-    // calculerDistanceTotale pour objectif
+    /**
+     * Calcule la distance cumulée pour un utilisateur et un sport donnés sur une période.
+     * Utilisé pour calculer la progression des objectifs personnels (Distance).
+     *
+     * @param userId L'identifiant de l'utilisateur.
+     * @param sportId L'identifiant du sport.
+     * @param debut Date de début de l'objectif.
+     * @param fin Date de fin de l'objectif.
+     * @return La distance totale en kilomètres (retourne 0.0 si aucune activité n'est trouvée).
+     */
     @Query("SELECT COALESCE(SUM(a.distance), 0.0) FROM Activite a " +
             "WHERE a.utilisateur.id = :userId " +
             "AND a.sport.id = :sportId " +
@@ -50,7 +79,16 @@ public interface ActiviteRepository extends JpaRepository<Activite, Long> {
                                   @Param("debut") LocalDate debut,
                                   @Param("fin") LocalDate fin);
 
-    // calculerDureeTotale pour l'objectif
+    /**
+     * Calcule la durée cumulée pour un utilisateur et un sport donnés sur une période.
+     * Utilisé pour calculer la progression des objectifs personnels (Durée).
+     *
+     * @param userId L'identifiant de l'utilisateur.
+     * @param sportId L'identifiant du sport.
+     * @param debut Date de début de l'objectif.
+     * @param fin Date de fin de l'objectif.
+     * @return La durée totale en minutes (retourne 0 si aucune activité n'est trouvée).
+     */
     @Query("SELECT COALESCE(SUM(a.duree), 0) FROM Activite a " +
             "WHERE a.utilisateur.id = :userId " +
             "AND a.sport.id = :sportId " +
@@ -61,15 +99,26 @@ public interface ActiviteRepository extends JpaRepository<Activite, Long> {
                              @Param("debut") LocalDate debut,
                              @Param("fin") LocalDate fin);
 
-    // Calculer la distance totale de tous les sports pour un utilisateur
+    /**
+     * Calcule la distance totale parcourue par un utilisateur depuis son inscription, tous sports confondus.
+     * Utilisé pour l'attribution automatique des badges de distance (10km, 25km, etc.).
+     *
+     * @param userId L'identifiant de l'utilisateur.
+     * @return La distance totale historique en kilomètres.
+     */
     @Query("SELECT COALESCE(SUM(a.distance), 0.0) FROM Activite a " +
             "WHERE a.utilisateur.id = :userId")
     Double calculerDistanceTotaleUtilisateur(@Param("userId") Long userId);
 
-    // Calculer la durée totale de musculation pour un utilisateur (toutes dates)
+    /**
+     * Calcule la durée totale passée à faire de la musculation par un utilisateur depuis son inscription.
+     * Utilisé pour l'attribution automatique des badges de musculation (10h, 25h, etc.).
+     *
+     * @param userId L'identifiant de l'utilisateur.
+     * @return La durée totale en minutes.
+     */
     @Query("SELECT COALESCE(SUM(a.duree), 0) FROM Activite a " +
             "WHERE a.utilisateur.id = :userId " +
             "AND LOWER(a.sport.nom) = 'musculation'")
     Long calculerDureeMusculation(@Param("userId") Long userId);
-
 }

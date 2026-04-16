@@ -62,14 +62,14 @@
                         </tr>
                         <tr>
                             <td><input type="date" id="date" name="date" class="form-control" th:value="${activite.date}" th:attr="max=${today}"></td>
-                            <td><input type="number" id="duree" name="duree" class="form-control" th:value="${activite.duree}"></td>
+                            <td><input type="number" id="duree" name="duree" class="form-control" th:value="${activite.duree}" min="1" required></td>
                             <td>
                                 <input th:if="${activite.sport != null and activite.sport.estBaseSurVitesse}"
-                                       type="number" step="0.1" id="distance" name="distance" class="form-control" th:value="${activite.distance}">
+                                       type="number" step="0.1" id="distance" name="distance" class="form-control" th:value="${activite.distance}" min="0" required>
                                 <input th:unless="${activite.sport != null and activite.sport.estBaseSurVitesse}"
-                                       type="number" id="niveauIntensite" name="niveauIntensite" class="form-control" min="1" max="5" th:value="${activite.niveauIntensite}">
+                                       type="number" id="niveauIntensite" name="niveauIntensite" class="form-control" min="1" max="5" th:value="${activite.niveauIntensite}" required>
                             </td>
-                            <td><input type="number" id="note" name="note" class="form-control" min="1" max="10" th:value="${activite.note}"></td>
+                            <td><input type="number" id="note" name="note" class="form-control" min="1" max="10" th:value="${activite.note}" required></td>
                         </tr>
                     </tbody>
                 </table>
