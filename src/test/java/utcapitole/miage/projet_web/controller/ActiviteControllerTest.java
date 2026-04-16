@@ -994,4 +994,105 @@ class ActiviteControllerTest {
         assertEquals(0, statsVides.get("totalCalories"));
         assertEquals(0.0, statsVides.get("totalDistance"));
     }
+
+    /**
+     * Test
+     * Couvre la branche a.getSport() == null lorsque sportId != null
+     */
+    @Test
+    void listActivites_sportIdNotNull_activiteSportNull() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        Activite a = new Activite();
+        a.setNom("Sans Sport");
+        a.setDate(LocalDate.now());
+        a.setSport(null); // Pas de sport associé
+
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(Arrays.asList(a));
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(activiteService.getStatsActivites(any())).thenReturn(new HashMap<>());
+
+        String viewName = activiteController.listActivites(model, session, "30j", "jour", 1L);
+
+        assertEquals("activiteList", viewName);
+        // L'activité doit être filtrée car elle n'a pas de sport
+        verify(model).addAttribute(eq("activites"), argThat(list -> ((List<?>)list).isEmpty()));
+    }
+
+    /**
+     * Test
+     * Couvre la branche sportId.equals(...) == false
+     */
+    @Test
+    void listActivites_sportIdNotNull_sportDifferent() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        Sport sportX = new Sport();
+        sportX.setId(10L);
+
+        Activite a = new Activite();
+        a.setNom("Sport Different");
+        a.setDate(LocalDate.now());
+        a.setSport(sportX);
+
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(Arrays.asList(a));
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(activiteService.getStatsActivites(any())).thenReturn(new HashMap<>());
+
+        String viewName = activiteController.listActivites(model, session, "30j", "jour", 1L);
+
+        assertEquals("activiteList", viewName);
+        // L'activité doit être filtrée car ID sport (10) != sportId filtré (1)
+        verify(model).addAttribute(eq("activites"), argThat(list -> ((List<?>)list).isEmpty()));
+    }
+
+    @Test
+    void listActivites_periodeTout_avecActiviteDateNull() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        Activite a = new Activite();
+        a.setNom("Date Null");
+        a.setDate(null); // Date nulle
+
+        // En periode "tout", dateDebut est null, donc l'activité passe le premier filtre
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(Arrays.asList(a));
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(activiteService.getStatsActivites(any())).thenReturn(new HashMap<>());
+
+        String viewName = activiteController.listActivites(model, session, "tout", "jour", null);
+
+        assertEquals("activiteList", viewName);
+        // Doit être dans la liste des activites
+        verify(model).addAttribute(eq("activites"), argThat(list -> ((List<?>)list).size() == 1));
+        // Mais ne doit pas être dans les labels du graphique (car date null filtrée dans construireProgression)
+        verify(model).addAttribute(eq("chartLabels"), argThat(list -> ((List<?>)list).isEmpty()));
+    }
+
+    @Test
+    void listActivites_avecPlusieursActivites_verifieTriEtRegroupement() {
+        when(session.getAttribute("loggedInUser")).thenReturn(mockUser);
+
+        LocalDate today = LocalDate.now();
+        
+        Activite a1 = new Activite();
+        a1.setDate(today.minusDays(1));
+        a1.setDuree(30);
+
+        Activite a2 = new Activite();
+        a2.setDate(today.minusDays(5));
+        a2.setDuree(60);
+
+        // Activités non triées à la base
+        when(activiteService.getActivitesByUtilisateur(mockUser)).thenReturn(Arrays.asList(a1, a2));
+        when(sportRepository.findAll()).thenReturn(Collections.emptyList());
+        when(activiteService.getStatsActivites(any())).thenReturn(new HashMap<>());
+
+        // Test regroupement semaine
+        activiteController.listActivites(model, session, "tout", "semaine", null);
+        verify(model, atLeastOnce()).addAttribute(eq("chartLabels"), any());
+
+        // Test regroupement mois
+        activiteController.listActivites(model, session, "tout", "mois", null);
+        verify(model, atLeastOnce()).addAttribute(eq("chartLabels"), any());
+    }
 }

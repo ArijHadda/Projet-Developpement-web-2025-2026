@@ -254,4 +254,56 @@ class ObjectifServiceTest {
         ObjectifService serviceAlternatif = new ObjectifService(objectifRepository, activiteRepository);
         assertNotNull(serviceAlternatif);
     }
+
+    @Test
+    void testGetObjectifsAvecProgression_DistanceEtDuree_IdentifieIncomplet() {
+        // Objectif demandant les deux (100km, 600min)
+        when(objectifRepository.findByUtilisateur(mockUser)).thenReturn(List.of(mockObj));
+
+        // Cas 1: Distance OK, mais Durée KO
+        when(activiteRepository.calculerDistanceTotale(anyLong(), anyLong(), any(), any())).thenReturn(100.0);
+        when(activiteRepository.calculerDureeTotale(anyLong(), anyLong(), any(), any())).thenReturn(300L);
+        objectifService.getObjectifsAvecProgression(mockUser);
+        verify(badgeAttributionService, never()).attribuerBadgeObjectifComplet(any());
+
+        // Cas 2: Distance KO, mais Durée OK
+        when(activiteRepository.calculerDistanceTotale(anyLong(), anyLong(), any(), any())).thenReturn(50.0);
+        when(activiteRepository.calculerDureeTotale(anyLong(), anyLong(), any(), any())).thenReturn(600L);
+        objectifService.getObjectifsAvecProgression(mockUser);
+        verify(badgeAttributionService, never()).attribuerBadgeObjectifComplet(any());
+    }
+
+    @Test
+    void testGetObjectifsAvecProgression_SingleMetric_IdentifieIncomplet() {
+        // Uniquement Distance (100km)
+        Objectif objDist = new Objectif("100km Velo", Frequence.MENSUEL, 0, 100.0, mockUser, mockSport);
+        when(objectifRepository.findByUtilisateur(mockUser)).thenReturn(List.of(objDist));
+        when(activiteRepository.calculerDistanceTotale(anyLong(), anyLong(), any(), any())).thenReturn(50.0);
+        objectifService.getObjectifsAvecProgression(mockUser);
+        verify(badgeAttributionService, never()).attribuerBadgeObjectifComplet(any());
+
+        // Uniquement Durée (600min)
+        Objectif objDur = new Objectif("600min Velo", Frequence.MENSUEL, 600, 0.0, mockUser, mockSport);
+        when(objectifRepository.findByUtilisateur(mockUser)).thenReturn(List.of(objDur));
+        when(activiteRepository.calculerDureeTotale(anyLong(), anyLong(), any(), any())).thenReturn(300L);
+        objectifService.getObjectifsAvecProgression(mockUser);
+        verify(badgeAttributionService, never()).attribuerBadgeObjectifComplet(any());
+    }
+
+    @Test
+    void testGetObjectifsAvecProgression_BadgeServiceNull_HandleCorrectement() {
+        // On crée un service sans badgeService (via le constructeur à 2 args)
+        ObjectifService serviceSansBadge = new ObjectifService(objectifRepository, activiteRepository);
+        
+        when(objectifRepository.findByUtilisateur(mockUser)).thenReturn(List.of(mockObj));
+        // L'objectif est complété
+        when(activiteRepository.calculerDistanceTotale(anyLong(), anyLong(), any(), any())).thenReturn(100.0);
+        when(activiteRepository.calculerDureeTotale(anyLong(), anyLong(), any(), any())).thenReturn(600L);
+
+        // Ne doit pas lancer de NPE
+        List<ObjectifProgressDTO> result = serviceSansBadge.getObjectifsAvecProgression(mockUser);
+        
+        assertEquals(1, result.size());
+        assertEquals(100.0, result.get(0).getPourcentageDistance());
+    }
 }
