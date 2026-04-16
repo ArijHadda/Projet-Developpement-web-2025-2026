@@ -10,6 +10,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Service métier gérant le cycle de vie des challenges (défis communautaires).
+ * Inclut la création, l'inscription, la génération des classements dynamiques
+ * et l'attribution des récompenses aux vainqueurs.
+ */
 @Service
 public class ChallengeService {
 
@@ -30,6 +35,13 @@ public class ChallengeService {
         this.badgeAttributionService = badgeAttributionService;
     }
 
+    /**
+     * Calcule et génère le classement actuel d'un challenge basé sur les calories brûlées.
+     * Si le challenge est terminé, déclenche l'attribution du badge "Première Victoire" au gagnant.
+     *
+     * @param challengeId L'identifiant du challenge.
+     * @return Une liste de ClassementDTO triée par ordre décroissant des scores.
+     */
     public List<ClassementDTO> getClassement(Long challengeId) {
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new IllegalArgumentException(MESSAGE_DE_INTROUVABLE));
@@ -52,16 +64,27 @@ public class ChallengeService {
 
         classement.sort((c1, c2) -> c2.getTotalCalories().compareTo(c1.getTotalCalories()));
 
-        // Attribuer le badge au top 1 si le challenge est termin�
         verifierEtAttribuerBadgeChallengeGagne(challenge, classement);
 
         return classement;
     }
 
+    /**
+     * Récupère l'intégralité des challenges du système.
+     *
+     * @return La liste des challenges.
+     */
     public List<Challenge> getAllChallenges() {
         return challengeRepository.findAll();
     }
 
+    /**
+     * Crée un nouveau challenge après avoir validé la cohérence des dates d'ouverture et de fermeture.
+     *
+     * @param challenge Le challenge à créer.
+     * @param createur L'utilisateur créant le challenge.
+     * @return Le challenge persisté.
+     */
     public Challenge creerChallenge(Challenge challenge, Utilisateur createur) {
         LocalDate today = LocalDate.now();
 
@@ -76,6 +99,12 @@ public class ChallengeService {
         return challengeRepository.save(challenge);
     }
 
+    /**
+     * Inscrit un utilisateur à un challenge, sous réserve que celui-ci ne soit pas déjà terminé.
+     *
+     * @param challengeId L'identifiant du challenge.
+     * @param utilisateur L'utilisateur souhaitant participer.
+     */
     public void rejoindreChallenge(Long challengeId, Utilisateur utilisateur) {
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new IllegalArgumentException(MESSAGE_DE_INTROUVABLE));
@@ -96,6 +125,12 @@ public class ChallengeService {
         participationRepository.save(participation);
     }
 
+    /**
+     * Supprime un challenge. Seul le créateur du challenge est autorisé à effectuer cette action.
+     *
+     * @param challengeId L'identifiant du challenge.
+     * @param utilisateurActuel L'utilisateur effectuant la requête.
+     */
     public void supprimerChallenge(Long challengeId, Utilisateur utilisateurActuel) {
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new IllegalArgumentException(MESSAGE_DE_INTROUVABLE));
@@ -107,6 +142,13 @@ public class ChallengeService {
         }
     }
 
+    /**
+     * Modifie le titre d'un challenge existant (réservé au créateur).
+     *
+     * @param challengeId L'identifiant du challenge.
+     * @param nouveauTitre Le nouveau titre à appliquer.
+     * @param utilisateurActuel L'utilisateur effectuant la requête.
+     */
     public void modifierTitreChallenge(Long challengeId, String nouveauTitre, Utilisateur utilisateurActuel) {
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new IllegalArgumentException(MESSAGE_DE_INTROUVABLE));

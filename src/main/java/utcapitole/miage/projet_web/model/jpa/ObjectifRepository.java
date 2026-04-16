@@ -7,6 +7,9 @@ import utcapitole.miage.projet_web.model.Utilisateur;
 
 import java.util.List;
 
+/**
+ * Interface d'accès aux données pour la gestion des entités Objectifs.
+ */
 @Repository
 public interface ObjectifRepository extends JpaRepository<Objectif, Long> {
 

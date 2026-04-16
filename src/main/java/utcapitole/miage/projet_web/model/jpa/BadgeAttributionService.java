@@ -9,6 +9,11 @@ import utcapitole.miage.projet_web.util.BadgeImageMapper;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Service métier responsable de la logique de Gamification du système.
+ * Il gère l'évaluation des statistiques des utilisateurs et l'attribution automatique
+ * des trophées et des badges (Distance, Musculation, Accomplissements divers).
+ */
 @Service
 public class BadgeAttributionService {
 
@@ -47,6 +52,14 @@ public class BadgeAttributionService {
         this.badgeRepository = badgeRepository;
     }
 
+    /**
+     * Enregistre manuellement une activité pour un utilisateur et déclenche l'évaluation des badges.
+     * Utilisé généralement via les requêtes administratives ou de simulation.
+     *
+     * @param utilisateurId L'identifiant de l'utilisateur concerné.
+     * @param activite L'objet activité à sauvegarder.
+     * @return La liste des intitulés des badges nouvellement débloqués lors de cette action.
+     */
     public List<String> enregistrerActiviteEtAttribuerBadges(Long utilisateurId, Activite activite) {
         Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable."));
@@ -57,6 +70,13 @@ public class BadgeAttributionService {
         return attribuerBadgesAutomatiques(utilisateurId);
     }
 
+    /**
+     * Évalue l'historique complet d'un utilisateur et attribue de nouveaux badges s'il franchit un palier.
+     * Les badges déjà possédés ne sont pas attribués en double.
+     *
+     * @param utilisateurId L'identifiant de l'utilisateur à évaluer.
+     * @return La liste des intitulés des badges nouvellement débloqués.
+     */
     public List<String> attribuerBadgesAutomatiques(Long utilisateurId) {
         Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable."));
@@ -80,6 +100,12 @@ public class BadgeAttributionService {
         return badgesAttribues;
     }
 
+    /**
+     * Attribue le badge "Premier Objectif Complété" si l'utilisateur ne le possède pas encore.
+     *
+     * @param utilisateur L'utilisateur ayant complété un objectif.
+     * @return La liste contenant l'intitulé du badge s'il a été attribué.
+     */
     public List<String> attribuerBadgeObjectifComplet(Utilisateur utilisateur) {
         List<String> badgesAttribues = new ArrayList<>();
         if (!possedeBadge(utilisateur, BADGE_OBJECTIF_COMPLETE)) {
@@ -88,6 +114,12 @@ public class BadgeAttributionService {
         return badgesAttribues;
     }
 
+    /**
+     * Attribue le badge "Première Victoire de Challenge" si l'utilisateur termine à la 1ère place.
+     *
+     * @param utilisateur Le gagnant du challenge.
+     * @return La liste contenant l'intitulé du badge s'il a été attribué.
+     */
     public List<String> attribuerBadgeChallengeGagne(Utilisateur utilisateur) {
         List<String> badgesAttribues = new ArrayList<>();
         if (!possedeBadge(utilisateur, BADGE_CHALLENGE_GAGNE)) {
@@ -148,6 +180,12 @@ public class BadgeAttributionService {
                 .anyMatch(badge -> entituleBadge.equalsIgnoreCase(badge.getEntitule()));
     }
 
+    /**
+     * Récupère l'intégralité des badges configurés dans le système.
+     * Typiquement utilisé pour afficher le "Mur des trophées" dans les profils.
+     *
+     * @return La liste complète des objets {@link Badge}.
+     */
     public List<Badge> getAllBadges() {
         return badgeRepository.findAll();
     }
