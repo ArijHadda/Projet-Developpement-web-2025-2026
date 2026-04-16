@@ -10,11 +10,22 @@ import utcapitole.miage.projet_web.model.jpa.SportRepository;
 
 import java.util.List;
 
+/**
+ * Configuration pour l'initialisation des données de base de l'application.
+ */
 @Configuration
 public class DataInitializer {
 
+    /**
+     * Logger pour le suivi des activités d'initialisation.
+     */
     private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);
 
+    /**
+     * Initialise la base de données avec des sports par défaut si elle est vide.
+     * @param repository Le dépôt pour la gestion des sports
+     * @return une instance de {@link CommandLineRunner}
+     */
     @Bean
     public CommandLineRunner initDatabase(SportRepository repository) {
         final String sportTypeDurance = "Endurance";
