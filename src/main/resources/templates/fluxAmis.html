@@ -24,15 +24,27 @@
     </nav>
 
     <div class="container">
-        <div class="flex justify-between items-center" style="margin: 2rem 0;">
-            <h1>🌟 Activités de mes amis</h1>
-            <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="btn btn-outline">
-                🔙 Retour au profil
-            </a>
+        <div class="flex justify-between items-center" style="margin: 2rem 0; flex-wrap: wrap; gap: 1rem;">
+            <h1 style="margin: 0;">🌟 Activités de mes amis</h1>
+            <div class="flex gap-sm">
+                <a th:href="@{/user/ami/chercher}" class="btn btn-primary">
+                    🔍 Chercher des amis
+                </a>
+                <a th:href="@{/user/profile/{id}(id=${session.loggedInUser.id})}" class="btn btn-outline">
+                    🔙 Retour au profil
+                </a>
+            </div>
         </div>
 
-        <div th:if="${#lists.isEmpty(fluxActivites)}" class="alert alert-info">
-            <p>ℹ️ Il n'y a aucune activité récente. Allez chercher des amis ou attendez qu'ils fassent du sport !</p>
+        <div th:if="${#lists.isEmpty(fluxActivites)}" class="card text-center" style="padding: 3rem 1rem; margin-bottom: 2rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">👥</div>
+            <h3>Votre flux est vide</h3>
+            <p class="text-muted" style="margin-bottom: 1.5rem;">
+                Il n'y a aucune activité récente. Trouvez d'autres sportifs pour vous motiver ensemble !
+            </p>
+            <a th:href="@{/user/ami/chercher}" class="btn btn-primary">
+                🔍 Trouver des amis maintenant
+            </a>
         </div>
 
         <div th:each="act : ${fluxActivites}" class="card" style="margin-bottom: 1.5rem;">

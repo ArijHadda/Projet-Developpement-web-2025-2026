@@ -52,7 +52,7 @@ class UtilisateurTest {
         List<Activite> activites = new ArrayList<>();
         activites.add(activite);
 
-        Badge badge = new Badge(1L, "1er 10km");
+        Badge badge = new Badge(1L, "1er 10km", "10KM");
         List<Badge> badges = new ArrayList<>();
         badges.add(badge);
 
@@ -98,7 +98,7 @@ class UtilisateurTest {
         niveaux.add(new SportNiveauPratique(sport, NiveauPratique.INTERMEDIAIRE));
 
         List<Activite> activites = List.of(new Activite());
-        List<Badge> badges = List.of(new Badge(2L, "Finisher"));
+        List<Badge> badges = List.of(new Badge(2L, "Finisher", "FINISHER"));
 
         List<Challenge> challenges = new ArrayList<>();
         List<Participation> participations = new ArrayList<>();

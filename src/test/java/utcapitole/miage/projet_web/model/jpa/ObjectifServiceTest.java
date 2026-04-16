@@ -33,6 +33,9 @@ class ObjectifServiceTest {
     @Mock
     private ActiviteRepository activiteRepository;
 
+    @Mock
+    private BadgeAttributionService badgeAttributionService; // <-- Ajout du mock manquant
+
     @InjectMocks
     private ObjectifService objectifService;
 
@@ -88,10 +91,13 @@ class ObjectifServiceTest {
         assertEquals(50.0, result.get(0).getPourcentageDistance());
         assertEquals(300.0, result.get(0).getDureeActuelle());
         assertEquals(50.0, result.get(0).getPourcentageDuree());
+
+        // Non complété, donc pas de badge
+        verify(badgeAttributionService, never()).attribuerBadgeObjectifComplet(any());
     }
 
     @Test
-    void testGetObjectifsAvecProgression_PlafonneA100Pourcent() {
+    void testGetObjectifsAvecProgression_PlafonneA100PourcentEtAttribueBadge() {
         // Préparation
         when(objectifRepository.findByUtilisateur(mockUser)).thenReturn(List.of(mockObj));
 
@@ -106,6 +112,33 @@ class ObjectifServiceTest {
         // Le pourcentage doit être plafonné à 100%
         assertEquals(100.0, result.get(0).getPourcentageDistance());
         assertEquals(100.0, result.get(0).getPourcentageDuree());
+
+        // L'objectif est complété, le badge doit être attribué
+        verify(badgeAttributionService).attribuerBadgeObjectifComplet(mockUser);
+    }
+
+    @Test
+    void testGetObjectifsAvecProgression_DistanceUniquement_AttribueBadge() {
+        // Un objectif basé uniquement sur la distance
+        Objectif objDist = new Objectif("100km Velo", Frequence.MENSUEL, 0, 100.0, mockUser, mockSport);
+        when(objectifRepository.findByUtilisateur(mockUser)).thenReturn(List.of(objDist));
+        when(activiteRepository.calculerDistanceTotale(anyLong(), anyLong(), any(), any())).thenReturn(100.0);
+
+        objectifService.getObjectifsAvecProgression(mockUser);
+
+        verify(badgeAttributionService).attribuerBadgeObjectifComplet(mockUser);
+    }
+
+    @Test
+    void testGetObjectifsAvecProgression_DureeUniquement_AttribueBadge() {
+        // Un objectif basé uniquement sur la durée
+        Objectif objDur = new Objectif("600min Velo", Frequence.MENSUEL, 600, 0.0, mockUser, mockSport);
+        when(objectifRepository.findByUtilisateur(mockUser)).thenReturn(List.of(objDur));
+        when(activiteRepository.calculerDureeTotale(anyLong(), anyLong(), any(), any())).thenReturn(600L);
+
+        objectifService.getObjectifsAvecProgression(mockUser);
+
+        verify(badgeAttributionService).attribuerBadgeObjectifComplet(mockUser);
     }
 
     @Test
@@ -213,5 +246,12 @@ class ObjectifServiceTest {
         assertEquals(1, result.size());
         assertEquals(0.0, result.get(0).getDureeActuelle());
         assertEquals(0.0, result.get(0).getPourcentageDuree());
+    }
+
+    @Test
+    void testConstructeurAlternatif() {
+        // Appeler explicitement le constructeur à 2 paramètres pour couvrir 100% des méthodes
+        ObjectifService serviceAlternatif = new ObjectifService(objectifRepository, activiteRepository);
+        assertNotNull(serviceAlternatif);
     }
 }

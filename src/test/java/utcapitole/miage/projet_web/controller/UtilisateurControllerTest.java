@@ -525,6 +525,11 @@ class UtilisateurControllerTest {
         public List<String> attribuerBadgesAutomatiques(Long utilisateurId) {
             return autoBadgesToReturn;
         }
+
+        @Override
+        public List<utcapitole.miage.projet_web.model.Badge> getAllBadges() {
+            return new ArrayList<>();
+        }
     }
 
     @Test
@@ -637,5 +642,58 @@ class UtilisateurControllerTest {
 
             assertTrue(model.containsAttribute("meteoEtatCiel"));
         }
+    }
+
+    @Test
+    void testAfficherProfile_AjouteAllBadgesAuModel() {
+        Utilisateur logged = user(1L, "p@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+        utilisateurService.byId.put(1L, logged);
+
+        // Simulation : le service renvoie une liste de 2 badges
+        List<utcapitole.miage.projet_web.model.Badge> mockBadges = new ArrayList<>();
+        mockBadges.add(new utcapitole.miage.projet_web.model.Badge(1L, "Badge1", "IMG1"));
+        mockBadges.add(new utcapitole.miage.projet_web.model.Badge(2L, "Badge2", "IMG2"));
+        badgeService.autoBadgesToReturn = List.of(); // Eviter null
+
+        // Surcharger temporairement la méthode getAllBadges() du FakeBadgeService
+        FakeBadgeAttributionService customBadgeService = new FakeBadgeAttributionService() {
+            @Override
+            public List<utcapitole.miage.projet_web.model.Badge> getAllBadges() {
+                return mockBadges;
+            }
+        };
+
+        // Injecter le service sur mesure dans le contrôleur pour ce test
+        setField(controller, "badgeAttributionService", customBadgeService);
+
+        Model model = new ExtendedModelMap();
+        String view = controller.afficherProfile(1L, session, model);
+        assertEquals("profile", view);
+
+        // Vérifier que le contrôleur a bien récupéré et passé "allBadges" au Model
+        assertTrue(model.containsAttribute("allBadges"));
+        assertEquals(mockBadges, model.getAttribute("allBadges"));
+
+        // Restaurer le service par défaut pour les autres tests
+        setField(controller, "badgeAttributionService", badgeService);
+    }
+
+    @Test
+    void testAfficherProfileMeteoExceptionGenerale() {
+        Utilisateur logged = user(1L, "p@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+        utilisateurService.byId.put(1L, logged);
+        when(restTemplate.getForObject(anyString(), eq(Map.class)))
+                .thenThrow(new RuntimeException("Erreur réseau imprévue"));
+        Model model = new ExtendedModelMap();
+        String view = controller.afficherProfile(1L, session, model);
+        assertEquals("profile", view);
+        assertEquals("Meteo indisponible", model.getAttribute("meteoTemperature"));
+        assertEquals("🌤️", model.getAttribute("meteoIcone"));
+        assertEquals("Ville inconnue", model.getAttribute("meteoVille"));
+        assertEquals("Indisponible", model.getAttribute("meteoEtatCiel"));
     }
 }

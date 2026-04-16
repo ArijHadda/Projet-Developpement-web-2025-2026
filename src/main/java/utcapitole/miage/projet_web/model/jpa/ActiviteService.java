@@ -9,6 +9,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import utcapitole.miage.projet_web.model.Activite;
 import utcapitole.miage.projet_web.model.Commentaire;
@@ -23,13 +24,20 @@ public class ActiviteService {
     private final CommentaireRepository commentaireRepository;
     private final UtilisateurRepository utilisateurRepository;
 
+    private final BadgeAttributionService badgeAttributionService;
     private final RestTemplate restTemplate = new RestTemplate();
 
     public ActiviteService(ActiviteRepository activiteRepository, SportRepository sportRepository, CommentaireRepository commentaireRepository, UtilisateurRepository utilisateurRepository) {
+        this(activiteRepository, sportRepository, commentaireRepository, utilisateurRepository, null);
+    }
+
+    @Autowired
+    public ActiviteService(ActiviteRepository activiteRepository, SportRepository sportRepository, CommentaireRepository commentaireRepository, UtilisateurRepository utilisateurRepository, BadgeAttributionService badgeAttributionService) {
         this.activiteRepository = activiteRepository;
         this.sportRepository = sportRepository;
         this.commentaireRepository = commentaireRepository;
         this.utilisateurRepository = utilisateurRepository;
+        this.badgeAttributionService = badgeAttributionService;
     }
 
     public Activite enregistrerActivite(Activite activite) {
@@ -47,7 +55,11 @@ public class ActiviteService {
         String meteo = recupererMeteo(coords[0], coords[1]);
         activite.setConditionsMeteo(meteo);
 
-        return activiteRepository.save(activite);
+        Activite savedActivite = activiteRepository.save(activite);
+        if (badgeAttributionService != null && activite.getUtilisateur() != null) {
+            badgeAttributionService.attribuerBadgesAutomatiques(activite.getUtilisateur().getId());
+        }
+        return savedActivite;
     }
 
     private double[] getCoordonnees() {

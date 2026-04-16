@@ -61,4 +61,15 @@ public interface ActiviteRepository extends JpaRepository<Activite, Long> {
                              @Param("debut") LocalDate debut,
                              @Param("fin") LocalDate fin);
 
+    // Calculer la distance totale de tous les sports pour un utilisateur
+    @Query("SELECT COALESCE(SUM(a.distance), 0.0) FROM Activite a " +
+            "WHERE a.utilisateur.id = :userId")
+    Double calculerDistanceTotaleUtilisateur(@Param("userId") Long userId);
+
+    // Calculer la durée totale de musculation pour un utilisateur (toutes dates)
+    @Query("SELECT COALESCE(SUM(a.duree), 0) FROM Activite a " +
+            "WHERE a.utilisateur.id = :userId " +
+            "AND LOWER(a.sport.nom) = 'musculation'")
+    Long calculerDureeMusculation(@Param("userId") Long userId);
+
 }
