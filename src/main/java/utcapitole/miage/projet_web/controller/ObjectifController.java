@@ -12,6 +12,12 @@ import utcapitole.miage.projet_web.dto.ObjectifProgressDTO;
 
 import java.util.List;
 
+/**
+ * Contrôleur gérant toutes les fonctionnalités liées aux objectifs sportifs :
+ * création, modification, suppression, filtrage et affichage de la progression.
+ *
+ * Toutes les routes sont préfixées par /objectif.
+ */
 @Controller
 @RequestMapping("/objectif")
 public class ObjectifController {
@@ -25,11 +31,27 @@ public class ObjectifController {
     private final ObjectifService objectifService;
     private final SportService sportService;
 
+    /**
+     * Constructeur du contrôleur des objectifs.
+     *
+     * @param objectifService Service métier gérant les objectifs.
+     * @param sportService Service permettant de récupérer les sports disponibles.
+     */
     public ObjectifController(ObjectifService objectifService, SportService sportService) {
         this.objectifService = objectifService;
         this.sportService = sportService;
     }
 
+    /**
+     * Affiche la liste des objectifs de l'utilisateur, avec possibilité de filtrer
+     * par sport ou par fréquence.
+     *
+     * @param sportId Identifiant du sport pour filtrer (optionnel).
+     * @param frequence Fréquence de l'objectif (optionnelle).
+     * @param model Modèle contenant les objectifs filtrés et les données associées.
+     * @param session Session contenant l'utilisateur connecté.
+     * @return La vue listant les objectifs ou une redirection vers la page de login.
+     */
     @GetMapping("/list")
     public String listerObjectifs(
             @RequestParam(required = false) Long sportId,
@@ -40,10 +62,8 @@ public class ObjectifController {
         Utilisateur currentUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (currentUser == null) return REDIRECT_LOGIN;
 
-        // Récupérer tous les objectifs avec progression
         List<ObjectifProgressDTO> objectifsProgress = objectifService.getObjectifsAvecProgression(currentUser);
 
-        // Appliquer les filtres avec .toList() (SonarQube java:S6204)
         if (sportId != null) {
             objectifsProgress = objectifsProgress.stream()
                     .filter(dto -> dto.getObjectif().getSport().getId().equals(sportId))
@@ -64,6 +84,13 @@ public class ObjectifController {
         return "objectif-list";
     }
 
+    /**
+     * Affiche le formulaire de création d’un objectif.
+     *
+     * @param model Modèle contenant un objectif vide et la liste des sports.
+     * @param session Session contenant l'utilisateur connecté.
+     * @return La vue du formulaire ou une redirection vers la page de login.
+     */
     @GetMapping("/create")
     public String showCreateForm(Model model, HttpSession session) {
         if (session.getAttribute(ATTR_LOGGED_IN_USER) == null) return REDIRECT_LOGIN;
@@ -73,8 +100,14 @@ public class ObjectifController {
         return "objectif-form";
     }
 
-    // Créer/Mettre à jour
-    @SuppressWarnings("java:S4684") // Suppression de l'alerte DTO pour ne pas casser le code existant
+    /**
+     * Enregistre un nouvel objectif ou met à jour un objectif existant.
+     *
+     * @param objectif Objectif soumis par l'utilisateur.
+     * @param session Session contenant l'utilisateur connecté.
+     * @return Redirection vers la liste des objectifs.
+     */
+    @SuppressWarnings("java:S4684")
     @PostMapping("/save")
     public String saveObjectif(@ModelAttribute(ATTR_OBJECTIF) Objectif objectif, HttpSession session) {
         Utilisateur currentUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
@@ -86,6 +119,15 @@ public class ObjectifController {
         return REDIRECT_OBJECTIF_LIST;
     }
 
+    /**
+     * Affiche le formulaire de modification d’un objectif existant.
+     * Vérifie que l'objectif appartient bien à l'utilisateur connecté.
+     *
+     * @param id Identifiant de l'objectif.
+     * @param model Modèle contenant l'objectif et la liste des sports.
+     * @param session Session contenant l'utilisateur connecté.
+     * @return La vue du formulaire ou une redirection si l'accès est interdit.
+     */
     @GetMapping("/{id}/edit")
     public String showEditForm(@PathVariable("id") Long id, Model model, HttpSession session) {
         Utilisateur currentUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
@@ -102,6 +144,13 @@ public class ObjectifController {
         }).orElse(REDIRECT_OBJECTIF_LIST);
     }
 
+    /**
+     * Supprime un objectif si celui-ci appartient à l'utilisateur connecté.
+     *
+     * @param id Identifiant de l'objectif à supprimer.
+     * @param session Session contenant l'utilisateur connecté.
+     * @return Redirection vers la liste des objectifs.
+     */
     @GetMapping("/{id}/delete")
     public String deleteObjectif(@PathVariable("id") Long id, HttpSession session) {
         Utilisateur currentUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);

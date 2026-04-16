@@ -14,16 +14,23 @@ import utcapitole.miage.projet_web.model.jpa.*;
 import utcapitole.miage.projet_web.model.Activite;
 
 import java.time.LocalDate;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Contrôleur principal gérant toutes les fonctionnalités liées aux utilisateurs :
+ * authentification, inscription, profil, météo, mise à jour des informations,
+ * gestion des niveaux de pratique, badges, activités et objectifs.
+ *
+ * Toutes les routes sont préfixées par /user.
+ */
 @Controller
 @RequestMapping("/user")
-@SuppressWarnings({"java:S4684", "java:S2441"}) // Suppression des alertes SonarQube sur DTO et Sérialisation
+@SuppressWarnings({"java:S4684", "java:S2441"})
 public class UtilisateurController {
 
+    // --- Constantes météo ---
     private static final String METEO_TEMPERATURE = "temperature";
     private static final String METEO_ICONE = "icone";
     private static final String METEO_VILLE = "ville";
@@ -32,6 +39,7 @@ public class UtilisateurController {
     private static final String METEO_VENT_DIRECTION = "ventDirection";
     private static final String METEO_MOMENT = "moment";
 
+    // --- Constantes de navigation ---
     private static final String REDIRECT_LOGIN = "redirect:/user/login";
     private static final String REDIRECT_USER_PROFILE = "redirect:/user/profile/";
     private static final String ATTR_LOGGED_IN_USER = "loggedInUser";
@@ -39,7 +47,7 @@ public class UtilisateurController {
     private static final String VIEW_UPDATE_PASSWORD = "update-password";
     private static final String ATTR_USER_ID = "userId";
 
-    // Variable non finale pour permettre l'injection Mock dans les tests
+    /** RestTemplate non final pour permettre l'injection mock dans les tests. */
     private RestTemplate restTemplate = new RestTemplate();
 
     private final UtilisateurService utilisateurService;
@@ -50,6 +58,17 @@ public class UtilisateurController {
     private final ActiviteService activiteService;
     private final ObjectifService objectifService;
 
+    /**
+     * Constructeur du contrôleur utilisateur.
+     *
+     * @param utilisateurService Service gérant les utilisateurs.
+     * @param sportService Service gérant les sports.
+     * @param sportNiveauPratiqueService Service gérant les niveaux de pratique.
+     * @param passwordEncoder Encodeur BCrypt pour les mots de passe.
+     * @param badgeAttributionService Service attribuant les badges.
+     * @param activiteService Service gérant les activités.
+     * @param objectifService Service gérant les objectifs.
+     */
     public UtilisateurController(UtilisateurService utilisateurService,
                                  SportService sportService,
                                  SportNiveauPratiqueService sportNiveauPratiqueService,
@@ -66,11 +85,29 @@ public class UtilisateurController {
         this.objectifService = objectifService;
     }
 
+    // ---------------------------------------------------------
+    // AUTHENTIFICATION
+    // ---------------------------------------------------------
+
+    /**
+     * Affiche le formulaire de connexion.
+     *
+     * @return La vue du formulaire de login.
+     */
     @GetMapping("/login")
     public String showLoginForm() {
         return "login";
     }
 
+    /**
+     * Traite la connexion d'un utilisateur.
+     *
+     * @param email Email saisi.
+     * @param password Mot de passe saisi.
+     * @param session Session HTTP.
+     * @param model Modèle pour afficher les erreurs.
+     * @return Redirection vers le profil ou retour au login en cas d'erreur.
+     */
     @PostMapping("/login")
     public String processLogin(@RequestParam String email,
                                @RequestParam String password,
@@ -88,12 +125,29 @@ public class UtilisateurController {
         }
     }
 
+    // ---------------------------------------------------------
+    // INSCRIPTION
+    // ---------------------------------------------------------
+
+    /**
+     * Affiche le formulaire d'inscription.
+     *
+     * @param model Modèle contenant un utilisateur vide.
+     * @return La vue du formulaire d'inscription.
+     */
     @GetMapping("/register")
     public String showRegisterForm(Model model) {
         model.addAttribute("utilisateur", new Utilisateur());
         return "register";
     }
 
+    /**
+     * Traite l'inscription d'un nouvel utilisateur.
+     *
+     * @param utilisateur Utilisateur soumis.
+     * @param model Modèle pour afficher les erreurs.
+     * @return Redirection vers login ou retour au formulaire en cas d'erreur.
+     */
     @PostMapping("/register")
     public String processRegister(@ModelAttribute Utilisateur utilisateur, Model model) {
         if (utilisateurService.findByMail(utilisateur.getMail()).isPresent()) {
@@ -105,7 +159,19 @@ public class UtilisateurController {
         return REDIRECT_LOGIN;
     }
 
-    // Renommage IdU en idU (SonarQube java:S117)
+    // ---------------------------------------------------------
+    // PROFIL UTILISATEUR
+    // ---------------------------------------------------------
+
+    /**
+     * Affiche le profil d'un utilisateur (soi-même ou un ami).
+     * Inclut la météo, les activités récentes et les objectifs.
+     *
+     * @param idU Identifiant de l'utilisateur.
+     * @param session Session HTTP.
+     * @param model Modèle contenant les données du profil.
+     * @return La vue du profil ou ami-profile.
+     */
     @GetMapping("/profile/{idU}")
     public String afficherProfile(@PathVariable Long idU, HttpSession session, Model model) {
         Utilisateur loggedInUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
@@ -117,9 +183,9 @@ public class UtilisateurController {
             return REDIRECT_LOGIN;
         }
 
-        List<utcapitole.miage.projet_web.model.Badge> allBadges = badgeAttributionService.getAllBadges();
-        model.addAttribute("allBadges", allBadges);
+        model.addAttribute("allBadges", badgeAttributionService.getAllBadges());
 
+        // Profil personnel
         if (loggedInUser.getId().equals(idU)) {
             Map<String, Object> infosMeteo = recupererInfosMeteo();
             model.addAttribute("meteoTemperature", infosMeteo.get(METEO_TEMPERATURE));
@@ -133,6 +199,7 @@ public class UtilisateurController {
             return "profile";
         }
 
+        // Profil d'un ami
         model.addAttribute("ami", user);
         List<Activite> activitesAmi = activiteService.getActivitesByUtilisateur(user);
         if (activitesAmi != null && activitesAmi.size() > 5) {
@@ -144,6 +211,16 @@ public class UtilisateurController {
         return "ami-profile";
     }
 
+    // ---------------------------------------------------------
+    // MÉTÉO
+    // ---------------------------------------------------------
+
+    /**
+     * Récupère les informations météo via API externe.
+     * Retourne une map contenant température, icône, ville, vent, etc.
+     *
+     * @return Map des informations météo.
+     */
     private Map<String, Object> recupererInfosMeteo() {
         Map<String, Object> meteo = Map.of(
                 METEO_TEMPERATURE, "Meteo indisponible",
@@ -202,6 +279,14 @@ public class UtilisateurController {
         }
     }
 
+    /**
+     * Récupère le nom de la ville via API de géocodage inverse.
+     *
+     * @param latitude Latitude.
+     * @param longitude Longitude.
+     * @param fallbackCity Ville de secours.
+     * @return Nom de la ville.
+     */
     private String recupererVille(double latitude, double longitude, Object fallbackCity) {
         try {
             String url = "https://geocoding-api.open-meteo.com/v1/reverse?latitude=" + latitude
@@ -215,11 +300,16 @@ public class UtilisateurController {
                 }
             }
         } catch (Exception ignored) {
-            // Ignoré intentionnellement : en cas d'erreur de l'API, on utilisera la ville de secours (fallbackCity)
         }
         return fallbackCity != null ? fallbackCity.toString() : "Ville inconnue";
     }
 
+    /**
+     * Retourne un libellé textuel correspondant au code météo.
+     *
+     * @param weatherCode Code météo.
+     * @return Libellé météo.
+     */
     private String getWeatherLabel(int weatherCode) {
         return switch (weatherCode) {
             case 0 -> "Ensoleille (Code 0)";
@@ -240,6 +330,13 @@ public class UtilisateurController {
         };
     }
 
+    /**
+     * Retourne une icône Unicode correspondant au code météo.
+     *
+     * @param weatherCode Code météo.
+     * @param isDay Indique si c'est le jour.
+     * @return Icône météo.
+     */
     private String getWeatherIcon(int weatherCode, boolean isDay) {
         if (weatherCode == 0) {
             return isDay ? "☀️" : "🌙";
@@ -256,12 +353,34 @@ public class UtilisateurController {
         };
     }
 
+    /**
+     * Retourne un libellé textuel correspondant à une direction du vent.
+     *
+     * @param degrees Angle en degrés.
+     * @return Direction du vent.
+     */
     private String getWindDirectionLabel(int degrees) {
         String[] directions = {"Nord", "Nord-Est", "Est", "Sud-Est", "Sud", "Sud-Ouest", "Ouest", "Nord-Ouest"};
         int index = (int) Math.round((degrees % 360) / 45.0) % 8;
         return directions[index];
     }
 
+    // ---------------------------------------------------------
+    // MISE À JOUR DU PROFIL
+    // ---------------------------------------------------------
+
+    /**
+     * Met à jour les informations personnelles d'un utilisateur.
+     *
+     * @param idU Identifiant utilisateur.
+     * @param mailU Email.
+     * @param sexeU Sexe.
+     * @param ageU Âge.
+     * @param tailleU Taille.
+     * @param poidsU Poids.
+     * @param session Session HTTP.
+     * @return Redirection vers le profil.
+     */
     @PostMapping("/profile/update/{idU}")
     public String modifierProfile(@PathVariable Long idU, @RequestParam String mailU,
                                   @RequestParam String sexeU,
@@ -276,6 +395,14 @@ public class UtilisateurController {
         return REDIRECT_USER_PROFILE + currentUser.getId();
     }
 
+    /**
+     * Affiche le formulaire de mise à jour du profil.
+     *
+     * @param idU Identifiant utilisateur.
+     * @param session Session HTTP.
+     * @param model Modèle contenant les données utilisateur.
+     * @return La vue de mise à jour ou redirection si accès interdit.
+     */
     @GetMapping("/profile/update/{idU}")
     public String updateProfile(@PathVariable Long idU, HttpSession session, Model model) {
         Utilisateur loggedInUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
@@ -292,6 +419,18 @@ public class UtilisateurController {
         return "update";
     }
 
+    // ---------------------------------------------------------
+    // MISE À JOUR DU MOT DE PASSE
+    // ---------------------------------------------------------
+
+    /**
+     * Affiche le formulaire de changement de mot de passe.
+     *
+     * @param idU Identifiant utilisateur.
+     * @param session Session HTTP.
+     * @param model Modèle contenant l'ID utilisateur.
+     * @return La vue du formulaire ou redirection si accès interdit.
+     */
     @GetMapping("/profile/update-password/{idU}")
     public String showUpdatePasswordForm(@PathVariable Long idU, HttpSession session, Model model) {
         Utilisateur loggedInUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
@@ -302,7 +441,18 @@ public class UtilisateurController {
         model.addAttribute(ATTR_USER_ID, idU);
         return VIEW_UPDATE_PASSWORD;
     }
-
+    /**
+     * Traite la mise à jour du mot de passe d'un utilisateur.
+     * Vérifie l'ancien mot de passe, la confirmation et applique les règles métier.
+     *
+     * @param idU Identifiant de l'utilisateur.
+     * @param ancienMdp Ancien mot de passe saisi.
+     * @param nouveauMdp Nouveau mot de passe souhaité.
+     * @param confirmMdp Confirmation du nouveau mot de passe.
+     * @param session Session HTTP contenant l'utilisateur connecté.
+     * @param model Modèle permettant d'afficher les erreurs éventuelles.
+     * @return Redirection vers le profil ou retour au formulaire en cas d'erreur.
+     */
     @PostMapping("/profile/update-password/{idU}")
     public String processUpdatePassword(@PathVariable Long idU,
                                         @RequestParam String ancienMdp,
@@ -310,7 +460,6 @@ public class UtilisateurController {
                                         @RequestParam String confirmMdp,
                                         HttpSession session,
                                         Model model) {
-
         Utilisateur loggedInUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (loggedInUser == null || !loggedInUser.getId().equals(idU)) {
             return REDIRECT_LOGIN;
@@ -330,12 +479,26 @@ public class UtilisateurController {
         }
     }
 
+    /**
+     * Déconnecte l'utilisateur en invalidant la session.
+     *
+     * @param session Session HTTP à invalider.
+     * @return Redirection vers la page de login.
+     */
     @GetMapping("/logout")
     public String logout(HttpSession session) {
         session.invalidate();
         return REDIRECT_LOGIN;
     }
 
+    /**
+     * Affiche la liste de tous les utilisateurs.
+     * Redirige ensuite vers la page de recherche d'amis.
+     *
+     * @param model Modèle contenant la liste des utilisateurs.
+     * @param session Session HTTP contenant l'utilisateur connecté.
+     * @return Redirection vers la page de recherche d'amis.
+     */
     @GetMapping("/profile/voirUtilisateur")
     public String voirListUtilisateur(Model model, HttpSession session) {
         Utilisateur loggedInUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
@@ -347,6 +510,17 @@ public class UtilisateurController {
         return "redirect:/user/ami/chercher";
     }
 
+    /**
+     * Enregistre une activité pour un utilisateur et attribue automatiquement les badges associés.
+     *
+     * @param idUtilisateur Identifiant de l'utilisateur concerné.
+     * @param type Type d'activité.
+     * @param date Date de l'activité.
+     * @param duree Durée en minutes.
+     * @param distance Distance parcourue.
+     * @param session Session HTTP contenant l'utilisateur connecté.
+     * @return Redirection vers le profil de l'utilisateur, avec paramètre badge si attribué.
+     */
     @PostMapping("/admin/users/{idUtilisateur}/activites")
     public String enregistrerActiviteEtAttribuerBadges(@PathVariable Long idUtilisateur,
                                                        @RequestParam String type,
@@ -371,6 +545,13 @@ public class UtilisateurController {
         return REDIRECT_USER_PROFILE + idUtilisateur + (badgeAttribue ? "?badge=attribue" : "");
     }
 
+    /**
+     * Attribue automatiquement les badges d'un utilisateur selon ses activités.
+     *
+     * @param idUtilisateur Identifiant de l'utilisateur.
+     * @param session Session HTTP contenant l'utilisateur connecté.
+     * @return Redirection vers le profil utilisateur.
+     */
     @PostMapping("/admin/users/{idUtilisateur}/badges/auto")
     public String attribuerBadgesAutomatiques(@PathVariable Long idUtilisateur,
                                               HttpSession session) {
@@ -383,6 +564,13 @@ public class UtilisateurController {
         return REDIRECT_USER_PROFILE + idUtilisateur;
     }
 
+    /**
+     * Affiche le formulaire permettant d'ajouter un niveau de pratique pour un sport.
+     *
+     * @param model Modèle contenant la liste des sports et niveaux.
+     * @param session Session HTTP contenant l'utilisateur connecté.
+     * @return La vue du formulaire ou redirection vers login.
+     */
     @GetMapping("/profile/ajouterNivPratique")
     public String ajouterNivPratique(Model model, HttpSession session) {
         Utilisateur loggedInUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
@@ -394,8 +582,19 @@ public class UtilisateurController {
         return "setSportNivPratique";
     }
 
+    /**
+     * Ajoute ou met à jour le niveau de pratique d'un utilisateur pour un sport donné.
+     *
+     * @param model Modèle utilisé pour la vue.
+     * @param session Session HTTP contenant l'utilisateur connecté.
+     * @param sport Identifiant du sport.
+     * @param niveau Niveau de pratique choisi.
+     * @return Redirection vers le profil utilisateur.
+     */
     @PostMapping("/nivPratique")
-    public String ajouterNiveauratique(Model model, HttpSession session, @RequestParam Long sport, @RequestParam NiveauPratique niveau) {
+    public String ajouterNiveauratique(Model model, HttpSession session,
+                                       @RequestParam Long sport,
+                                       @RequestParam NiveauPratique niveau) {
         Utilisateur sessionUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (sessionUser == null) {
             return REDIRECT_LOGIN;
@@ -404,8 +603,11 @@ public class UtilisateurController {
         if (user == null) {
             return REDIRECT_LOGIN;
         }
+
         Sport sports = sportService.getById(sport);
-        Optional<SportNiveauPratique> existing = sportNiveauPratiqueService.findByUtilisateurIdAndSportId(user.getId(), sport);
+        Optional<SportNiveauPratique> existing =
+                sportNiveauPratiqueService.findByUtilisateurIdAndSportId(user.getId(), sport);
+
         if (existing.isPresent()) {
             SportNiveauPratique sn = existing.get();
             sn.setNiveau(niveau);
@@ -421,6 +623,13 @@ public class UtilisateurController {
         return REDIRECT_USER_PROFILE + user.getId();
     }
 
+    /**
+     * Supprime un niveau de pratique d'un utilisateur.
+     *
+     * @param idSn Identifiant du SportNiveauPratique à supprimer.
+     * @param session Session HTTP contenant l'utilisateur connecté.
+     * @return Redirection vers le profil utilisateur.
+     */
     @GetMapping("/deleteSportNiveau/{idSn}")
     public String deleteSportNiveau(@PathVariable Long idSn, HttpSession session) {
         Utilisateur loggedInUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);

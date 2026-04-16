@@ -12,6 +12,13 @@ import utcapitole.miage.projet_web.model.jpa.UtilisateurService;
 
 import java.util.List;
 
+/**
+ * Contrôleur gérant toutes les fonctionnalités liées aux relations d’amitié :
+ * recherche d’utilisateurs, envoi de demandes d’amis, consultation des invitations,
+ * acceptation et refus des demandes.
+ *
+ * Toutes les routes sont préfixées par /user/ami.
+ */
 @Controller
 @RequestMapping("/user/ami")
 public class AmiController {
@@ -24,12 +31,26 @@ public class AmiController {
     private final UtilisateurService utilisateurService;
     private final DemandeAmiRepository demandeAmiRepository;
 
+    /**
+     * Constructeur du contrôleur des relations d’amitié.
+     *
+     * @param utilisateurService Service gérant les utilisateurs et les demandes d’amis.
+     * @param demandeAmiRepository Repository permettant d'accéder aux demandes d’amis.
+     */
     public AmiController(UtilisateurService utilisateurService, DemandeAmiRepository demandeAmiRepository) {
         this.utilisateurService = utilisateurService;
         this.demandeAmiRepository = demandeAmiRepository;
     }
 
-    // afficher tous les utilisateurs
+    /**
+     * Affiche la liste des utilisateurs, avec possibilité de filtrer par mot-clé.
+     * Affiche également les demandes d’amis en attente envoyées par l’utilisateur.
+     *
+     * @param motCle Mot-clé optionnel pour filtrer par nom ou prénom.
+     * @param model Modèle contenant les données pour la vue.
+     * @param session Session contenant l’utilisateur connecté.
+     * @return La vue affichant la liste des utilisateurs ou une redirection vers la page de login.
+     */
     @GetMapping("/chercher")
     public String chercherAmis(@RequestParam(value = "motCle", required = false) String motCle,
                                Model model, HttpSession session) {
@@ -46,10 +67,9 @@ public class AmiController {
             listeAffichee = utilisateurService.findAll();
         }
 
-        // obtenir la liste des demande en attentes que j'ai envoyees
-        List<DemandeAmi> mesDemandesEnvoyees = demandeAmiRepository.findByExpediteurAndStatut(userDb, STATUS_PENDING);
+        List<DemandeAmi> mesDemandesEnvoyees =
+                demandeAmiRepository.findByExpediteurAndStatut(userDb, STATUS_PENDING);
 
-        // enregistrer just les id de les destinateurs afin de faciliter la gestion dans frontend
         List<Long> waitingIds = mesDemandesEnvoyees.stream()
                 .map(d -> d.getDestinataire().getId())
                 .toList();
@@ -62,6 +82,14 @@ public class AmiController {
         return "usersList";
     }
 
+    /**
+     * Envoie une demande d’amitié à un autre utilisateur.
+     *
+     * @param id Identifiant du destinataire.
+     * @param session Session contenant l’utilisateur connecté.
+     * @param redirectAttributes Permet d’afficher un message après redirection.
+     * @return Redirection vers la page de recherche d’utilisateurs.
+     */
     @PostMapping("/demander/{id}")
     public String demander(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
         Utilisateur current = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
@@ -69,7 +97,6 @@ public class AmiController {
 
         try {
             utilisateurService.envoyerDemande(current.getId(), id);
-            // redirectAttributes: pour afficher les messages apres autoriser la page
             redirectAttributes.addFlashAttribute("success", "Demande envoyée !");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute(ATTR_ERROR, e.getMessage());
@@ -77,6 +104,13 @@ public class AmiController {
         return "redirect:/user/ami/chercher";
     }
 
+    /**
+     * Affiche les invitations d’amis reçues par l’utilisateur connecté.
+     *
+     * @param model Modèle contenant la liste des invitations.
+     * @param session Session contenant l’utilisateur connecté.
+     * @return La vue affichant les invitations ou une redirection vers la page de login.
+     */
     @GetMapping("/invitations")
     public String voirInvitations(Model model, HttpSession session) {
         Utilisateur current = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
@@ -91,6 +125,14 @@ public class AmiController {
         return "invitations";
     }
 
+    /**
+     * Accepte une demande d’amitié.
+     *
+     * @param demandeId Identifiant de la demande d’amitié.
+     * @param session Session contenant l’utilisateur connecté.
+     * @param redirectAttributes Permet d’afficher un message après redirection.
+     * @return Redirection vers la page des invitations.
+     */
     @PostMapping("/accepter/{demandeId}")
     public String accepter(@PathVariable Long demandeId, HttpSession session, RedirectAttributes redirectAttributes) {
 
@@ -106,6 +148,14 @@ public class AmiController {
         return "redirect:/user/ami/invitations";
     }
 
+    /**
+     * Refuse une demande d’amitié.
+     *
+     * @param demandeId Identifiant de la demande d’amitié.
+     * @param session Session contenant l’utilisateur connecté.
+     * @param redirectAttributes Permet d’afficher un message après redirection.
+     * @return Redirection vers la page des invitations.
+     */
     @PostMapping("/refuser/{demandeId}")
     public String refuser(@PathVariable Long demandeId, HttpSession session, RedirectAttributes redirectAttributes) {
 
