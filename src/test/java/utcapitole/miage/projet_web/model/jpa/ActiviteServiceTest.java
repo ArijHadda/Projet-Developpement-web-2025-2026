@@ -182,9 +182,11 @@ class ActiviteServiceTest {
         when(activiteRepository.save(any(Activite.class))).thenReturn(activite);
 
         // Action : ne doit pas lever de NPE même si badgeAttributionService est null
-        serviceSansBadge.enregistrerActivite(activite);
-        
-        // Pas d'appel possible au badge service car il est nul
+        Activite result = serviceSansBadge.enregistrerActivite(activite);
+
+        org.junit.jupiter.api.Assertions.assertNotNull(result, "L'activité doit être retournée");
+        org.junit.jupiter.api.Assertions.assertEquals("Course", result.getNom());
+        org.mockito.Mockito.verify(activiteRepository, org.mockito.Mockito.times(1)).save(activite);
     }
 
     @Test
@@ -896,7 +898,7 @@ class ActiviteServiceTest {
         resp.put("lon", 1.4);
         when(restTemplate.getForObject("http://ip-api.com/json/", Map.class)).thenReturn(resp);
 
-        // Le catch (L97) doit intercepter l'erreur et utiliser Toulouse
+        // Le catch pour L97 doit intercepter l'erreur et utiliser Toulouse
         when(restTemplate.getForObject(contains("latitude=43.6047&longitude=1.4442"), eq(Map.class))).thenReturn(buildMeteoResponse(12.0));
         when(activiteRepository.save(any(Activite.class))).thenReturn(activite);
 
