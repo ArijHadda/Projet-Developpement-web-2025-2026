@@ -129,9 +129,6 @@
 				<version>0.8.13</version>
 				<configuration>
 					<inclBootstrapClasses>false</inclBootstrapClasses>
-					<includes>
-						<include>utcapitole.miage.projet_web.*</include>
-					</includes>
 				</configuration>
 				<executions>
 					<execution>
