@@ -42,7 +42,10 @@
 
                     <div class="form-group">
                         <label for="sexe">⚧ Sexe</label>
-                        <input type="text" id="sexe" name="sexeU" th:value="${userUpdate.sexe}" class="form-control" required />
+                        <select id="sexe" name="sexeU" class="form-control" required>
+                            <option value="M" th:selected="${userUpdate.sexe == 'M'}">Homme</option>
+                            <option value="F" th:selected="${userUpdate.sexe == 'F'}">Femme</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
