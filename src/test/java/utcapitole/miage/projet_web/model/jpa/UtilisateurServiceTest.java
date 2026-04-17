@@ -86,6 +86,7 @@ class UtilisateurServiceTest {
     @Test
     void testModifierProfile() {
         when(utilisateurRepository.findById(CORRECT_ID)).thenReturn(Optional.of(mockUser));
+        when(utilisateurRepository.findByMail("new@miage.fr")).thenReturn(Optional.empty());
         when(utilisateurRepository.save(any(Utilisateur.class))).thenReturn(mockUser);
 
         Utilisateur updatedUser = assertDoesNotThrow(() ->
@@ -99,6 +100,33 @@ class UtilisateurServiceTest {
         assertEquals(75.0f, updatedUser.getPoids());
 
         verify(utilisateurRepository).save(mockUser);
+    }
+
+    // --- NOUVEAU TEST : Couvrir la modification sans changer d'email ---
+    @Test
+    void testModifierProfileSameEmail() {
+        when(utilisateurRepository.findById(CORRECT_ID)).thenReturn(Optional.of(mockUser));
+        // Pas de mock sur findByMail car il ne doit pas être appelé
+        when(utilisateurRepository.save(any(Utilisateur.class))).thenReturn(mockUser);
+
+        Utilisateur updatedUser = assertDoesNotThrow(() ->
+                utilisateurService.modifierProfile(CORRECT_ID, CORRECT_MAIL, "M", 25, 1.80f, 75.0f)
+        );
+
+        assertEquals(CORRECT_MAIL, updatedUser.getMail());
+        verify(utilisateurRepository).save(mockUser);
+    }
+
+    // --- NOUVEAU TEST : Couvrir l'exception si l'email est déjà pris ---
+    @Test
+    void testModifierProfileEmailAlreadyUsedShouldThrow() {
+        when(utilisateurRepository.findById(CORRECT_ID)).thenReturn(Optional.of(mockUser));
+        when(utilisateurRepository.findByMail("dest@miage.fr")).thenReturn(Optional.of(destUser));
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                utilisateurService.modifierProfile(CORRECT_ID, "dest@miage.fr", "M", 25, 1.80f, 75.0f)
+        );
+        assertEquals("Cet email est déjà utilisé par un autre compte.", exception.getMessage());
     }
 
     // --- NOUVEAU TEST : Couvrir l'exception si l'utilisateur n'est pas trouvé (pour maintenir 100% coverage) ---

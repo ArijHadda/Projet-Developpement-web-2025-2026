@@ -195,14 +195,36 @@ class UtilisateurControllerTest {
         Utilisateur logged = user(5L, "l@test.fr", "pwd");
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("loggedInUser", logged);
+        utilisateurService.byId.put(5L, logged); // Nécessaire pour le rechargement en session
 
-        String view = controller.modifierProfile(5L, "n@test.fr", "F", 20, 1.6f, 50f,  session);
+        Model model = new ExtendedModelMap();
+        String view = controller.modifierProfile(5L, "n@test.fr", "F", 20, 1.6f, 50f,  session, model);
         assertEquals("redirect:/user/profile/5", view);
         assertEquals("n@test.fr", utilisateurService.lastModifiedMail);
+        assertEquals(logged, session.getAttribute("loggedInUser"));
 
         // Test hacker
-        String denied = controller.modifierProfile(99L, "n@test.fr", "F", 20, 1.6f, 50f, session);
+        String denied = controller.modifierProfile(99L, "n@test.fr", "F", 20, 1.6f, 50f, session, model);
         assertEquals("redirect:/user/login", denied);
+    }
+
+    // --- NOUVEAU TEST : Couverture du catch de IllegalArgumentException ---
+    @Test
+    void testModifierProfileEmailAlreadyUsed() {
+        Utilisateur logged = user(5L, "l@test.fr", "pwd");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("loggedInUser", logged);
+        utilisateurService.byId.put(5L, logged); // Nécessaire pour recharger la vue update
+
+        // On ordonne au fake service de lever l'exception
+        utilisateurService.modifierProfileException = new IllegalArgumentException("Cet email est déjà utilisé par un autre compte.");
+
+        Model model = new ExtendedModelMap();
+        String view = controller.modifierProfile(5L, "dup@test.fr", "F", 20, 1.6f, 50f, session, model);
+
+        assertEquals("update", view);
+        assertEquals("Cet email est déjà utilisé par un autre compte.", model.getAttribute("error"));
+        assertTrue(model.containsAttribute("userUpdate"));
     }
 
     @Test
@@ -482,6 +504,7 @@ class UtilisateurControllerTest {
         Utilisateur lastRegisteredUser;
         String lastModifiedMail;
         RuntimeException passwordException;
+        RuntimeException modifierProfileException;
         boolean saved = false;
 
         FakeUtilisateurService() {
@@ -511,6 +534,9 @@ class UtilisateurControllerTest {
 
         @Override
         public Utilisateur modifierProfile(Long idU, String mailU, String sexeU, int ageU, float tailleU, float poidsU) {
+            if (modifierProfileException != null) {
+                throw modifierProfileException;
+            }
             this.lastModifiedMail = mailU;
             return byId.getOrDefault(idU, new Utilisateur());
         }
@@ -752,8 +778,8 @@ class UtilisateurControllerTest {
     @Test
     void testModifierProfile_SessionNull() {
         MockHttpSession session = new MockHttpSession(); // Session vide
-
-        String view = controller.modifierProfile(1L, "mail@test.fr", "M", 30, 1.8f, 80f, session);
+        Model model = new ExtendedModelMap();
+        String view = controller.modifierProfile(1L, "mail@test.fr", "M", 30, 1.8f, 80f, session, model);
 
         assertEquals("redirect:/user/login", view);
     }
@@ -781,11 +807,11 @@ class UtilisateurControllerTest {
             currentWeather.put("windspeed", 10.0);
             currentWeather.put("winddirection", 180);
             currentWeather.put("is_day", 1);
-            
+
             // Puis on en met un à null (L263)
             currentWeather.put(field, null);
             weatherResponse.put("current_weather", currentWeather);
-            
+
             when(restTemplate.getForObject(contains("api.open-meteo.com"), eq(Map.class))).thenReturn(weatherResponse);
 
             Model model = new ExtendedModelMap();

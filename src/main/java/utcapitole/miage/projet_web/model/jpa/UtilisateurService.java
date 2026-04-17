@@ -57,6 +57,13 @@ public class UtilisateurService {
         Utilisateur user = utilisateurRepository.findById(idU)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur non trouvé."));
 
+        if (!user.getMail().equals(mailU)) {
+            Optional<Utilisateur> existingUser = utilisateurRepository.findByMail(mailU);
+            if (existingUser.isPresent()) {
+                throw new IllegalArgumentException("Cet email est déjà utilisé par un autre compte.");
+            }
+        }
+
         user.setMail(mailU);
         user.setSexe(sexeU);
         user.setAge(ageU);

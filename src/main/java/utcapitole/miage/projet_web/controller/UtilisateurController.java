@@ -390,14 +390,30 @@ public class UtilisateurController {
     public String modifierProfile(@PathVariable Long idU, @RequestParam String mailU,
                                   @RequestParam String sexeU,
                                   @RequestParam int ageU, @RequestParam float tailleU,
-                                  @RequestParam float poidsU, HttpSession session) {
+                                  @RequestParam float poidsU, HttpSession session,
+                                  Model model) {
 
         Utilisateur currentUser = (Utilisateur) session.getAttribute(ATTR_LOGGED_IN_USER);
         if (currentUser == null || !currentUser.getId().equals(idU)) {
             return REDIRECT_LOGIN;
         }
-        utilisateurService.modifierProfile(idU, mailU, sexeU, ageU, tailleU, poidsU);
-        return REDIRECT_USER_PROFILE + currentUser.getId();
+
+        try {
+            utilisateurService.modifierProfile(idU, mailU, sexeU, ageU, tailleU, poidsU);
+
+            Utilisateur updatedUser = utilisateurService.getUtilisateurAvecSports(idU);
+            session.setAttribute(ATTR_LOGGED_IN_USER, updatedUser);
+
+            return REDIRECT_USER_PROFILE + currentUser.getId();
+
+        } catch (IllegalArgumentException e) {
+            model.addAttribute(ATTR_ERROR, e.getMessage());
+
+            Utilisateur user = utilisateurService.getUtilisateurAvecSports(idU);
+            model.addAttribute("userUpdate", user);
+
+            return "update";
+        }
     }
 
     /**
