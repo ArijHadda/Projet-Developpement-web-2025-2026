@@ -63,9 +63,16 @@
                 <div class="divider" style="margin: 1rem 0;"></div>
 
                 <div class="flex gap-sm" style="flex-wrap: wrap;">
-                    <form th:action="@{/challenge/{id}/join(id=${challenge.id})}" method="post" style="margin: 0;">
-                        <button type="submit" class="btn btn-secondary btn-sm">🎯 Rejoindre</button>
-                    </form>
+                    <!-- Vérifier si l'utilisateur participe déjà -->
+                    <div th:with="isParticipant=${challenge.participations.![utilisateur.id].contains(session.loggedInUser.id)}">
+                        <!-- S'il ne participe pas, afficher le bouton Rejoindre -->
+                        <form th:if="${!isParticipant}" th:action="@{/challenge/{id}/join(id=${challenge.id})}" method="post" style="margin: 0;">
+                            <button type="submit" class="btn btn-secondary btn-sm">🎯 Rejoindre</button>
+                        </form>
+                        <!-- S'il participe déjà, afficher un bouton désactivé -->
+                        <button th:if="${isParticipant}" type="button" class="btn btn-secondary btn-sm" disabled style="opacity: 0.6; cursor: not-allowed; background-color: var(--color-success); border-color: var(--color-success); color: white;">✅ Déjà rejoint</button>
+                    </div>
+                    
                     <a th:href="@{/challenge/{id}/classement(id=${challenge.id})}" class="btn btn-warning btn-sm">📊 Classement</a>
                     
                     <div th:if="${challenge.createur.id == session.loggedInUser.id}" class="flex gap-sm" style="margin-left: auto; padding-left: 1rem; border-left: 2px solid var(--color-gray-300);">
